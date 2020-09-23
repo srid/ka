@@ -16,8 +16,10 @@ extra-source-files: CHANGELOG.md
 executable ka
   main-is:            src/Main.hs
   build-depends:
-    , base       ^>=4.13
-    , relude     ^>=0.7.0.0
+    , base         ^>=4.13
+    , filepattern
+    , fsnotify
+    , relude       ^>=0.7.0.0
     , with-utf8
 
   mixins:
