@@ -8,5 +8,7 @@ in
         [ cabal-install
           cabal-fmt
           ghcid
+          haskell-language-server
+          ormolu
         ]);
   }
