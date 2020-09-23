@@ -1,0 +1,17 @@
+name: "CI"
+on:
+  pull_request:
+  push:
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    env:
+      MAINLINE: refs/heads/master
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v11
+      - name: Build 🔧
+        run: nix-build -j4
