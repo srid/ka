@@ -1,16 +1,16 @@
-cabal-version:       >=1.10
-name:                ka
-version:             0.1.0.0
-homepage:            https://github.com/srid/ka
-license:             AGPL
-license-file:        LICENSE
-author:              Sridhar Ratnakumar
-maintainer:          srid@srid.ca
-category:            CLI
-build-type:          Simple
-extra-source-files:  CHANGELOG.md
+cabal-version:      >=1.10
+name:               ka
+version:            0.1.0.0
+homepage:           https://github.com/srid/ka
+license:            AGPL
+license-file:       LICENSE
+author:             Sridhar Ratnakumar
+maintainer:         srid@srid.ca
+category:           CLI
+build-type:         Simple
+extra-source-files: CHANGELOG.md
 
 executable ka
-  main-is:             src/Main.hs
-  build-depends:       base >=4.13 && <4.14
-  default-language:    Haskell2010
+  main-is:          src/Main.hs
+  build-depends:    base ==4.13.*
+  default-language: Haskell2010
