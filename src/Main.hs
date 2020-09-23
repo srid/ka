@@ -1,4 +1,8 @@
 module Main where
 
+import Main.Utf8 (withUtf8)
+
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main =
+  withUtf8 $ do
+    putTextLn "Hello, Haskell!"
