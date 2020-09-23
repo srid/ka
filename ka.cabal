@@ -17,7 +17,7 @@ executable ka
   main-is:            src/Main.hs
   build-depends:
     , base       ^>=4.13
-    , relude     ^>=0.6.0.0
+    , relude     ^>=0.7.0.0
     , with-utf8
 
   mixins:
