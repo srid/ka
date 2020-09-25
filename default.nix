@@ -1,5 +1,6 @@
 let 
-  pkgs = import (import ./nixpkgs.nix) { };
+  sources = import ./nix/sources.nix;
+  pkgs = import sources.nixpkgs { };
   extraDeps =
     if pkgs.lib.trivial.inNixShell
       then with pkgs.haskellPackages; [ 
@@ -13,6 +14,9 @@ let
 in 
   pkgs.haskellPackages.developPackage {
     root = ./.;
+    source-overrides = {
+      reflex-fsnotify = sources.reflex-fsnotify;
+    };
     modifier = drv:
       pkgs.haskell.lib.addBuildTools drv extraDeps;
   }
