@@ -16,10 +16,13 @@ extra-source-files: CHANGELOG.md
 executable ka
   main-is:            src/Main.hs
   build-depends:
-    , base         ^>=4.13
+    , base             ^>=4.13
+    , containers
     , filepattern
     , fsnotify
-    , relude       ^>=0.7.0.0
+    , reflex
+    , reflex-fsnotify
+    , relude           ^>=0.7.0.0
     , with-utf8
 
   mixins:
@@ -27,7 +30,14 @@ executable ka
     relude (Relude as Prelude)
 
   default-extensions:
+    FlexibleContexts
+    LambdaCase
     OverloadedStrings
     ScopedTypeVariables
+    TupleSections
+    TypeFamilies
+
+  ghc-options:
+    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
 
   default-language:   Haskell2010
