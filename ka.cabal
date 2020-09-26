@@ -16,13 +16,17 @@ extra-source-files: CHANGELOG.md
 executable ka
   main-is:            src/Main.hs
   build-depends:
-    , base             ^>=4.13
+    , base               ^>=4.13
+    , commonmark
+    , commonmark-pandoc
     , containers
+    , filepath
     , filepattern
     , fsnotify
+    , pandoc-types
     , reflex
     , reflex-fsnotify
-    , relude           ^>=0.7.0.0
+    , relude             ^>=0.7.0.0
     , with-utf8
 
   mixins:
