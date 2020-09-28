@@ -45,7 +45,7 @@ executable ka
     TypeFamilies
     ViewPatterns
 
-  exposed-modules:
+  other-modules:
     Ka.Diff
     Ka.Plugin
 
