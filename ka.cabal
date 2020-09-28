@@ -14,7 +14,8 @@ build-type:         Simple
 extra-source-files: CHANGELOG.md
 
 executable ka
-  main-is:            src/Main.hs
+  hs-source-dirs:     src
+  main-is:            Main.hs
   build-depends:
     , base               ^>=4.13
     , commonmark
@@ -42,6 +43,10 @@ executable ka
     ScopedTypeVariables
     TupleSections
     TypeFamilies
+
+  exposed-modules:
+    Ka.Diff
+    Ka.Plugin
 
   ghc-options:
     -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns

@@ -5,6 +5,8 @@ module Main where
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import qualified Data.Map.Strict as Map
+import Ka.Diff
+import Ka.Plugin
 import Main.Utf8 (withUtf8)
 import Reflex
 import Reflex.FSNotify (watchDir)
@@ -29,7 +31,6 @@ main =
             liftIO $ print st
             liftIO $ print diff
             liftIO $ putStrLn "===\n"
-
       pure never
 
 kaApp :: MonadHeadlessApp t m => FilePath -> m (Dynamic t (KaState, KaStateDiff))
@@ -66,25 +67,6 @@ type FileContent = Text
 
 type FileDoc = Either CM.ParseError (CP.Cm () B.Blocks)
 
--- | A value along with its diff status if any.
-data V a
-  = -- | The value a has not been modified
-    VSame a
-  | -- | The value was modified, added or deleted
-    VChanged (Change a)
-  deriving (Eq, Show)
-
-data Change a
-  = Added a
-  | Modified a
-  | Removed
-  deriving stock (Eq, Show)
-  deriving stock (Functor)
-
-applyDiff :: Ord k => Map k (Change a) -> Map k (V a) -> Map k (V a)
-applyDiff diff =
-  Map.union (fmap VChanged diff)
-
 data KaState = KaState
   { -- | Pandoc AST of plain-text files
     inputDoc :: Map FilePath (V FileDoc),
@@ -114,7 +96,9 @@ kaInit =
 
 kaPatch :: KaState -> KaStateDiff -> KaState
 kaPatch st diff =
-  let diffDoc = Map.mapWithKey (fmap . parseMarkdown) diff
+  let plugins = [demoPlugin]
+      cmSpec = commonmarkSpec `foldMap` plugins
+      diffDoc = Map.mapWithKey (fmap . parseMarkdown cmSpec) diff
       diffOutLinks = Map.mapWithKey (fmap . queryLinks) diffDoc
    in st
         { inputDoc =
@@ -133,6 +117,6 @@ kaPatch st diff =
 queryLinks :: FilePath -> FileDoc -> [FilePath]
 queryLinks _ _ = [] -- TODO
 
-parseMarkdown :: FilePath -> Text -> FileDoc
-parseMarkdown fp s =
-  join $ CM.commonmarkWith mempty fp s
+parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> FileDoc
+parseMarkdown spec fp s =
+  join $ CM.commonmarkWith spec fp s
