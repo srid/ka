@@ -21,7 +21,7 @@ data Plugin = Plugin
     -- | Transform Pandoc type after graph creation
     docTransformerWithGraph :: (() -> Pandoc -> Pandoc),
     -- | Files to generate
-    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed ByteString)
+    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed Text)
   }
 
 demoPlugin :: Plugin

@@ -16,7 +16,7 @@ data Db = Db
     -- | Post-transformed Pandoc AST
     outputDoc :: Map FilePath (V Pandoc),
     -- | Pages to generate
-    outputFiles :: Map FilePath (Changed ByteString)
+    outputFiles :: Map FilePath (Changed Text)
   }
   deriving (Show)
 
@@ -44,7 +44,7 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
       outLinksChanges = Map.mapWithKey (fmap . queryLinks) pandocChanges
       inputDoc' = applyChanges pandocChanges $ inputDoc db
       outLinks' = applyChanges outLinksChanges $ outLinks db
-      outputFiles' :: Map FilePath (Changed ByteString) =
+      outputFiles' :: Map FilePath (Changed Text) =
         flip foldMap (fileGenerator <$> plugins) $ \gen ->
           gen inputDoc'
    in db

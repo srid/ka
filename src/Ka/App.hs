@@ -12,7 +12,7 @@ import Reflex.FSNotify (watchDir)
 import Reflex.Host.Headless (MonadHeadlessApp)
 import System.FSNotify (defaultConfig)
 import qualified System.FSNotify as FSN
-import System.FilePath (takeExtension)
+import System.FilePath (takeExtension, takeFileName)
 import System.FilePattern.Directory (FilePattern, getDirectoryFiles)
 
 kaApp :: MonadHeadlessApp t m => m (Dynamic t (Db, Map FilePath (Changed Text)))
@@ -63,4 +63,4 @@ noteChange evt =
         pure (fp, Removed) -- FIXME: ?
     else pure Nothing
   where
-    fp = FSN.eventPath evt
+    fp = takeFileName $ FSN.eventPath evt
