@@ -28,10 +28,13 @@ main =
       stWithDiff <- kaApp "./doc"
       void $
         networkView $
-          ffor stWithDiff $ \(st, diff) -> do
-            liftIO $ print st
-            liftIO $ print diff
-            liftIO $ putStrLn "===\n"
+          ffor stWithDiff $ \(st, diff) -> liftIO $ do
+            -- liftIO $ print st
+            putStrLn $ "Diff: " <> show diff
+            forM_ (Map.toList $ outputFiles st) $ \(k, v) -> do
+              putStr $ k <> " : "
+              print v
+            putStrLn "===\n"
       pure never
 
 kaApp :: MonadHeadlessApp t m => FilePath -> m (Dynamic t (KaState, KaStateDiff))
@@ -91,8 +94,17 @@ kaInit =
 -- Incremental update of ka state
 -- ------------------------------
 
+kaReset :: KaState -> KaState
+kaReset st =
+  st
+    { inputDoc = Map.mapMaybe id $ fmap markSame $ inputDoc st,
+      outLinks = Map.mapMaybe id $ fmap markSame $ outLinks st,
+      outputDoc = Map.mapMaybe id $ fmap markSame $ outputDoc st,
+      outputFiles = mempty
+    }
+
 kaPatch :: KaState -> KaStateDiff -> KaState
-kaPatch st diff =
+kaPatch (kaReset -> st) diff =
   let plugins = [demoPlugin]
       cmSpec = commonmarkSpec `foldMap` plugins
       diffDoc = Map.mapWithKey (fmap . parseMarkdown cmSpec) diff

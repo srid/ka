@@ -43,6 +43,7 @@ executable ka
     ScopedTypeVariables
     TupleSections
     TypeFamilies
+    ViewPatterns
 
   exposed-modules:
     Ka.Diff
