@@ -17,6 +17,7 @@ import qualified System.FSNotify as FSN
 import System.FilePath ((</>))
 import System.FilePattern.Directory (getDirectoryFiles)
 import qualified Text.Pandoc.Builder as B
+import Text.Pandoc.Definition (Pandoc (Pandoc))
 
 main :: IO ()
 main =
@@ -63,31 +64,27 @@ kaApp inputDir = do
 -- ka types
 -- --------
 
-type FileContent = Text
-
-type FileDoc = Either CM.ParseError (CP.Cm () B.Blocks)
-
 data KaState = KaState
   { -- | Pandoc AST of plain-text files
-    inputDoc :: Map FilePath (V FileDoc),
+    inputDoc :: Map FilePath (V Pandoc),
     -- | Outgoing links (used for building the graph)
     outLinks :: Map FilePath (V [FilePath]),
     -- | Graph of notes
     graph :: (),
     -- | Post-transformed Pandoc AST
-    outputDoc :: Map FilePath (V FileDoc),
+    outputDoc :: Map FilePath (V Pandoc),
     -- | Pages to generate
-    outputFiles :: Map FilePath (V ByteString)
+    outputFiles :: Map FilePath (Change ByteString)
   }
   deriving (Show)
 
-type KaStateDiff = Map FilePath (Change FileContent)
+type KaStateDiff = Map FilePath (Change Text)
 
 emptyKaState :: KaState
 emptyKaState =
   KaState mempty mempty () mempty mempty
 
-kaInit :: Map FilePath FileContent -> KaState
+kaInit :: Map FilePath Text -> KaState
 kaInit =
   kaPatch emptyKaState . fmap Added
 
@@ -100,23 +97,24 @@ kaPatch st diff =
       cmSpec = commonmarkSpec `foldMap` plugins
       diffDoc = Map.mapWithKey (fmap . parseMarkdown cmSpec) diff
       diffOutLinks = Map.mapWithKey (fmap . queryLinks) diffDoc
+      inputDoc' = applyDiff diffDoc $ inputDoc st
+      outLinks' = applyDiff diffOutLinks $ outLinks st
+      outputFiles' :: Map FilePath (Change ByteString) =
+        flip foldMap (fileGenerator <$> plugins) $ \gen ->
+          gen inputDoc'
    in st
-        { inputDoc =
-            applyDiff diffDoc (inputDoc st),
-          outLinks =
-            applyDiff diffOutLinks (outLinks st),
+        { inputDoc = inputDoc',
+          outLinks = outLinks',
           graph = (),
-          outputDoc =
-            -- TODO: Run backlinks plugin to generate this
-            mempty,
-          outputFiles =
-            -- TODO: Run sitegen plugin
-            mempty
+          outputDoc = inputDoc',
+          outputFiles = outputFiles'
         }
 
-queryLinks :: FilePath -> FileDoc -> [FilePath]
+queryLinks :: FilePath -> Pandoc -> [FilePath]
 queryLinks _ _ = [] -- TODO
 
-parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> FileDoc
+parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> Pandoc
 parseMarkdown spec fp s =
-  join $ CM.commonmarkWith spec fp s
+  either (error . show) toPandoc $ join $ CM.commonmarkWith spec fp s
+  where
+    toPandoc = Pandoc mempty . B.toList . CP.unCm
