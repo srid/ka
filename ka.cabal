@@ -21,6 +21,7 @@ executable ka
     , commonmark
     , commonmark-pandoc
     , containers
+    , directory
     , filepath
     , filepattern
     , fsnotify
