@@ -14,13 +14,13 @@ main =
     runHeadlessApp $ do
       -- Fire this to quit the app
       -- (e, fire) <- newTriggerEvent
-      stWithDiff <- kaApp "./doc"
+      dbWithDiff <- kaApp "./doc"
       void $
         networkView $
-          ffor stWithDiff $ \(st, diff) -> liftIO $ do
+          ffor dbWithDiff $ \(db, diff) -> liftIO $ do
             -- liftIO $ print st
             putStrLn $ "Diff: " <> show diff
-            forM_ (Map.toList $ Db.outputFiles st) $ \(k, v) -> do
+            forM_ (Map.toList $ Db.outputFiles db) $ \(k, v) -> do
               putStr $ k <> " : "
               print v
             putStrLn "===\n"

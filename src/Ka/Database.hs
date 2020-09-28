@@ -20,40 +20,46 @@ data Db = Db
   }
   deriving (Show)
 
+-- | Unlike Db, Ctx doesn't change, and is fixed and required for Db updates.
 data Ctx = Ctx
   { plugins :: [Plugin]
   }
 
 initDb :: Ctx -> Map FilePath Text -> Db
-initDb ctx =
-  patchDb ctx emptyDb . fmap Added
+initDb ctx (fmap Added -> changes) =
+  changeDb ctx emptyDb changes
   where
     emptyDb =
       Db mempty mempty () mempty mempty
 
-resetDb :: Db -> Db
-resetDb st =
-  st
-    { inputDoc = Map.mapMaybe id $ fmap markUnchanged $ inputDoc st,
-      outLinks = Map.mapMaybe id $ fmap markUnchanged $ outLinks st,
-      outputDoc = Map.mapMaybe id $ fmap markUnchanged $ outputDoc st,
-      outputFiles = mempty
-    }
-
-patchDb :: Ctx -> Db -> Map FilePath (Changed Text) -> Db
-patchDb Ctx {..} (resetDb -> st) diff =
+-- | Change the given `Db` such that *minimal* edits are done to apply the
+-- given change.
+--
+-- This function should run fast given a small number of changes. It most
+-- certainly should not be O(n).
+changeDb :: Ctx -> Db -> Map FilePath (Changed Text) -> Db
+changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
   let cmSpec = commonmarkSpec `foldMap` plugins
-      diffDoc = Map.mapWithKey (fmap . parseMarkdown cmSpec) diff
-      diffOutLinks = Map.mapWithKey (fmap . queryLinks) diffDoc
-      inputDoc' = applyChanges diffDoc $ inputDoc st
-      outLinks' = applyChanges diffOutLinks $ outLinks st
+      pandocChanges = Map.mapWithKey (fmap . parseMarkdown cmSpec) txtChanges
+      outLinksChanges = Map.mapWithKey (fmap . queryLinks) pandocChanges
+      inputDoc' = applyChanges pandocChanges $ inputDoc db
+      outLinks' = applyChanges outLinksChanges $ outLinks db
       outputFiles' :: Map FilePath (Changed ByteString) =
         flip foldMap (fileGenerator <$> plugins) $ \gen ->
           gen inputDoc'
-   in st
+   in db
         { inputDoc = inputDoc',
           outLinks = outLinks',
           graph = (),
           outputDoc = inputDoc',
           outputFiles = outputFiles'
         }
+
+markAllAsUnchanged :: Db -> Db
+markAllAsUnchanged st =
+  st
+    { inputDoc = Map.mapMaybe id $ fmap markUnchanged $ inputDoc st,
+      outLinks = Map.mapMaybe id $ fmap markUnchanged $ outLinks st,
+      outputDoc = Map.mapMaybe id $ fmap markUnchanged $ outputDoc st,
+      outputFiles = mempty
+    }

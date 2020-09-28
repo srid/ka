@@ -3,7 +3,8 @@
 module Ka.App where
 
 import qualified Data.Map.Strict as Map
-import Ka.Database (Ctx (Ctx), Db, initDb, patchDb)
+import Ka.Database (Ctx (Ctx), Db)
+import qualified Ka.Database as Db
 import Ka.Diff (Changed (..))
 import Ka.Plugin (demoPlugin)
 import Reflex
@@ -17,19 +18,19 @@ import System.FilePattern.Directory (getDirectoryFiles)
 kaApp :: MonadHeadlessApp t m => FilePath -> m (Dynamic t (Db, Map FilePath (Changed Text)))
 kaApp inputDir = do
   pb <- getPostBuild
-  changes <- watchDir defaultConfig (inputDir <$ pb) (const True)
+  fileChanges <- watchDir defaultConfig (inputDir <$ pb) (const True)
   let ctx = Ctx [demoPlugin]
-  st0 :: Db <-
-    initDb ctx <$> do
+  db0 :: Db <-
+    Db.initDb ctx <$> do
       liftIO $ do
         files <- getDirectoryFiles inputDir ["*.md"]
         fmap Map.fromList $
           forM files $ \fp -> do
             s <- readFileText (inputDir </> fp)
             pure (fp, s)
-  diffE <-
+  dbChanges <-
     performEvent $
-      ffor changes $
+      ffor fileChanges $
         -- TODO: group events
         -- TODO: filter by *.md
         fmap one . \case
@@ -37,8 +38,8 @@ kaApp inputDir = do
           FSN.Modified fp _ _ -> (fp,) . Modified <$> readFileText fp
           FSN.Removed fp _ _ -> pure (fp, Removed)
           FSN.Unknown fp _ _ -> pure (fp, Removed) -- FIXME: ?
-  rec stWithDiff <-
-        holdDyn (st0, mempty) $
-          ffor (attach (current stWithDiff) diffE) $ \((things, _lastChanged), changed) ->
-            (patchDb ctx things changed, changed)
-  pure stWithDiff
+  rec dbWithChanges <-
+        holdDyn (db0, mempty) $
+          ffor (attach (current dbWithChanges) dbChanges) $ \((things, _), changes) ->
+            (Db.changeDb ctx things changes, changes)
+  pure dbWithChanges
