@@ -3,7 +3,7 @@ module Ka.Plugin where
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import qualified Data.Map.Strict as Map
-import Ka.Diff (Change (..), V (..))
+import Ka.Diff (Changed (..), V (..))
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Pandoc)
 
@@ -21,7 +21,7 @@ data Plugin = Plugin
     -- | Transform Pandoc type after graph creation
     docTransformerWithGraph :: (() -> Pandoc -> Pandoc),
     -- | Files to generate
-    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Change ByteString)
+    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed ByteString)
   }
 
 demoPlugin :: Plugin

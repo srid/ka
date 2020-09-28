@@ -1,36 +1,36 @@
--- | A diff is a set (map) of `Change`s
 module Ka.Diff where
 
 import qualified Data.Map.Strict as Map
 
--- | The kind of change made to some value
-data Change a
+-- | A value that was changed in some way.
+data Changed a
   = Added a
   | Modified a
   | Removed
   deriving stock (Eq, Show)
   deriving stock (Functor)
 
-changedVal :: Change a -> Maybe a
-changedVal = \case
+changedTo :: Changed a -> Maybe a
+changedTo = \case
   Added x -> Just x
   Modified x -> Just x
   Removed -> Nothing
 
--- | Value that may have been changed
+-- | A value that *may* have been changed
 data V a
   = -- | The value has not been modified
     VSame a
   | -- | The value was modified, added or deleted
-    VChanged (Change a)
-  deriving (Eq, Show)
+    VChanged (Changed a)
+  deriving stock (Eq, Show)
 
 -- | Mark as value as unchanged (same), unless it was removed (then return Nothing)
-markSame :: V a -> Maybe (V a)
-markSame = \case
-  VChanged ch -> VSame <$> changedVal ch
+markUnchanged :: V a -> Maybe (V a)
+markUnchanged = \case
+  VChanged ch -> VSame <$> changedTo ch
   x@(VSame _) -> Just x
 
-applyDiff :: Ord k => Map k (Change a) -> Map k (V a) -> Map k (V a)
-applyDiff diff =
+-- | Apply changes using Map as the structure.
+applyChanges :: Ord k => Map k (Changed a) -> Map k (V a) -> Map k (V a)
+applyChanges diff =
   Map.union (fmap VChanged diff)

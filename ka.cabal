@@ -40,13 +40,17 @@ executable ka
     FlexibleContexts
     LambdaCase
     OverloadedStrings
+    RecordWildCards
     ScopedTypeVariables
     TupleSections
     TypeFamilies
     ViewPatterns
 
   other-modules:
+    Ka.App
+    Ka.Database
     Ka.Diff
+    Ka.Markdown
     Ka.Plugin
 
   ghc-options:
