@@ -1,6 +1,8 @@
 let 
   sources = import ./nix/sources.nix;
-  pkgs = import sources.nixpkgs { };
+in 
+{ pkgs ? import sources.nixpkgs {} , ... }:
+let
   extraDeps =
     if pkgs.lib.trivial.inNixShell
       then with pkgs.haskellPackages; [ 
