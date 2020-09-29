@@ -2,11 +2,11 @@
 
 `ka` lifts your plain-text notes to life.
 
-## Usage 
+## Usage
 
 Run `ka` on any directory containing Markdown notes.
 
-```
+```bash
 ka
 ```
 

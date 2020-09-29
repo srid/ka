@@ -21,12 +21,15 @@ executable ka
     , commonmark
     , commonmark-pandoc
     , containers
+    , data-default
     , directory
     , filepath
     , filepattern
     , fsnotify
     , pandoc-types
     , reflex
+    , reflex-dom-pandoc  >=0.2.6.0
+    , reflex-dom-core
     , reflex-fsnotify
     , relude             ^>=0.7.0.0
     , with-utf8

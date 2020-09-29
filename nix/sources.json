@@ -23,6 +23,18 @@
         "url": "https://github.com/NixOS/nixpkgs/archive/06b27898a456.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "reflex-dom-pandoc": {
+        "branch": "master",
+        "description": "Render Pandoc documents in reflex-dom",
+        "homepage": "",
+        "owner": "srid",
+        "repo": "reflex-dom-pandoc",
+        "rev": "bd9bcf4fc5c60fa6752a895a238080f75c3299a6",
+        "sha256": "115djfg1a20hsrsx19m0rwb0xlh3v968ypv4vmfa27yjg0nq8nbp",
+        "type": "tarball",
+        "url": "https://github.com/srid/reflex-dom-pandoc/archive/bd9bcf4fc5c60fa6752a895a238080f75c3299a6.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "reflex-fsnotify": {
         "branch": "develop",
         "description": "Watch files and directories for changes using a functional-reactive interface!",

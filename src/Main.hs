@@ -13,11 +13,14 @@ import System.Directory (createDirectoryIfMissing, removeFile, withCurrentDirect
 import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
 
+notesDir :: FilePath
+notesDir = "/home/srid/Sync/zk"
+
 main :: IO ()
 main =
   withUtf8 $ do
-    createDirectoryIfMissing True "./doc/.ka/output"
-    withCurrentDirectory "./doc" $ do
+    createDirectoryIfMissing True $ notesDir </> ".ka" </> "output"
+    withCurrentDirectory notesDir $ do
       runHeadlessApp $ do
         -- Fire this to quit the app
         -- (e, fire) <- newTriggerEvent

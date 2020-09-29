@@ -2,8 +2,13 @@ module Ka.Plugin where
 
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
+import Data.Default (Default)
 import qualified Data.Map.Strict as Map
+import GHC.IO.Unsafe (unsafePerformIO)
 import Ka.Diff (Changed (..), V (..))
+import Reflex.Dom.Core
+import Reflex.Dom.Pandoc.Document
+import System.FilePath ((-<.>))
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Pandoc)
 
@@ -24,18 +29,28 @@ data Plugin = Plugin
     fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed Text)
   }
 
+instance Default Plugin where
+  def =
+    Plugin mempty id (const id) (const mempty)
+
 demoPlugin :: Plugin
 demoPlugin =
-  Plugin
-    { commonmarkSpec = mempty,
-      docTransformer = id,
-      docTransformerWithGraph = const id,
+  def
+    { commonmarkSpec = CM.defaultSyntaxSpec,
       fileGenerator = \docs ->
-        Map.mapMaybe id $
-          flip Map.mapWithKey docs $ \_k -> \case
-            VChanged ch ->
-              Just $
-                flip fmap ch $ \_doc ->
-                  "TODO: write this doc"
-            VSame _ -> Nothing
+        Map.fromList $
+          catMaybes $
+            flip fmap (Map.toList docs) $ \(k, v) -> case v of
+              VChanged ch ->
+                Just $
+                  (k -<.> ".html",) $
+                    flip fmap ch $ \doc ->
+                      -- TODO: allow IO in fileGenerated instead
+                      unsafePerformIO $ fmap (decodeUtf8 . snd) $ renderStatic $ noteWidget doc
+              VSame _ ->
+                Nothing
     }
+
+noteWidget :: PandocBuilder t m => Pandoc -> m ()
+noteWidget doc =
+  elPandoc defaultConfig doc
