@@ -1,6 +1,6 @@
 let 
   sources = import ./nix/sources.nix;
-  nixpkgs = import ../nixpkgs { };
+  nixpkgs = import sources.nixpkgs-static { };
   pkgs = nixpkgs.pkgsMusl;
   ka = import ./default.nix { inherit pkgs; };
   inherit (pkgs.haskell.lib) appendConfigureFlags justStaticExecutables;

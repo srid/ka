@@ -12,15 +12,27 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
-        "branch": "release-20.03",
+        "branch": "master",
         "description": "Nix Packages collection",
         "homepage": null,
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "06b27898a456",
-        "sha256": "0y7cfcv05d1wdyispbkqhg1p83rv3rn52cxlxklk5zrn2r0libyn",
+        "rev": "990af061bc84d7410a989ce0ce53d165ef51eae2",
+        "sha256": "0wmsvmgcfsq6102avnd7jgv0gaq3ics29449iwafyn7k4ysmji26",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/06b27898a456.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/990af061bc84d7410a989ce0ce53d165ef51eae2.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs-static": {
+        "branch": "static",
+        "description": "Nix Packages collection",
+        "homepage": null,
+        "owner": "srid",
+        "repo": "nixpkgs",
+        "rev": "312f5dc940b1a2c627e8cce4adc192cfa3e730db",
+        "sha256": "1x1h6j43wp2fgzjlv0nf8h5syvpdp3nhp8xb85hxzdz8k7hkhi4s",
+        "type": "tarball",
+        "url": "https://github.com/srid/nixpkgs/archive/312f5dc940b1a2c627e8cce4adc192cfa3e730db.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "reflex-dom-pandoc": {
