@@ -31,12 +31,14 @@ main =
               -- putStrLn $ "Diff: " <> show diff
               forM_ (Map.toList $ Db.outputFiles db) $ \(k, v) -> do
                 case v of
-                  Added s -> do
+                  Added genS -> do
+                    s <- genS
                     putStrLn $ "+ " <> k
-                    writeFileText (".ka" </> "output" </> k) s
-                  Modified s -> do
+                    writeFileBS (".ka" </> "output" </> k) s
+                  Modified genS -> do
+                    s <- genS
                     putStrLn $ "* " <> k
-                    writeFileText (".ka" </> "output" </> k) s
+                    writeFileBS (".ka" </> "output" </> k) s
                   Removed -> do
                     putStrLn $ "- " <> k
                     removeIfExists k

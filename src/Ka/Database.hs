@@ -16,9 +16,8 @@ data Db = Db
     -- | Post-transformed Pandoc AST
     outputDoc :: Map FilePath (V Pandoc),
     -- | Pages to generate
-    outputFiles :: Map FilePath (Changed Text)
+    outputFiles :: Map FilePath (Changed (IO ByteString))
   }
-  deriving (Show)
 
 -- | Unlike Db, Ctx doesn't change, and is fixed and required for Db updates.
 data Ctx = Ctx
@@ -44,7 +43,7 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
       outLinksChanges = Map.mapWithKey (fmap . queryLinks) pandocChanges
       inputDoc' = applyChanges pandocChanges $ inputDoc db
       outLinks' = applyChanges outLinksChanges $ outLinks db
-      outputFiles' :: Map FilePath (Changed Text) =
+      outputFiles' =
         flip foldMap (fileGenerator <$> plugins) $ \gen ->
           gen inputDoc'
    in db

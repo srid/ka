@@ -4,7 +4,6 @@ import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import Data.Default (Default)
 import qualified Data.Map.Strict as Map
-import GHC.IO.Unsafe (unsafePerformIO)
 import Ka.Diff (Changed (..), V (..))
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc.Document
@@ -26,7 +25,7 @@ data Plugin = Plugin
     -- | Transform Pandoc type after graph creation
     docTransformerWithGraph :: (() -> Pandoc -> Pandoc),
     -- | Files to generate
-    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed Text)
+    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed (IO ByteString))
   }
 
 instance Default Plugin where
@@ -45,11 +44,14 @@ demoPlugin =
                 Just $
                   (k -<.> ".html",) $
                     flip fmap ch $ \doc ->
-                      -- TODO: allow IO in fileGenerated instead
-                      unsafePerformIO $ fmap (decodeUtf8 . snd) $ renderStatic $ noteWidget doc
+                      renderReflexWidget $ noteWidget doc
               VSame _ ->
                 Nothing
     }
+
+renderReflexWidget :: forall x. StaticWidget x () -> IO ByteString
+renderReflexWidget w =
+  fmap snd $ renderStatic w
 
 noteWidget :: PandocBuilder t m => Pandoc -> m ()
 noteWidget doc =
