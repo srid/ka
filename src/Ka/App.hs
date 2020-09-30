@@ -6,7 +6,9 @@ import qualified Data.Map.Strict as Map
 import Ka.Database (Ctx (Ctx), Db)
 import qualified Ka.Database as Db
 import Ka.Diff (Changed (..))
-import Ka.Plugin (demoPlugin)
+import Ka.Plugin (wipPlugin)
+import Ka.Plugin.Markdown (markdownPlugin)
+import Ka.Plugin.WikiLink (wikiLinkPlugin)
 import Reflex
 import Reflex.FSNotify (watchDir)
 import Reflex.Host.Headless (MonadHeadlessApp)
@@ -15,11 +17,18 @@ import qualified System.FSNotify as FSN
 import System.FilePath (takeExtension, takeFileName)
 import System.FilePattern.Directory (FilePattern, getDirectoryFiles)
 
+ctx :: Ctx
+ctx =
+  Ctx
+    [ markdownPlugin,
+      wikiLinkPlugin,
+      wipPlugin
+    ]
+
 kaApp :: MonadHeadlessApp t m => m (Dynamic t (Db, Map FilePath (Changed Text)))
 kaApp = do
   pb <- getPostBuild
   fileChanges <- watchDir defaultConfig ("." <$ pb) (const True)
-  let ctx = Ctx [demoPlugin]
   db0 :: Db <-
     Db.initDb ctx <$> do
       liftIO $ do
