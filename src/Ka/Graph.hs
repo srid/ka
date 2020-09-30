@@ -28,18 +28,20 @@ patch diff =
       `concatMap` Map.toList diff
 
 patchVertex :: FilePath -> Changed (Set FilePath) -> Graph -> Graph
-patchVertex v esC g =
-  flip compose g $ case esC of
+patchVertex v esC =
+  compose $ case esC of
     Removed ->
       one $ AM.removeVertex v
     Added es ->
       one $ AM.overlay $ AM.star v (Set.toList es)
     Modified es ->
-      let removed = AM.postSet v g `Set.difference` es
-       in mconcat
-            [ AM.removeEdge v <$> toList removed,
-              one $ AM.overlay $ AM.star v (Set.toList es)
-            ]
+      one $ \g ->
+        let removed = AM.postSet v g `Set.difference` es
+         in flip compose g $
+              mconcat
+                [ AM.removeEdge v <$> toList removed,
+                  one $ AM.overlay $ AM.star v (Set.toList es)
+                ]
 
 compose :: [a -> a] -> a -> a
 compose = foldr (.) id
