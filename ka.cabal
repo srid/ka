@@ -27,9 +27,10 @@ executable ka
     , filepattern
     , fsnotify
     , pandoc-types
+    , parsec
     , reflex
-    , reflex-dom-pandoc  >=0.2.6.0
     , reflex-dom-core
+    , reflex-dom-pandoc  >=0.2.6.0
     , reflex-fsnotify
     , relude             ^>=0.7.0.0
     , with-utf8
