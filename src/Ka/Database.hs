@@ -44,7 +44,7 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
       outLinksChanges = Map.mapWithKey (fmap . queryLinks) pandocChanges
       inputDoc' = applyChanges pandocChanges $ inputDoc db
       outLinks' = applyChanges outLinksChanges $ outLinks db
-      graph' = G.patch outLinks' (graph db)
+      graph' = G.patch (getChange `Map.mapMaybe` outLinks') (graph db)
       outputFiles' =
         flip foldMap (fileGenerator <$> plugins) $ \gen ->
           gen graph' inputDoc'

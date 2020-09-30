@@ -24,6 +24,11 @@ data V a
     VChanged (Changed a)
   deriving stock (Eq, Show)
 
+getChange :: V a -> Maybe (Changed a)
+getChange = \case
+  VSame _ -> Nothing
+  VChanged ch -> Just ch
+
 -- | Mark as value as unchanged (same), unless it was removed (then return Nothing)
 markUnchanged :: V a -> Maybe (V a)
 markUnchanged = \case

@@ -21,27 +21,24 @@ type Graph = AM.AdjacencyMap FilePath
 empty :: Graph
 empty = AM.empty
 
-patch :: Map FilePath (V (Set FilePath)) -> Graph -> Graph
+patch :: Map FilePath (Changed (Set FilePath)) -> Graph -> Graph
 patch diff =
   compose $
-    flip concatMap (Map.toList diff) $ \(v, esV) ->
-      case esV of
-        VSame _ -> mempty
-        VChanged esC ->
-          one $ patchChange v esC
+    (one . uncurry patchVertex)
+      `concatMap` Map.toList diff
 
-patchChange :: FilePath -> Changed (Set FilePath) -> Graph -> Graph
-patchChange v esC g =
+patchVertex :: FilePath -> Changed (Set FilePath) -> Graph -> Graph
+patchVertex v esC g =
   flip compose g $ case esC of
     Removed ->
       one $ AM.removeVertex v
     Added es ->
-      one $ AM.overlay (AM.star v (Set.toList es))
+      one $ AM.overlay $ AM.star v (Set.toList es)
     Modified es ->
       let removed = AM.postSet v g `Set.difference` es
        in mconcat
             [ AM.removeEdge v <$> toList removed,
-              one $ AM.overlay (AM.star v (Set.toList es))
+              one $ AM.overlay $ AM.star v (Set.toList es)
             ]
 
 compose :: [a -> a] -> a -> a
