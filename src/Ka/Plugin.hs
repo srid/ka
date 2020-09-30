@@ -5,8 +5,10 @@ import qualified Commonmark.Pandoc as CP
 import Data.Default (Default)
 import qualified Data.Map.Strict as Map
 import Ka.Diff (Changed (..), V (..))
+import Ka.Graph (Graph)
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc.Document
+import Shower (shower)
 import System.FilePath ((-<.>))
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Pandoc)
@@ -25,7 +27,7 @@ data Plugin = Plugin
     -- | Transform Pandoc type after graph creation
     docTransformerWithGraph :: (() -> Pandoc -> Pandoc),
     -- | Files to generate
-    fileGenerator :: Map FilePath (V Pandoc) -> Map FilePath (Changed (IO ByteString))
+    fileGenerator :: Graph -> Map FilePath (V Pandoc) -> Map FilePath (Changed (IO ByteString))
   }
 
 instance Default Plugin where
@@ -35,21 +37,29 @@ instance Default Plugin where
 wipPlugin :: Plugin
 wipPlugin =
   def
-    { fileGenerator = \docs ->
-        Map.fromList $
-          catMaybes $
-            flip fmap (Map.toList docs) $ \(k, v) -> case v of
-              VChanged ch ->
-                Just $
-                  (k -<.> ".html",) $
-                    flip fmap ch $ \doc ->
-                      renderReflexWidget $ noteWidget doc
-              VSame _ ->
-                Nothing
+    { fileGenerator = \g docs ->
+        let pages = Map.fromList $
+              catMaybes $
+                flip fmap (Map.toList docs) $ \(k, v) -> case v of
+                  VChanged ch ->
+                    Just $
+                      (k -<.> ".html",) $
+                        flip fmap ch $ \doc ->
+                          renderReflexWidget $ noteWidget doc
+                  VSame _ ->
+                    Nothing
+            indexPage =
+              one ("index.html", Modified $ renderReflexWidget $ debugWidget g)
+         in pages <> indexPage
     }
 
--- Wiki link plugin
 -- Render plugin
+
+debugWidget :: (DomBuilder t m, Show a) => a -> m ()
+debugWidget x = do
+  el "code" $ do
+    el "pre" $ do
+      text $ toText $ shower x
 
 renderReflexWidget :: forall x. StaticWidget x () -> IO ByteString
 renderReflexWidget w =

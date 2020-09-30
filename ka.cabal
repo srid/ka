@@ -17,6 +17,7 @@ executable ka
   hs-source-dirs:     src
   main-is:            Main.hs
   build-depends:
+    , algebraic-graphs
     , base               ^>=4.13
     , commonmark
     , commonmark-pandoc
@@ -33,6 +34,7 @@ executable ka
     , reflex-dom-pandoc  >=0.2.6.0
     , reflex-fsnotify
     , relude             ^>=0.7.0.0
+    , shower
     , with-utf8
 
   mixins:
@@ -55,6 +57,7 @@ executable ka
     Ka.App
     Ka.Database
     Ka.Diff
+    Ka.Graph
     Ka.Markdown
     Ka.Plugin
     Ka.Plugin.Markdown

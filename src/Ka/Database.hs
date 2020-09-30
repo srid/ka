@@ -2,6 +2,7 @@ module Ka.Database where
 
 import qualified Data.Map.Strict as Map
 import Ka.Diff
+import Ka.Graph as G
 import Ka.Markdown
 import Ka.Plugin
 import Text.Pandoc.Definition (Pandoc)
@@ -10,9 +11,9 @@ data Db = Db
   { -- | Pandoc AST of plain-text files
     inputDoc :: Map FilePath (V Pandoc),
     -- | Outgoing links (used for building the graph)
-    outLinks :: Map FilePath (V [FilePath]),
+    outLinks :: Map FilePath (V (Set FilePath)),
     -- | Graph of notes
-    graph :: (),
+    graph :: Graph,
     -- | Post-transformed Pandoc AST
     outputDoc :: Map FilePath (V Pandoc),
     -- | Pages to generate
@@ -29,7 +30,7 @@ initDb ctx (fmap Added -> changes) =
   changeDb ctx emptyDb changes
   where
     emptyDb =
-      Db mempty mempty () mempty mempty
+      Db mempty mempty G.empty mempty mempty
 
 -- | Change the given `Db` such that *minimal* edits are done to apply the
 -- given change.
@@ -43,13 +44,14 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
       outLinksChanges = Map.mapWithKey (fmap . queryLinks) pandocChanges
       inputDoc' = applyChanges pandocChanges $ inputDoc db
       outLinks' = applyChanges outLinksChanges $ outLinks db
+      graph' = G.patch outLinks' (graph db)
       outputFiles' =
         flip foldMap (fileGenerator <$> plugins) $ \gen ->
-          gen inputDoc'
+          gen graph' inputDoc'
    in db
         { inputDoc = inputDoc',
           outLinks = outLinks',
-          graph = (),
+          graph = graph',
           outputDoc = inputDoc',
           outputFiles = outputFiles'
         }

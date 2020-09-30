@@ -1,4 +1,8 @@
-module Ka.Markdown where
+module Ka.Markdown
+  ( parseMarkdown,
+    queryLinks,
+  )
+where
 
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
@@ -12,5 +16,5 @@ parseMarkdown spec fp s =
   where
     toPandoc = Pandoc mempty . B.toList . CP.unCm
 
-queryLinks :: FilePath -> Pandoc -> [FilePath]
-queryLinks _ _ = [] -- TODO
+queryLinks :: FilePath -> Pandoc -> Set FilePath
+queryLinks _ _ = mempty -- TODO
