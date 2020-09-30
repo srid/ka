@@ -23,25 +23,18 @@ empty = AM.empty
 
 patch :: Map FilePath (Changed (Set FilePath)) -> Graph -> Graph
 patch diff =
-  compose $
-    (one . uncurry patchVertex)
-      `concatMap` Map.toList diff
+  fmap snd . runState $ do
+    uncurry patchVertex `mapM_` Map.toList diff
 
-patchVertex :: FilePath -> Changed (Set FilePath) -> Graph -> Graph
-patchVertex v esC =
-  compose $ case esC of
-    Removed ->
-      one $ AM.removeVertex v
-    Added es ->
-      one $ AM.overlay $ AM.star v (Set.toList es)
-    Modified es ->
-      one $ \g ->
-        let removed = AM.postSet v g `Set.difference` es
-         in flip compose g $
-              mconcat
-                [ AM.removeEdge v <$> toList removed,
-                  one $ AM.overlay $ AM.star v (Set.toList es)
-                ]
-
-compose :: [a -> a] -> a -> a
-compose = foldr (.) id
+patchVertex :: MonadState Graph m => FilePath -> Changed (Set FilePath) -> m ()
+patchVertex v = \case
+  Removed ->
+    modify $ AM.removeVertex v
+  Added es ->
+    modify $ AM.overlay $ AM.star v (Set.toList es)
+  Modified es -> do
+    g <- get
+    let removed = AM.postSet v g `Set.difference` es
+    forM_ (toList removed) $
+      modify . AM.removeEdge v
+    modify $ AM.overlay $ AM.star v (Set.toList es)
