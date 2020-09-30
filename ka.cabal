@@ -35,6 +35,7 @@ executable ka
     , reflex-fsnotify
     , relude             ^>=0.7.0.0
     , shower
+    , text
     , with-utf8
 
   mixins:

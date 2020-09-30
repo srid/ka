@@ -41,7 +41,7 @@ changeDb :: Ctx -> Db -> Map FilePath (Changed Text) -> Db
 changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
   let cmSpec = commonmarkSpec `foldMap` plugins
       pandocChanges = Map.mapWithKey (fmap . parseMarkdown cmSpec) txtChanges
-      outLinksChanges = Map.mapWithKey (fmap . queryLinks) pandocChanges
+      outLinksChanges = Map.map (fmap queryLinks) pandocChanges
       inputDoc' = applyChanges pandocChanges $ inputDoc db
       outLinks' = applyChanges outLinksChanges $ outLinks db
       graph' = G.patch (getChange `Map.mapMaybe` outLinks') (graph db)

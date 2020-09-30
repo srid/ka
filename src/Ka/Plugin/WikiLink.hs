@@ -14,7 +14,7 @@ import qualified Text.Parsec as P
 wikiLinkPlugin :: Plugin
 wikiLinkPlugin =
   def
-    { commonmarkSpec = wikiLinkSpec (<> ".html")
+    { commonmarkSpec = wikiLinkSpec (<> ".md")
     }
 
 wikiLinkSpec ::
