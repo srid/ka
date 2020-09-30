@@ -16,6 +16,7 @@ let
 in 
   pkgs.haskellPackages.developPackage {
     root = ./.;
+    name = "ka";
     source-overrides = {
       reflex-fsnotify = sources.reflex-fsnotify;
       reflex-dom-pandoc = sources.reflex-dom-pandoc;
