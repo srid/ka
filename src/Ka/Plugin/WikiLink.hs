@@ -8,13 +8,14 @@ import qualified Commonmark.Inlines as CM
 import Commonmark.TokParsers (noneOfToks, symbol)
 import Commonmark.Tokens (TokType (LineEnd, Symbol))
 import Data.Default (Default (def))
+import Ka.Markdown (noteExtension)
 import Ka.Plugin
 import qualified Text.Parsec as P
 
 wikiLinkPlugin :: Plugin
 wikiLinkPlugin =
   def
-    { commonmarkSpec = wikiLinkSpec (<> ".md")
+    { commonmarkSpec = wikiLinkSpec (<> toText noteExtension)
     }
 
 wikiLinkSpec ::

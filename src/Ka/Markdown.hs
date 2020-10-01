@@ -1,5 +1,7 @@
 module Ka.Markdown
-  ( parseMarkdown,
+  ( noteExtension,
+    notePattern,
+    parseMarkdown,
     queryLinks,
   )
 where
@@ -9,9 +11,17 @@ import qualified Commonmark.Pandoc as CP
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Ka.Plugin (CMSyntaxSpec)
+import System.FilePattern (FilePattern)
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Inline (Link), Pandoc (..))
 import qualified Text.Pandoc.Walk as W
+
+noteExtension :: String
+noteExtension = ".md"
+
+-- | Pattern of filenames to treat as notes
+notePattern :: FilePattern
+notePattern = "*" <> noteExtension
 
 parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> Pandoc
 parseMarkdown spec fp s =
