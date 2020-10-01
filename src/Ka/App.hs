@@ -2,7 +2,9 @@
 
 module Ka.App where
 
+import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
+import Data.Time (NominalDiffTime)
 import Ka.Database (Ctx (Ctx), Db)
 import qualified Ka.Database as Db
 import Ka.Diff (Changed (..))
@@ -12,7 +14,7 @@ import Ka.Plugin.ViewGraph (viewGraphPlugin)
 import Ka.Plugin.ViewNote (viewNotePlugin)
 import Ka.Plugin.WikiLink (wikiLinkPlugin)
 import Reflex
-import Reflex.FSNotify (watchDir)
+import Reflex.FSNotify (FSEvent, watchDir)
 import Reflex.Host.Headless (MonadHeadlessApp)
 import System.FSNotify (defaultConfig)
 import qualified System.FSNotify as FSN
@@ -28,10 +30,26 @@ ctx =
       viewGraphPlugin
     ]
 
+watchDirWithDebounce ::
+  ( PostBuild t m,
+    TriggerEvent t m,
+    PerformEvent t m,
+    MonadIO (Performable m),
+    MonadHold t m,
+    MonadFix m
+  ) =>
+  NominalDiffTime ->
+  FilePath ->
+  m (Event t [FSEvent])
+watchDirWithDebounce ms dirPath = do
+  let cfg = defaultConfig {FSN.confDebounce = FSN.Debounce ms}
+  pb <- getPostBuild
+  evt <- watchDir cfg (dirPath <$ pb) (const True)
+  fmap toList <$> batchOccurrences ms evt
+
 kaApp :: MonadHeadlessApp t m => m (Dynamic t (Db, Map FilePath (Changed Text)))
 kaApp = do
-  pb <- getPostBuild
-  fileChanges <- watchDir defaultConfig ("." <$ pb) (const True)
+  fileChanges <- watchDirWithDebounce 0.1 "."
   db0 :: Db <-
     Db.initDb ctx <$> do
       liftIO $ do
@@ -41,14 +59,14 @@ kaApp = do
             s <- readFileText fp
             pure (fp, s)
   dbChanges <-
-    fmap (fmapMaybe id) $
+    fmap (fmap Map.fromList) $
       performEvent $
-        -- TODO: group events
-        ffor fileChanges $ \x -> liftIO $ do
-          noteChange x >>= \case
-            Nothing -> pure Nothing
-            Just (fp, change) ->
-              pure $ Just $ one (fp, change)
+        ffor fileChanges $ \(toList -> xs) ->
+          liftIO $ do
+            -- TODO: If `xs` has multiple events for the same file, this will
+            -- trigger multiple file reads (see `noteChange`) which we should
+            -- avoid ... possibly by removing duplicates in `watchDirWithDebounce`.
+            catMaybes <$> traverse noteChange xs
   rec dbWithChanges <-
         holdDyn (db0, mempty) $
           ffor (attach (current dbWithChanges) dbChanges) $ \((things, _), changes) ->

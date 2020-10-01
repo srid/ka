@@ -37,6 +37,7 @@ executable ka
     , relude             ^>=0.7.0.0
     , shower
     , text
+    , time
     , with-utf8
 
   mixins:
