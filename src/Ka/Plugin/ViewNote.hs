@@ -1,7 +1,6 @@
 module Ka.Plugin.ViewNote where
 
 import qualified Data.Map.Strict as Map
-import Ka.Diff
 import Ka.Markdown (getNoteLink)
 import Ka.Plugin
 import Reflex.Dom.Core (def, renderStatic)
@@ -25,15 +24,10 @@ viewNotePlugin =
               Link attr inlines (toText $ url -<.> ".html", title),
       fileGenerator = \_g docs ->
         Map.fromList $
-          catMaybes $
-            flip fmap (Map.toList docs) $ \(k, v) -> case v of
-              VChanged ch ->
-                Just $
-                  (k -<.> ".html",) $
-                    flip fmap ch $ \doc ->
-                      fmap snd $ renderStatic $ noteWidget doc
-              VSame _ ->
-                Nothing
+          flip fmap (Map.toList docs) $ \(k, ch) ->
+            (k -<.> ".html",) $
+              flip fmap ch $ \doc ->
+                fmap snd $ renderStatic $ noteWidget doc
     }
 
 noteWidget :: PandocBuilder t m => Pandoc -> m ()

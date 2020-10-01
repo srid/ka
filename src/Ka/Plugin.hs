@@ -3,7 +3,7 @@ module Ka.Plugin where
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import Data.Default (Default)
-import Ka.Diff (Changed (..), V (..))
+import Ka.Diff (Changed (..))
 import Ka.Graph (Graph)
 import Reflex.Dom.Core
 import qualified Text.Pandoc.Builder as B
@@ -26,8 +26,7 @@ data Plugin = Plugin
     -- | Transform Pandoc type after graph creation
     docTransformerWithGraph :: (Graph -> Pandoc -> Pandoc),
     -- | Files to generate
-    -- FIXME: V -> Changed
-    fileGenerator :: Graph -> Map FilePath (V Pandoc) -> Map FilePath (Changed (IO ByteString))
+    fileGenerator :: Graph -> Map FilePath (Changed Pandoc) -> Map FilePath (Changed (IO ByteString))
   }
 
 instance Default Plugin where

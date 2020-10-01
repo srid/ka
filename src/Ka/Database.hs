@@ -52,8 +52,9 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
               forM_ plugins $ \p ->
                 modify $ docTransformerWithGraph p graph'
       outputFiles' =
-        flip foldMap (fileGenerator <$> plugins) $ \gen ->
-          gen graph' outputDoc'
+        let outputDocChanges = Map.mapMaybe getChange outputDoc'
+         in flip foldMap (fileGenerator <$> plugins) $ \gen ->
+              gen graph' outputDocChanges
    in db
         { inputDoc = inputDoc',
           outLinks = outLinks',
