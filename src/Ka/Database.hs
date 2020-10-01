@@ -45,14 +45,20 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
       inputDoc' = applyChanges pandocChanges $ inputDoc db
       outLinks' = applyChanges outLinksChanges $ outLinks db
       graph' = G.patch (getChange `Map.mapMaybe` outLinks') (graph db)
+      outputDoc' =
+        flip Map.map inputDoc' $
+          mapChanged $
+            fmap snd . runState $ do
+              forM_ plugins $ \p ->
+                modify $ docTransformerWithGraph p graph'
       outputFiles' =
         flip foldMap (fileGenerator <$> plugins) $ \gen ->
-          gen graph' inputDoc'
+          gen graph' outputDoc'
    in db
         { inputDoc = inputDoc',
           outLinks = outLinks',
           graph = graph',
-          outputDoc = inputDoc',
+          outputDoc = outputDoc',
           outputFiles = outputFiles'
         }
 

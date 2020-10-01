@@ -24,6 +24,11 @@ data V a
     VChanged (Changed a)
   deriving stock (Eq, Show)
 
+mapChanged :: (a -> a) -> V a -> V a
+mapChanged f = \case
+  VSame x -> VSame x
+  VChanged ch -> VChanged $ fmap f ch
+
 getChange :: V a -> Maybe (Changed a)
 getChange = \case
   VSame _ -> Nothing

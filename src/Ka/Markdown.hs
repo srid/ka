@@ -3,6 +3,7 @@ module Ka.Markdown
     notePattern,
     parseMarkdown,
     queryLinks,
+    getNoteLink,
   )
 where
 
@@ -13,7 +14,7 @@ import qualified Data.Text as T
 import Ka.Plugin (CMSyntaxSpec)
 import System.FilePattern (FilePattern)
 import qualified Text.Pandoc.Builder as B
-import Text.Pandoc.Definition (Inline (Link), Pandoc (..))
+import Text.Pandoc.Definition (Attr, Inline (Link), Pandoc (..), Target)
 import qualified Text.Pandoc.Walk as W
 
 noteExtension :: String
@@ -33,12 +34,19 @@ queryLinks :: Pandoc -> Set FilePath
 queryLinks = Set.fromList . W.query go
   where
     go :: Inline -> [FilePath]
-    go = maybeToList . filePathFromInline
-    filePathFromInline :: Inline -> Maybe FilePath
-    filePathFromInline = \case
-      Link _attr _inlines (url, _title) -> do
-        guard $ not $ "/" `T.isInfixOf` url
-        guard $ ".md" `T.isSuffixOf` url
-        pure $ toString url
-      _ ->
-        Nothing
+    go = maybeToList . getNoteLinkFilePath
+
+-- | Get the note filename from its link
+getNoteLinkFilePath :: Inline -> Maybe FilePath
+getNoteLinkFilePath x = do
+  (_attr, _inlines, (url, _title)) <- getNoteLink x
+  pure $ toString url
+
+getNoteLink :: Inline -> Maybe (Attr, [Inline], Target)
+getNoteLink = \case
+  Link attr inlines target@(url, _title) -> do
+    guard $ not $ "/" `T.isInfixOf` url
+    guard $ ".md" `T.isSuffixOf` url
+    pure (attr, inlines, target)
+  _ ->
+    Nothing
