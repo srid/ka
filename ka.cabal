@@ -27,6 +27,7 @@ executable ka
     , filepath
     , filepattern
     , fsnotify
+    , mtl
     , pandoc-types
     , parsec
     , reflex
@@ -51,6 +52,7 @@ executable ka
     RecordWildCards
     ScopedTypeVariables
     TupleSections
+    TypeApplications
     TypeFamilies
     ViewPatterns
 

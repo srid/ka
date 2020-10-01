@@ -11,11 +11,6 @@ import qualified Data.Set as Set
 import Ka.Diff
 import Prelude hiding (empty)
 
--- TODO:
--- WikLink: use .md.
--- query for links to "*.md"
--- Render: change .md to .html
-
 type Graph = AM.AdjacencyMap FilePath
 
 empty :: Graph

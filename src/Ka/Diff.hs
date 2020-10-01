@@ -34,6 +34,11 @@ getChange = \case
   VSame _ -> Nothing
   VChanged ch -> Just ch
 
+markChanged :: V a -> V a
+markChanged = \case
+  VSame x -> VChanged (Modified x)
+  x -> x
+
 -- | Mark as value as unchanged (same), unless it was removed (then return Nothing)
 markUnchanged :: V a -> Maybe (V a)
 markUnchanged = \case

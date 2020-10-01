@@ -1,6 +1,8 @@
 module Ka.Database where
 
+import Control.Monad.Writer.Strict
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import Ka.Diff
 import Ka.Graph as G
 import Ka.Markdown
@@ -51,10 +53,18 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
             fmap snd . runState $ do
               forM_ plugins $ \p ->
                 modify $ docTransformerWithGraph p graph'
+      outputDocChanges = Map.mapMaybe getChange outputDoc'
+      extraTouched =
+        snd $
+          runWriter @(Set FilePath) $ do
+            forM_ plugins $ \p ->
+              tell $ docTouches p graph' outputDocChanges
+      outputDocChanges' = Map.mapMaybe getChange $
+        flip Map.mapWithKey outputDoc' $ \k v ->
+          if Set.member k extraTouched then markChanged v else v
       outputFiles' =
-        let outputDocChanges = Map.mapMaybe getChange outputDoc'
-         in flip foldMap (fileGenerator <$> plugins) $ \gen ->
-              gen graph' outputDocChanges
+        flip foldMap (fileGenerator <$> plugins) $ \gen ->
+          gen graph' outputDocChanges'
    in db
         { inputDoc = inputDoc',
           outLinks = outLinks',
