@@ -3,7 +3,7 @@ module Ka.Plugin.ViewNote where
 import qualified Algebra.Graph.AdjacencyMap as AM
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import Ka.Markdown (getNoteLink)
+import Ka.Markdown (getNoteLink, noteFileTitle)
 import Ka.Plugin
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc.Document
@@ -39,16 +39,23 @@ viewNotePlugin =
               ch <&> \doc ->
                 fmap snd $
                   renderStatic $ do
-                    noteWidget doc
-                    backlinksWidget $ AM.preSet k g
+                    noteWidget k doc $ AM.preSet k g
     }
 
 mdToHtml :: FilePath -> FilePath
 mdToHtml = (-<.> ".html")
 
-noteWidget :: PandocBuilder t m => Pandoc -> m ()
-noteWidget doc =
-  elPandoc defaultConfig doc
+noteWidget :: PandocBuilder t m => FilePath -> Pandoc -> Set FilePath -> m ()
+noteWidget fp doc backlinks = do
+  el "head" $ do
+    el "style" $ do
+      text "a { color: green; text-decoration: none; } a:hover { background-color: green; color: white; }"
+    el "title" $ text $ noteFileTitle fp
+  elAttr "div" ("style" =: "max-width: 760px; margin: 0 auto;") $ do
+    el "h1" $ text $ noteFileTitle fp
+    el "hr" blank
+    elPandoc defaultConfig doc
+    backlinksWidget backlinks
 
 backlinksWidget :: DomBuilder t m => Set FilePath -> m ()
 backlinksWidget xs = do
@@ -57,4 +64,5 @@ backlinksWidget xs = do
   elClass "ul" "backlinks" $ do
     forM_ xs $ \x -> do
       el "li" $ do
-        elAttr "a" ("href" =: toText (mdToHtml x)) $ text (toText x)
+        elAttr "a" ("href" =: toText (mdToHtml x)) $
+          text $ noteFileTitle x

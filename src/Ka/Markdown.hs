@@ -1,6 +1,7 @@
 module Ka.Markdown
   ( noteExtension,
     notePattern,
+    noteFileTitle,
     parseMarkdown,
     queryLinks,
     getNoteLink,
@@ -12,6 +13,7 @@ import qualified Commonmark.Pandoc as CP
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Ka.Plugin (CMSyntaxSpec)
+import System.FilePath (dropExtension)
 import System.FilePattern (FilePattern)
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Attr, Inline (Link), Pandoc (..), Target)
@@ -23,6 +25,9 @@ noteExtension = ".md"
 -- | Pattern of filenames to treat as notes
 notePattern :: FilePattern
 notePattern = "*" <> noteExtension
+
+noteFileTitle :: FilePath -> Text
+noteFileTitle = toText . dropExtension
 
 parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> Pandoc
 parseMarkdown spec fp s =
