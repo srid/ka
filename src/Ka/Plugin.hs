@@ -28,9 +28,10 @@ data Plugin = Plugin
     docTransformerWithGraph :: (Graph -> Pandoc -> Pandoc),
     -- | Determine what other files should be marked as modified
     --
-    -- This depends on the subsequent actions use from graph
-    -- FIXME: See note in ViewNote.hs about needing old graph for edge removals.
-    docTouches :: Graph -> Map FilePath (Changed Pandoc) -> Set FilePath,
+    -- This depends on the subsequent actions using the graph.
+    -- The old graph should be used for edge-removal cases.
+    -- TODO: Instead of passing the old graph, just send a (V Graph)
+    docTouches :: Graph -> Graph -> Map FilePath (Changed Pandoc) -> Set FilePath,
     -- | Files to generate
     fileGenerator :: Graph -> Map FilePath (Changed Pandoc) -> Map FilePath (Changed (IO ByteString))
   }

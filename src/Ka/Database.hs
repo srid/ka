@@ -58,7 +58,7 @@ changeDb Ctx {..} (markAllAsUnchanged -> db) txtChanges =
         snd $
           runWriter @(Set FilePath) $ do
             forM_ plugins $ \p ->
-              tell $ docTouches p graph' outputDocChanges
+              tell $ docTouches p (graph db) graph' outputDocChanges
       outputDocChanges' = Map.mapMaybe getChange $
         flip Map.mapWithKey outputDoc' $ \k v ->
           if Set.member k extraTouched then markChanged v else v

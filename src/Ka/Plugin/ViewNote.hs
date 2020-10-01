@@ -25,14 +25,12 @@ viewNotePlugin =
             Nothing -> x
             Just (attr, inlines, (toString -> url, title)) ->
               Link attr inlines (toText $ mdToHtml url, title),
-      docTouches = \g docs ->
+      docTouches = \oldG g docs ->
         -- Mark frontlinks of modified notes as modified, because their
         -- backlinks would have been changed.
-        -- FIXME: !! need old graph to know postSet that got *removed*
-        -- Should be done by adding V to edge label of graph?
         Set.unions $
           Map.keys docs <&> \fp ->
-            AM.postSet fp g,
+            AM.postSet fp g `Set.union` AM.postSet fp oldG,
       fileGenerator = \g docs ->
         -- Generate .html for each note file
         Map.fromList $
@@ -42,7 +40,7 @@ viewNotePlugin =
                 fmap snd $
                   renderStatic $ do
                     noteWidget doc
-                    backlinksWidget $ AM.postSet k g
+                    backlinksWidget $ AM.preSet k g
     }
 
 mdToHtml :: FilePath -> FilePath
