@@ -20,11 +20,12 @@ viewNotePlugin =
   def
     { docTransformerWithGraph = \_g doc ->
         -- Rewrite links to point to the generated HTML page
+        -- FIXME: See note in Plugin.hs
         flip W.walk doc $ \x ->
           case getNoteLink x of
             Nothing -> x
             Just (attr, inlines, (toString -> url, title)) ->
-              Link attr inlines (toText $ mdToHtml url, title),
+              Link attr inlines (toText $ mdToHtmlUrl url, title),
       docTouches = \oldG g docs ->
         -- Mark frontlinks of modified notes as modified, because their
         -- backlinks would have been changed.
@@ -45,6 +46,12 @@ viewNotePlugin =
 mdToHtml :: FilePath -> FilePath
 mdToHtml = (-<.> ".html")
 
+mdToHtmlUrl :: FilePath -> FilePath
+mdToHtmlUrl =
+  -- The ./ prefix is to prevent the browser from thinking that our URL is a
+  -- custom protocol when it contains a colon.
+  ("./" <>) . mdToHtml
+
 noteWidget :: PandocBuilder t m => FilePath -> Pandoc -> Set FilePath -> m ()
 noteWidget fp doc backlinks = do
   el "head" $ do
@@ -64,5 +71,5 @@ backlinksWidget xs = do
   elClass "ul" "backlinks" $ do
     forM_ xs $ \x -> do
       el "li" $ do
-        elAttr "a" ("href" =: toText (mdToHtml x)) $
+        elAttr "a" ("href" =: toText (mdToHtmlUrl x)) $
           text $ noteFileTitle x

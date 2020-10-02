@@ -31,6 +31,8 @@ data Plugin = Plugin
     -- This depends on the subsequent actions using the graph.
     -- The old graph should be used for edge-removal cases.
     -- TODO: Instead of passing the old graph, just send a (V Graph)
+    -- FIXME: The newly touched files won't be processed with docTransformer (eg: rewrite .md -> .html)
+    -- This is why I see the bug where sometimes pages have just .md links
     docTouches :: Graph -> Graph -> Map FilePath (Changed Pandoc) -> Set FilePath,
     -- | Files to generate
     fileGenerator :: Graph -> Map FilePath (Changed Pandoc) -> Map FilePath (Changed (IO ByteString))
