@@ -8,5 +8,5 @@ pkgs.recurseIntoAttrs {
   # pushed to cachix. This allows the development workflow (bin/run, etc.) to
   # use cachix to full extent.
   ka = import ./default.nix {};
-  kaStatic = import ./static.nix {};
+  kaStatic = import ./static.nix;
 }
