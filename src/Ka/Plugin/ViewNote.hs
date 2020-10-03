@@ -13,6 +13,7 @@ import Reflex.Dom.Pandoc.Document
     defaultConfig,
     elPandoc,
   )
+import System.Directory (makeAbsolute)
 import System.FilePath ((-<.>))
 import Text.Pandoc.Definition (Inline (Link), Pandoc)
 import qualified Text.Pandoc.Walk as W
@@ -27,7 +28,8 @@ render g k doc =
               Link attr inlines (toText $ mdToHtmlUrl url, title)
    in fmap snd $
         renderStatic $ do
-          noteWidget k docWLinksFixed $ AM.preSet k g
+          kAbs <- liftIO $ makeAbsolute k
+          noteWidget k kAbs docWLinksFixed $ AM.preSet k g
 
 mdToHtml :: FilePath -> FilePath
 mdToHtml = (-<.> ".html")
@@ -38,8 +40,14 @@ mdToHtmlUrl =
   -- custom protocol when it contains a colon.
   ("./" <>) . mdToHtml
 
-noteWidget :: PandocBuilder t m => FilePath -> Pandoc -> Set FilePath -> m ()
-noteWidget fp doc backlinks = do
+noteWidget ::
+  PandocBuilder t m =>
+  FilePath ->
+  FilePath ->
+  Pandoc ->
+  Set FilePath ->
+  m ()
+noteWidget fp fpAbs doc backlinks = do
   el "head" $ do
     el "style" $ do
       text "a { color: green; text-decoration: none; } a:hover { background-color: green; color: white; }"
@@ -49,6 +57,11 @@ noteWidget fp doc backlinks = do
     el "hr" blank
     elPandoc defaultConfig doc
     backlinksWidget backlinks
+    el "hr" blank
+    let editUrl = toText $ "vscode://file" <> fpAbs
+    elAttr "a" ("href" =: editUrl) $ text "Edit locally"
+    text " | "
+    elAttr "a" ("href" =: ".") $ text "Index"
 
 backlinksWidget :: DomBuilder t m => Set FilePath -> m ()
 backlinksWidget xs = do
