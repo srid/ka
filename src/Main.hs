@@ -3,12 +3,10 @@ module Main where
 import Control.Exception (catch, throwIO)
 import qualified Data.Map.Strict as Map
 import Ka.App (kaApp)
-import qualified Ka.Database as Db
-import Ka.Diff (Changed (..))
+import Ka.Watch (Status (..))
 import Main.Utf8 (withUtf8)
-import Reflex (Reflex (never), ffor)
+import Reflex (Reflex (never), ffor, performEvent_)
 import Reflex.Host.Headless (runHeadlessApp)
-import Reflex.Network (networkView)
 import System.Directory (createDirectoryIfMissing, removeFile, withCurrentDirectory)
 import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
@@ -24,22 +22,22 @@ main =
       runHeadlessApp $ do
         -- Fire this to quit the app
         -- (e, fire) <- newTriggerEvent
-        dbWithDiff <- kaApp
+        output <- kaApp
         void $
-          networkView $
-            ffor dbWithDiff $ \(db, _diff) -> liftIO $ do
+          performEvent_ $
+            ffor output $ \outputFiles -> liftIO $ do
               -- putStrLn $ "Diff: " <> show diff
-              forM_ (Map.toList $ Db.outputFiles db) $ \(k, v) -> do
-                case v of
-                  Added genS -> do
+              forM_ (Map.toList outputFiles) $ \(k, (st, genS)) -> do
+                case st of
+                  Untracked -> do
                     s <- genS
                     putStrLn $ "+ " <> k
                     writeFileBS (".ka" </> "output" </> k) s
-                  Modified genS -> do
+                  Dirty -> do
                     s <- genS
                     putStrLn $ "* " <> k
                     writeFileBS (".ka" </> "output" </> k) s
-                  Removed -> do
+                  Deleted -> do
                     putStrLn $ "- " <> k
                     removeIfExists k
         pure never

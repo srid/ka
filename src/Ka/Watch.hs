@@ -1,26 +1,82 @@
 module Ka.Watch
-  ( watchDirWithDebounce,
-    readChangedFile,
+  ( directoryFilesContent,
+    Status (..),
   )
 where
 
 import Control.Monad.Fix (MonadFix)
 import Data.List (nubBy)
+import qualified Data.Map.Strict as Map
 import Data.Time (NominalDiffTime)
-import Ka.Diff (Changed (..))
-import Ka.Markdown (noteExtension)
 import Reflex
-  ( MonadHold,
-    PerformEvent (Performable),
-    PostBuild (..),
-    Reflex (Event),
-    TriggerEvent,
-    batchOccurrences,
-  )
 import Reflex.FSNotify (FSEvent, watchDir)
 import System.FSNotify (defaultConfig)
 import qualified System.FSNotify as FSN
 import System.FilePath (takeExtension, takeFileName)
+import System.FilePattern.Directory (getDirectoryFiles)
+
+data Status
+  = -- | A new file got added
+    Untracked
+  | -- | A file was modified, or some unknown event happened
+    Dirty
+  | -- | A file was deleted
+    Deleted
+  deriving stock (Eq, Show)
+
+-- | Get the contents of all the files in the given directory
+--
+-- Returns an event that fires when any of the files are updated or deleted. The
+-- initial event fire will contain all the files and their contents, with the
+-- subsequent updates containing the fsnotify events.
+directoryFilesContent ::
+  ( PerformEvent t m,
+    PostBuild t m,
+    TriggerEvent t m,
+    MonadHold t m,
+    MonadFix m,
+    MonadIO (Performable m),
+    MonadIO m
+  ) =>
+  FilePath ->
+  String ->
+  m (Event t (Map FilePath (Text, Status)))
+directoryFilesContent dirPath ext = do
+  fileChangeE <- watchDirectory dirPath ext
+  initE <-
+    performEvent $
+      ffor fileChangeE $
+        Map.traverseWithKey $ \fp st -> do
+          s <- liftIO $ readFileText fp
+          pure (s, st)
+  (restE, fire) <- newTriggerEvent
+  liftIO $ do
+    files <- getDirectoryFiles "." ["*" <> ext]
+    xs <- flip traverse files $ \fp -> do
+      s <- readFileText fp
+      pure (fp, (s, Untracked))
+    fire $ Map.fromList xs
+  pure $
+    leftmost [restE, initE]
+
+watchDirectory ::
+  ( PostBuild t m,
+    TriggerEvent t m,
+    PerformEvent t m,
+    MonadIO (Performable m),
+    MonadHold t m,
+    MonadFix m
+  ) =>
+  FilePath ->
+  String ->
+  m (Event t (Map FilePath Status))
+watchDirectory dirPath ext = do
+  fsEvt <- watchDirWithDebounce 0.1 dirPath
+  let fsEvt' = fforMaybe fsEvt $ \es -> do
+        let es' = ffilter (\e -> takeExtension (FSN.eventPath e) == ext) es
+        if null es' then Nothing else Just es'
+  let evt = fmapMaybe (traverse noteFileStatusFromEvent) fsEvt'
+  pure $ Map.fromList <$> evt
 
 -- | Like `watchDir` but batches file events
 --
@@ -45,26 +101,24 @@ watchDirWithDebounce ms dirPath = do
   -- Discard all but the last event for each path.
   pure $ nubByKeepLast ((==) `on` FSN.eventPath) <$> evtGrouped
 
-readChangedFile :: FSN.Event -> IO (Maybe (FilePath, Changed Text))
-readChangedFile evt =
-  if takeExtension fp == noteExtension
-    then fmap Just $ case evt of
+noteFileStatusFromEvent :: FSN.Event -> Maybe (FilePath, Status)
+noteFileStatusFromEvent evt = do
+  -- Using `takeFileName` here (discarding the parent path elements), because
+  -- we are watching the current directory. Effectively this gives us the
+  -- relative path, which is just the filename as we glob over *.md.
+  let fp = takeFileName $ FSN.eventPath evt
+  pure $
+    (fp,) $ case evt of
       FSN.Added _ _ _ ->
-        (fp,) . Added <$> readFileText fp
+        Untracked
       FSN.Modified _ _ _ ->
-        (fp,) . Modified <$> readFileText fp
+        Dirty
       FSN.Removed _ _ _ ->
-        pure (fp, Removed)
+        Deleted
       FSN.Unknown _ _ _ ->
         -- Unknown is an event that fsnotify (haskell) doesn't know how to
         -- handle. Let's consider the file to be modified, just to be safe.
-        (fp,) . Modified <$> readFileText fp
-    else pure Nothing
-  where
-    -- Using `takeFileName` here (discarding the parent path elements), because
-    -- we are watching the current directory. Effectively this gives us the
-    -- relative path, which is just the filename as we glob over *.md.
-    fp = takeFileName $ FSN.eventPath evt
+        Dirty
 
 -- | Like @Data.List.nubBy@ but keeps the last occurence
 nubByKeepLast :: (a -> a -> Bool) -> [a] -> [a]

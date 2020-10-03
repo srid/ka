@@ -59,13 +59,8 @@ executable ka
 
   other-modules:
     Ka.App
-    Ka.Database
-    Ka.Diff
     Ka.Graph
     Ka.Markdown
-    Ka.Plugin
-    Ka.Plugin.Markdown
-    Ka.Plugin.ViewGraph
     Ka.Plugin.ViewNote
     Ka.Plugin.WikiLink
     Ka.Watch

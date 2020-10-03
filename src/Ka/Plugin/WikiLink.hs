@@ -1,5 +1,5 @@
 module Ka.Plugin.WikiLink
-  ( wikiLinkPlugin,
+  ( wikiLinkSpec,
   )
 where
 
@@ -7,25 +7,23 @@ import qualified Commonmark as CM
 import qualified Commonmark.Inlines as CM
 import Commonmark.TokParsers (noneOfToks, symbol)
 import Commonmark.Tokens (TokType (LineEnd, Symbol))
-import Data.Default (Default (def))
 import Ka.Markdown (noteExtension)
-import Ka.Plugin
 import qualified Text.Parsec as P
 
-wikiLinkPlugin :: Plugin
-wikiLinkPlugin =
-  def
-    { commonmarkSpec = wikiLinkSpec (<> toText noteExtension)
-    }
-
 wikiLinkSpec ::
+  (Monad m, CM.IsBlock il bl, CM.IsInline il) =>
+  CM.SyntaxSpec m il bl
+wikiLinkSpec =
+  wikiLinkSpec' (<> toText noteExtension)
+
+wikiLinkSpec' ::
   (Monad m, CM.IsBlock il bl, CM.IsInline il) =>
   -- | Transform the wikilink inner text to a working URL
   --
   -- Eg: @(<> ".html")
   (Text -> Text) ->
   CM.SyntaxSpec m il bl
-wikiLinkSpec f =
+wikiLinkSpec' f =
   mempty
     { CM.syntaxInlineParsers = [pLink]
     }

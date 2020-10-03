@@ -1,10 +1,12 @@
-module Ka.Plugin.ViewNote where
+module Ka.Plugin.ViewNote
+  ( render,
+    mdToHtml,
+  )
+where
 
 import qualified Algebra.Graph.AdjacencyMap as AM
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
+import Ka.Graph (Graph)
 import Ka.Markdown (getNoteLink, noteFileTitle)
-import Ka.Plugin
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
@@ -15,33 +17,17 @@ import System.FilePath ((-<.>))
 import Text.Pandoc.Definition (Inline (Link), Pandoc)
 import qualified Text.Pandoc.Walk as W
 
-viewNotePlugin :: Plugin
-viewNotePlugin =
-  def
-    { docTransformerWithGraph = \_g doc ->
-        -- Rewrite links to point to the generated HTML page
-        -- FIXME: See note in Plugin.hs
+render :: Graph -> FilePath -> Pandoc -> IO ByteString
+render g k doc =
+  let docWLinksFixed =
         flip W.walk doc $ \x ->
           case getNoteLink x of
             Nothing -> x
             Just (attr, inlines, (toString -> url, title)) ->
-              Link attr inlines (toText $ mdToHtmlUrl url, title),
-      docTouches = \oldG g docs ->
-        -- Mark frontlinks of modified notes as modified, because their
-        -- backlinks would have been changed.
-        Set.unions $
-          Map.keys docs <&> \fp ->
-            AM.postSet fp g `Set.union` AM.postSet fp oldG,
-      fileGenerator = \g docs ->
-        -- Generate .html for each note file
-        Map.fromList $
-          Map.toList docs <&> \(k, ch) ->
-            (mdToHtml k,) $
-              ch <&> \doc ->
-                fmap snd $
-                  renderStatic $ do
-                    noteWidget k doc $ AM.preSet k g
-    }
+              Link attr inlines (toText $ mdToHtmlUrl url, title)
+   in fmap snd $
+        renderStatic $ do
+          noteWidget k docWLinksFixed $ AM.preSet k g
 
 mdToHtml :: FilePath -> FilePath
 mdToHtml = (-<.> ".html")
