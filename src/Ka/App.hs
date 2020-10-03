@@ -4,7 +4,7 @@ module Ka.App where
 
 import qualified Algebra.Graph.AdjacencyMap as AM
 import Commonmark (defaultSyntaxSpec)
-import Commonmark.Extensions (gfmExtensions)
+import qualified Commonmark.Extensions as CE
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Ka.Graph (Graph)
@@ -29,7 +29,8 @@ kaApp = do
             let spec =
                   defaultSyntaxSpec
                     <> wikiLinkSpec
-                    <> gfmExtensions
+                    <> CE.footnoteSpec
+                    <> CE.gfmExtensions
                 doc = parseMarkdown spec fp s
              in (doc, st)
   graphD :: Dynamic t Graph <-
@@ -57,8 +58,8 @@ kaApp = do
                       symmetricDifference
                         (AM.postSet fp graph)
                         (AM.postSet fp oldGraph)
-                    esR = catMaybes $
-                      ffor (Set.toList esDirty) $ \fp' -> do
+                    esR =
+                      fforMaybe (Set.toList esDirty) $ \fp' -> do
                         -- Add linked doc not already marked as changed.
                         guard $ Map.notMember fp' fps
                         doc' <- Map.lookup fp' docMap
