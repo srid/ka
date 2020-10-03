@@ -3,7 +3,6 @@ module Main where
 import Control.Exception (catch, throwIO)
 import qualified Data.Map.Strict as Map
 import Ka.App (kaApp)
-import Ka.Watch (Status (..))
 import Main.Utf8 (withUtf8)
 import Reflex (Reflex (never), ffor, performEvent_)
 import Reflex.Host.Headless (runHeadlessApp)
@@ -17,29 +16,23 @@ notesDir = "/home/srid/Sync/zk"
 main :: IO ()
 main =
   withUtf8 $ do
-    createDirectoryIfMissing True $ notesDir </> ".ka" </> "output"
+    let outputDir = notesDir </> ".ka" </> "output"
+    createDirectoryIfMissing True outputDir
     withCurrentDirectory notesDir $ do
       runHeadlessApp $ do
-        -- Fire this to quit the app
-        -- (e, fire) <- newTriggerEvent
         output <- kaApp
         void $
           performEvent_ $
             ffor output $ \outputFiles -> liftIO $ do
               -- putStrLn $ "Diff: " <> show diff
-              forM_ (Map.toList outputFiles) $ \(k, (st, genS)) -> do
-                case st of
-                  Untracked -> do
-                    s <- genS
-                    putStrLn $ "+ " <> k
-                    writeFileBS (".ka" </> "output" </> k) s
-                  Dirty -> do
-                    s <- genS
-                    putStrLn $ "* " <> k
-                    writeFileBS (".ka" </> "output" </> k) s
-                  Deleted -> do
+              forM_ (Map.toList outputFiles) $ \(k, mGenS) -> do
+                case mGenS of
+                  Nothing -> do
                     putStrLn $ "- " <> k
-                    removeIfExists k
+                    removeIfExists $ outputDir </> k
+                  Just genS -> do
+                    putStrLn $ "W " <> k
+                    writeFileBS (outputDir </> k) =<< genS
         pure never
 
 removeIfExists :: FilePath -> IO ()

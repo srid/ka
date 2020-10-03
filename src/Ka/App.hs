@@ -20,7 +20,7 @@ import Text.Pandoc.Definition (Pandoc)
 kaApp ::
   forall t m.
   MonadHeadlessApp t m =>
-  m (Event t (Map FilePath (Status, IO ByteString)))
+  m (Event t (Map FilePath (Maybe (IO ByteString))))
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   let pandocE :: Event t (Map FilePath (Pandoc, Status)) =
@@ -68,8 +68,11 @@ kaApp = do
   pure $
     ffor (attachPromptlyDyn graphD pandocAllE) $ \(graph, xs) ->
       Map.fromList $
-        ffor (Map.toList xs) $ \(fp, (doc, st)) ->
-          (ViewNote.mdToHtml fp, (st, ViewNote.render graph fp doc :: IO ByteString))
+        ffor (Map.toList xs) $ \(fp, (doc, st)) -> do
+          let htmlFile = ViewNote.mdToHtml fp
+          case st of
+            Deleted -> (htmlFile, Nothing)
+            _ -> (htmlFile, Just $ ViewNote.render graph fp doc)
 
 symmetricDifference :: Ord a => Set a -> Set a -> Set a
 symmetricDifference x y =

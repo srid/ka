@@ -52,7 +52,7 @@ noteWidget fp fpAbs doc backlinks = do
     el "style" $ do
       text "a { color: green; text-decoration: none; } a:hover { background-color: green; color: white; }"
     el "title" $ text $ noteFileTitle fp
-  elAttr "div" ("style" =: "max-width: 760px; margin: 0 auto;") $ do
+  elAttr "div" ("style" =: "max-width: 768px; margin: 0 auto;") $ do
     el "h1" $ text $ noteFileTitle fp
     el "hr" blank
     elPandoc defaultConfig doc
