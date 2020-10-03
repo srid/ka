@@ -20,6 +20,7 @@ executable ka
     , algebraic-graphs
     , base               ^>=4.13
     , commonmark
+    , commonmark-extensions
     , commonmark-pandoc
     , containers
     , data-default

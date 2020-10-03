@@ -4,6 +4,7 @@ module Ka.App where
 
 import qualified Algebra.Graph.AdjacencyMap as AM
 import Commonmark (defaultSyntaxSpec)
+import Commonmark.Extensions (gfmExtensions)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Ka.Graph (Graph)
@@ -25,7 +26,11 @@ kaApp = do
   let pandocE :: Event t (Map FilePath (Pandoc, Status)) =
         ffor fileContentE $
           Map.mapWithKey $ \fp (s, st) ->
-            let doc = parseMarkdown (defaultSyntaxSpec <> wikiLinkSpec) fp s
+            let spec =
+                  defaultSyntaxSpec
+                    <> wikiLinkSpec
+                    <> gfmExtensions
+                doc = parseMarkdown spec fp s
              in (doc, st)
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
