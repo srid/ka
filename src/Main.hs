@@ -32,7 +32,8 @@ main =
                     removeIfExists $ outputDir </> k
                   Just genS -> do
                     putStrLn $ "W " <> k
-                    writeFileBS (outputDir </> k) =<< genS
+                    s <- genS
+                    writeFileBS (outputDir </> k) $! s
         pure never
 
 removeIfExists :: FilePath -> IO ()
