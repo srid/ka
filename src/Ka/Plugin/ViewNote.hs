@@ -53,20 +53,22 @@ noteWidget fp fpAbs doc backlinks = do
     elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
     el "style" $ do
       text ".ui.container a { font-weight: bold; }"
-      text ".ui.container { zoom: 1.2; margin: 0.5em auto; }"
+      text ".ui.container { zoom: 1.05; margin: 0.5em auto; }"
+      text "div#footnotes { font-size: 85%; border-top: 1px solid grey;}"
     el "title" $ text $ noteFileTitle fp
   el "body" $ do
     divClass "ui text container" $ do
-      divClass "ui top attached segment" $
-        el "h1" $ text $ noteFileTitle fp
-      divClass "ui attached segment" $ do
+      -- divClass "ui basic segment" $
+      divClass "ui basic segment" $ do
+        elClass "h1" "ui header" $ text $ noteFileTitle fp
         elPandoc defaultConfig doc
-      divClass "ui bottom attached backlinks message segment" $ do
+      divClass "ui backlinks message segment" $ do
         backlinksWidget backlinks
-      let editUrl = toText $ "vscode://file" <> fpAbs
-      elAttr "a" ("href" =: editUrl) $ text "Edit locally"
-      text " | "
-      elAttr "a" ("href" =: ".") $ text "Index"
+      divClass "ui center aligned basic segment" $ do
+        let editUrl = toText $ "vscode://file" <> fpAbs
+        elAttr "a" ("href" =: editUrl) $ text "Edit locally"
+        text " | "
+        elAttr "a" ("href" =: ".") $ text "Index"
 
 backlinksWidget :: DomBuilder t m => Set FilePath -> m ()
 backlinksWidget (Set.toList -> xs) = do
