@@ -7,20 +7,22 @@ import Commonmark (defaultSyntaxSpec)
 import qualified Commonmark.Extensions as CE
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
+import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
-import Ka.Markdown (noteExtension, parseMarkdown, queryLinks)
+import Ka.Markdown (noteExtension, noteFileTitle, parseMarkdown, queryLinks)
 import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
+import Reflex.Dom.Core
 import Reflex.Host.Headless (MonadHeadlessApp)
 import Text.Pandoc.Definition (Pandoc)
 
 kaApp ::
   forall t m.
   MonadHeadlessApp t m =>
-  m (Event t (Map FilePath (Maybe (IO ByteString))))
+  m [Event t (Map FilePath (Maybe (IO ByteString)))]
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   let pandocE :: Event t (Map FilePath (Maybe Pandoc)) =
@@ -38,9 +40,41 @@ kaApp = do
         Map.map (fmap $ toList . queryLinks)
   pandocD :: Dynamic t (Map FilePath Pandoc) <-
     foldDyn patchMap mempty pandocE
-  pluginViewNotes graphD pandocD pandocE
+  sequence
+    [ pluginViewNotes graphD pandocD pandocE,
+      pluginCalendar graphD pandocD pandocE
+    ]
 
 -- TODO: Extract the below as plugins once FRP API stablizes.
+
+pluginCalendar ::
+  forall t m.
+  ( Reflex t,
+    MonadHold t m
+  ) =>
+  Dynamic t Graph ->
+  Dynamic t (Map FilePath Pandoc) ->
+  (Event t (Map FilePath (Maybe Pandoc))) ->
+  m (Event t (Map FilePath (Maybe (IO ByteString))))
+pluginCalendar _graphD pandocD pandocE = do
+  let filesDiffE = Map.keys <$> pandocE
+      filesD = Map.keys <$> pandocD
+  pure $
+    ffor (attachPromptlyDyn filesD filesDiffE) $ \(fs, changedFiles) ->
+      if any isDiaryFileName changedFiles
+        then one $
+          ("calendar.html",) $
+            Just $
+              fmap snd $
+                renderStatic $ do
+                  let dairyFs = filter isDiaryFileName fs
+                  el "title" $ text "Calendar"
+                  forM_ dairyFs $ \fp ->
+                    el "li" $ elAttr "a" ("href" =: toText (ViewNote.mdToHtml fp)) $ text $ noteFileTitle fp
+        else mempty
+  where
+    isDiaryFileName =
+      T.isPrefixOf "20" . toText
 
 pluginViewNotes ::
   forall t m.
