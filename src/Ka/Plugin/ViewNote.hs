@@ -5,6 +5,7 @@ module Ka.Plugin.ViewNote
 where
 
 import qualified Algebra.Graph.AdjacencyMap as AM
+import qualified Data.Set as Set
 import Ka.Graph (Graph)
 import Ka.Markdown (getNoteLink, noteFileTitle)
 import Reflex.Dom.Core hiding (Link)
@@ -49,26 +50,29 @@ noteWidget ::
   m ()
 noteWidget fp fpAbs doc backlinks = do
   el "head" $ do
+    elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
     el "style" $ do
-      text "a { color: green; text-decoration: none; } a:hover { background-color: green; color: white; }"
+      text ".ui.container a { font-weight: bold; }"
+      text ".ui.container { zoom: 1.2; margin: 0.5em auto; }"
     el "title" $ text $ noteFileTitle fp
-  elAttr "div" ("style" =: "max-width: 768px; margin: 0 auto;") $ do
-    el "h1" $ text $ noteFileTitle fp
-    el "hr" blank
-    elPandoc defaultConfig doc
-    backlinksWidget backlinks
-    el "hr" blank
-    let editUrl = toText $ "vscode://file" <> fpAbs
-    elAttr "a" ("href" =: editUrl) $ text "Edit locally"
-    text " | "
-    elAttr "a" ("href" =: ".") $ text "Index"
+  el "body" $ do
+    divClass "ui text container" $ do
+      divClass "ui top attached segment" $
+        el "h1" $ text $ noteFileTitle fp
+      divClass "ui attached segment" $ do
+        elPandoc defaultConfig doc
+      divClass "ui bottom attached backlinks message segment" $ do
+        backlinksWidget backlinks
+      let editUrl = toText $ "vscode://file" <> fpAbs
+      elAttr "a" ("href" =: editUrl) $ text "Edit locally"
+      text " | "
+      elAttr "a" ("href" =: ".") $ text "Index"
 
 backlinksWidget :: DomBuilder t m => Set FilePath -> m ()
-backlinksWidget xs = do
-  el "hr" blank
-  el "h2" $ text "Backlinks"
-  elClass "ul" "backlinks" $ do
-    forM_ xs $ \x -> do
-      el "li" $ do
-        elAttr "a" ("href" =: toText (mdToHtmlUrl x)) $
+backlinksWidget (Set.toList -> xs) = do
+  whenNotNull xs $ \_ -> do
+    divClass "header" $ text "Backlinks"
+    elClass "ul" "ui list" $ do
+      forM_ xs $ \x -> do
+        elAttr "a" ("class" =: "item" <> "href" =: toText (mdToHtmlUrl x)) $
           text $ noteFileTitle x
