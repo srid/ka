@@ -50,6 +50,8 @@ noteWidget ::
   m ()
 noteWidget fp fpAbs doc backlinks = do
   el "head" $ do
+    -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
+    -- Like table,a. Then style only zettel links.
     elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
     el "style" $ do
       text ".ui.container a { font-weight: bold; }"
@@ -62,7 +64,7 @@ noteWidget fp fpAbs doc backlinks = do
       divClass "ui basic segment" $ do
         elClass "h1" "ui header" $ text $ noteFileTitle fp
         elPandoc defaultConfig doc
-      divClass "ui backlinks message segment" $ do
+      divClass "ui stacked segment" $ do
         backlinksWidget backlinks
       divClass "ui center aligned basic segment" $ do
         let editUrl = toText $ "vscode://file" <> fpAbs
@@ -73,7 +75,7 @@ noteWidget fp fpAbs doc backlinks = do
 backlinksWidget :: DomBuilder t m => Set FilePath -> m ()
 backlinksWidget (Set.toList -> xs) = do
   whenNotNull xs $ \_ -> do
-    divClass "header" $ text "Backlinks"
+    elClass "b" "header" $ text "Backlinks"
     elClass "ul" "ui list" $ do
       forM_ xs $ \x -> do
         elAttr "a" ("class" =: "item" <> "href" =: toText (mdToHtmlUrl x)) $

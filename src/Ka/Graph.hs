@@ -8,7 +8,6 @@ where
 import qualified Algebra.Graph.AdjacencyMap as AM
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import Ka.Watch (Status (..))
 import Prelude hiding (empty)
 
 type Graph = AM.AdjacencyMap FilePath
@@ -16,22 +15,20 @@ type Graph = AM.AdjacencyMap FilePath
 empty :: Graph
 empty = AM.empty
 
-patch :: Map FilePath ([FilePath], Status) -> Graph -> Graph
+patch :: Map FilePath (Maybe [FilePath]) -> Graph -> Graph
 patch diff =
   fmap snd . runState $ do
     patchVertex `mapM_` Map.toList diff
 
 patchVertex ::
   MonadState Graph m =>
-  (FilePath, ([FilePath], Status)) ->
+  (FilePath, (Maybe [FilePath])) ->
   m ()
-patchVertex (v, (es, st)) =
-  case st of
-    Deleted ->
+patchVertex (v, mes) =
+  case mes of
+    Nothing ->
       modify $ AM.removeVertex v
-    Untracked ->
-      modify $ AM.overlay $ AM.star v es
-    Dirty -> do
+    Just es -> do
       g <- get
       let removed = AM.postSet v g `Set.difference` (Set.fromList es)
       forM_ (toList removed) $

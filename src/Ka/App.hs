@@ -12,7 +12,7 @@ import qualified Ka.Graph as G
 import Ka.Markdown (noteExtension, parseMarkdown, queryLinks)
 import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
-import Ka.Watch (Status (..), directoryFilesContent)
+import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Host.Headless (MonadHeadlessApp)
 import Text.Pandoc.Definition (Pandoc)
@@ -23,27 +23,21 @@ kaApp ::
   m (Event t (Map FilePath (Maybe (IO ByteString))))
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
-  let pandocE :: Event t (Map FilePath (Pandoc, Status)) =
+  let pandocE :: Event t (Map FilePath (Maybe Pandoc)) =
         ffor fileContentE $
-          Map.mapWithKey $ \fp (s, st) ->
+          Map.mapWithKey $ \fp -> fmap $ \s ->
             let spec =
                   defaultSyntaxSpec
                     <> wikiLinkSpec
                     <> CE.footnoteSpec
                     <> CE.gfmExtensions
-                doc = parseMarkdown spec fp s
-             in (doc, st)
+             in parseMarkdown spec fp s
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
       ffor pandocE $
-        Map.map (first $ toList . queryLinks)
+        Map.map (fmap $ toList . queryLinks)
   pandocD :: Dynamic t (Map FilePath Pandoc) <-
-    foldDyn patchMap mempty $
-      ffor pandocE $
-        Map.map $ \(doc, st) ->
-          if st == Deleted
-            then Nothing
-            else Just doc
+    foldDyn patchMap mempty pandocE
   pluginViewNotes graphD pandocD pandocE
 
 -- TODO: Extract the below as plugins once FRP API stablizes.
@@ -55,12 +49,12 @@ pluginViewNotes ::
   ) =>
   Dynamic t Graph ->
   Dynamic t (Map FilePath Pandoc) ->
-  (Event t (Map FilePath (Pandoc, Status))) ->
+  (Event t (Map FilePath (Maybe Pandoc))) ->
   m (Event t (Map FilePath (Maybe (IO ByteString))))
 pluginViewNotes graphD pandocD pandocE = do
   -- Like `pandocE` but includes other notes whose backlinks have changed as a
   -- result of the update in `pandocE`
-  let pandocAllE :: Event t (Map FilePath (Pandoc, Status)) =
+  let pandocAllE :: Event t (Map FilePath (Maybe Pandoc)) =
         ffor
           -- `attach` gets us the old graph. The promptly version gets the new
           -- one (updated in this frame)
@@ -80,16 +74,16 @@ pluginViewNotes graphD pandocD pandocE = do
                         -- Add linked doc not already marked as changed.
                         guard $ Map.notMember fp' fps
                         doc' <- Map.lookup fp' docMap
-                        pure (fp', (doc', Dirty))
+                        pure (fp', Just doc')
                  in Map.insert fp doc $ Map.fromList esR
   pure $
     ffor (attachPromptlyDyn graphD pandocAllE) $ \(graph, xs) ->
       Map.fromList $
-        ffor (Map.toList xs) $ \(fp, (doc, st)) -> do
+        ffor (Map.toList xs) $ \(fp, mdoc) -> do
           let htmlFile = ViewNote.mdToHtml fp
-          case st of
-            Deleted -> (htmlFile, Nothing)
-            _ -> (htmlFile, Just $ ViewNote.render graph fp doc)
+          case mdoc of
+            Nothing -> (htmlFile, Nothing)
+            Just doc -> (htmlFile, Just $ ViewNote.render graph fp doc)
 
 patchMap :: Ord k => Map k (Maybe a) -> Map k a -> Map k a
 patchMap diff xs =
