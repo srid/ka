@@ -44,6 +44,20 @@ kaApp = do
           if st == Deleted
             then Nothing
             else Just doc
+  pluginViewNotes graphD pandocD pandocE
+
+-- TODO: Extract the below as plugins once FRP API stablizes.
+
+pluginViewNotes ::
+  forall t m.
+  ( Reflex t,
+    MonadHold t m
+  ) =>
+  Dynamic t Graph ->
+  Dynamic t (Map FilePath Pandoc) ->
+  (Event t (Map FilePath (Pandoc, Status))) ->
+  m (Event t (Map FilePath (Maybe (IO ByteString))))
+pluginViewNotes graphD pandocD pandocE = do
   -- Like `pandocE` but includes other notes whose backlinks have changed as a
   -- result of the update in `pandocE`
   let pandocAllE :: Event t (Map FilePath (Pandoc, Status)) =
