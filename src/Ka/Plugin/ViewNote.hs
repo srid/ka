@@ -50,6 +50,7 @@ noteWidget ::
   m ()
 noteWidget fp fpAbs doc backlinks = do
   el "head" $ do
+    elAttr "meta" ("content" =: "width=device-width, initial-scale=1" <> "name" =: "viewport") blank
     -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
     -- Like table,a. Then style only zettel links.
     elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
