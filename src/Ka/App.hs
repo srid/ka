@@ -5,6 +5,7 @@ module Ka.App where
 import qualified Algebra.Graph.AdjacencyMap as AM
 import Commonmark (defaultSyntaxSpec)
 import qualified Commonmark.Extensions as CE
+import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
@@ -50,28 +51,29 @@ kaApp = do
 pluginCalendar ::
   forall t m.
   ( Reflex t,
-    MonadHold t m
+    MonadHold t m,
+    MonadFix m
   ) =>
   Dynamic t Graph ->
   Dynamic t (Map FilePath Pandoc) ->
   (Event t (Map FilePath (Maybe Pandoc))) ->
   m (Event t (Map FilePath (Maybe (IO ByteString))))
-pluginCalendar _graphD pandocD pandocE = do
-  let filesDiffE = Map.keys <$> pandocE
-      filesD = Map.keys <$> pandocD
+pluginCalendar _graphD _pandocD pandocE = do
+  let diaryFilesE =
+        ffilter (not . null) $
+          Map.filterWithKey (\k _ -> isDiaryFileName k) <$> pandocE
+  diaryFilesD <-
+    foldDyn patchMap mempty diaryFilesE
   pure $
-    ffor (attachPromptlyDyn filesD filesDiffE) $ \(fs, changedFiles) ->
-      if any isDiaryFileName changedFiles
-        then one $
-          ("calendar.html",) $
-            Just $
-              fmap snd $
-                renderStatic $ do
-                  let dairyFs = filter isDiaryFileName fs
-                  el "title" $ text "Calendar"
-                  forM_ dairyFs $ \fp ->
-                    el "li" $ elAttr "a" ("href" =: toText (ViewNote.mdToHtml fp)) $ text $ noteFileTitle fp
-        else mempty
+    ffor (tagPromptlyDyn diaryFilesD diaryFilesE) $ \fs ->
+      one $
+        ("calendar.html",) $
+          Just $
+            fmap snd $
+              renderStatic $ do
+                el "title" $ text "Calendar"
+                forM_ (Map.keys fs) $ \fp ->
+                  el "li" $ elAttr "a" ("href" =: toText (ViewNote.mdToHtml fp)) $ text $ noteFileTitle fp
   where
     isDiaryFileName =
       T.isPrefixOf "20" . toText
