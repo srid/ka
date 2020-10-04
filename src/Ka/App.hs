@@ -38,9 +38,12 @@ kaApp = do
       ffor pandocE $
         Map.map (first $ toList . queryLinks)
   pandocD :: Dynamic t (Map FilePath Pandoc) <-
-    foldDyn Map.union mempty $
+    foldDyn patchMap mempty $
       ffor pandocE $
-        Map.map fst
+        Map.map $ \(doc, st) ->
+          if st == Deleted
+            then Nothing
+            else Just doc
   -- Like `pandocE` but includes other notes whose backlinks have changed as a
   -- result of the update in `pandocE`
   let pandocAllE :: Event t (Map FilePath (Pandoc, Status)) =
@@ -73,6 +76,11 @@ kaApp = do
           case st of
             Deleted -> (htmlFile, Nothing)
             _ -> (htmlFile, Just $ ViewNote.render graph fp doc)
+
+patchMap :: Ord k => Map k (Maybe a) -> Map k a -> Map k a
+patchMap diff xs =
+  let (toAdd, toDel) = Map.mapEither (maybeToLeft ()) diff
+   in Map.union toAdd xs `Map.difference` toDel
 
 symmetricDifference :: Ord a => Set a -> Set a -> Set a
 symmetricDifference x y =
