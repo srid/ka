@@ -66,17 +66,27 @@ pluginCalendar _graphD _pandocD pandocE = do
         ffilter (not . null) $
           Map.filterWithKey (\k _ -> isDiaryFileName k) <$> pandocE
   diaryFilesD <-
-    foldDyn patchMap mempty diaryFilesE
+    fmap Map.keysSet
+      <$> foldDyn patchMap mempty diaryFilesE
   pure $
-    ffor (tagPromptlyDyn diaryFilesD diaryFilesE) $ \fs ->
-      one $
-        ("@Calendar.html",) $
-          Just $
-            fmap snd $
-              renderStatic $ do
-                el "title" $ text "Calendar"
-                forM_ (Map.keys fs) $ \fp ->
-                  el "li" $ elAttr "a" ("href" =: toText (ViewNote.mdToHtml fp)) $ text $ noteFileTitle fp
+    fforMaybe
+      ( attach (current diaryFilesD) $
+          tagPromptlyDyn diaryFilesD diaryFilesE
+      )
+      $ \(oldFs, fs) ->
+        -- Update the entire calendar file only if a dairy file got added or
+        -- removed.
+        if oldFs == fs
+          then Nothing
+          else Just $
+            one $
+              ("@Calendar.html",) $
+                Just $
+                  fmap snd $
+                    renderStatic $ do
+                      el "title" $ text "Calendar"
+                      forM_ fs $ \fp ->
+                        el "li" $ elAttr "a" ("href" =: toText (ViewNote.mdToHtml fp)) $ text $ noteFileTitle fp
   where
     isDiaryFileName =
       T.isPrefixOf "20" . toText
