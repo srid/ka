@@ -41,9 +41,9 @@ kaApp = do
         Map.map (fmap $ toList . queryLinks)
   pandocD :: Dynamic t (Map FilePath Pandoc) <-
     foldDyn patchMap mempty pandocE
-  -- NOTE: If two plugins produce the same file, the first plugin's output will
-  -- be used, discarding the rest. That is what `Map.union` effectively does.
-  fmap (mergeWith Map.union) $
+  -- NOTE: If two plugins produce the same file, the later plugin's output will
+  -- be used, discarding the formers. That is what `flip Map.union` effectively does.
+  fmap (mergeWith $ flip Map.union) $
     sequence
       [ pluginViewNotes graphD pandocD pandocE,
         pluginCalendar graphD pandocD pandocE
