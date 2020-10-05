@@ -23,7 +23,7 @@ import Text.Pandoc.Definition (Pandoc)
 kaApp ::
   forall t m.
   MonadHeadlessApp t m =>
-  m [Event t (Map FilePath (Maybe (IO ByteString)))]
+  m (Event t (Map FilePath (Maybe (IO ByteString))))
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   let pandocE :: Event t (Map FilePath (Maybe Pandoc)) =
@@ -41,10 +41,13 @@ kaApp = do
         Map.map (fmap $ toList . queryLinks)
   pandocD :: Dynamic t (Map FilePath Pandoc) <-
     foldDyn patchMap mempty pandocE
-  sequence
-    [ pluginViewNotes graphD pandocD pandocE,
-      pluginCalendar graphD pandocD pandocE
-    ]
+  -- NOTE: If two plugins produce the same file, the first plugin's output will
+  -- be used, discarding the rest. That is what `Map.union` effectively does.
+  fmap (mergeWith Map.union) $
+    sequence
+      [ pluginViewNotes graphD pandocD pandocE,
+        pluginCalendar graphD pandocD pandocE
+      ]
 
 -- TODO: Extract the below as plugins once FRP API stablizes.
 
@@ -67,7 +70,7 @@ pluginCalendar _graphD _pandocD pandocE = do
   pure $
     ffor (tagPromptlyDyn diaryFilesD diaryFilesE) $ \fs ->
       one $
-        ("calendar.html",) $
+        ("@Calendar.html",) $
           Just $
             fmap snd $
               renderStatic $ do

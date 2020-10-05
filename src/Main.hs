@@ -20,21 +20,20 @@ main =
     createDirectoryIfMissing True outputDir
     withCurrentDirectory notesDir $ do
       runHeadlessApp $ do
-        evts <- kaApp
-        forM_ evts $ \output ->
-          void $
-            performEvent_ $
-              ffor output $ \outputFiles -> liftIO $ do
-                -- putStrLn $ "Diff: " <> show diff
-                forM_ (Map.toList outputFiles) $ \(k, mGenS) -> do
-                  case mGenS of
-                    Nothing -> do
-                      putStrLn $ "- " <> k
-                      removeIfExists $ outputDir </> k
-                    Just genS -> do
-                      putStrLn $ "W " <> k
-                      s <- genS
-                      writeFileBS (outputDir </> k) $! s
+        output <- kaApp
+        void $
+          performEvent_ $
+            ffor output $ \outputFiles -> liftIO $ do
+              -- putStrLn $ "Diff: " <> show diff
+              forM_ (Map.toList outputFiles) $ \(k, mGenS) -> do
+                case mGenS of
+                  Nothing -> do
+                    putStrLn $ "- " <> k
+                    removeIfExists $ outputDir </> k
+                  Just genS -> do
+                    putStrLn $ "W " <> k
+                    s <- genS
+                    writeFileBS (outputDir </> k) $! s
         pure never
 
 removeIfExists :: FilePath -> IO ()
