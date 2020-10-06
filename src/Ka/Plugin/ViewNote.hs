@@ -4,8 +4,7 @@ module Ka.Plugin.ViewNote
   )
 where
 
-import qualified Algebra.Graph.AdjacencyMap as AM
-import qualified Data.Set as Set
+import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import Ka.Graph (Graph)
 import Ka.Markdown (getNoteLink, noteFileTitle)
 import Reflex.Dom.Core hiding (Link)
@@ -16,7 +15,7 @@ import Reflex.Dom.Pandoc.Document
   )
 import System.Directory (makeAbsolute)
 import System.FilePath ((-<.>))
-import Text.Pandoc.Definition (Inline (Link), Pandoc)
+import Text.Pandoc.Definition (Block, Inline (Link), Pandoc (Pandoc))
 import qualified Text.Pandoc.Walk as W
 
 render :: Graph -> FilePath -> Pandoc -> IO ByteString
@@ -30,7 +29,10 @@ render g k doc =
    in fmap snd $
         renderStatic $ do
           kAbs <- liftIO $ makeAbsolute k
-          noteWidget k kAbs docWLinksFixed $ AM.preSet k g
+          let backlinks =
+                (toList $ AM.preSet k g) <&> \k0 ->
+                  (k0,) $ AM.edgeLabel k0 k g
+          noteWidget k kAbs docWLinksFixed backlinks
 
 mdToHtml :: FilePath -> FilePath
 mdToHtml = (-<.> ".html")
@@ -46,7 +48,7 @@ noteWidget ::
   FilePath ->
   FilePath ->
   Pandoc ->
-  Set FilePath ->
+  [(FilePath, [Block])] ->
   m ()
 noteWidget fp fpAbs doc backlinks = do
   el "head" $ do
@@ -58,6 +60,8 @@ noteWidget fp fpAbs doc backlinks = do
       text ".ui.container a { font-weight: bold; }"
       text ".ui.container { zoom: 1.05; margin: 0.5em auto; }"
       text "div#footnotes { font-size: 85%; border-top: 1px solid grey;}"
+      text ".backlinks .context { color: gray; }"
+      text ".backlinks .context a { color: gray; }"
     el "title" $ text $ noteFileTitle fp
   el "body" $ do
     divClass "ui text container" $ do
@@ -65,7 +69,7 @@ noteWidget fp fpAbs doc backlinks = do
       divClass "ui basic segment" $ do
         elClass "h1" "ui header" $ text $ noteFileTitle fp
         elPandoc defaultConfig doc
-      divClass "ui stacked segment" $ do
+      divClass "ui stacked backlinks segment" $ do
         backlinksWidget backlinks
       divClass "ui center aligned basic segment" $ do
         let editUrl = toText $ "vscode://file" <> fpAbs
@@ -73,11 +77,15 @@ noteWidget fp fpAbs doc backlinks = do
         text " | "
         elAttr "a" ("href" =: ".") $ text "Index"
 
-backlinksWidget :: DomBuilder t m => Set FilePath -> m ()
-backlinksWidget (Set.toList -> xs) = do
+backlinksWidget :: PandocBuilder t m => [(FilePath, [Block])] -> m ()
+backlinksWidget xs = do
   whenNotNull xs $ \_ -> do
     elClass "b" "header" $ text "Backlinks"
     elClass "ul" "ui list" $ do
-      forM_ xs $ \x -> do
+      forM_ xs $ \(x, blks) -> do
         elAttr "a" ("class" =: "item" <> "href" =: toText (mdToHtmlUrl x)) $
           text $ noteFileTitle x
+        elClass "ul" "context" $ do
+          forM_ blks $ \blk ->
+            el "li" $
+              elPandoc defaultConfig $ Pandoc mempty (one blk)

@@ -2,18 +2,18 @@ module Ka.Markdown
   ( noteExtension,
     noteFileTitle,
     parseMarkdown,
-    queryLinks,
+    queryLinksWithContext,
     getNoteLink,
   )
 where
 
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
-import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import System.FilePath (dropExtension)
 import qualified Text.Pandoc.Builder as B
-import Text.Pandoc.Definition (Attr, Inline (Link), Pandoc (..), Target)
+import Text.Pandoc.Definition (Attr, Block, Inline (Link), Pandoc (..), Target)
 import qualified Text.Pandoc.Walk as W
 
 type CMSyntaxSpec =
@@ -34,11 +34,25 @@ parseMarkdown spec fp s =
   where
     toPandoc = Pandoc mempty . B.toList . CP.unCm
 
-queryLinks :: Pandoc -> Set FilePath
-queryLinks = Set.fromList . W.query go
+queryLinksWithContext :: Pandoc -> Map FilePath [Block]
+queryLinksWithContext doc =
+  Map.fromListWith (<>) . fmap (second one) $ W.query go doc
   where
-    go :: Inline -> [FilePath]
-    go = maybeToList . getNoteLinkFilePath
+    go :: Block -> [(FilePath, Block)]
+    go blk =
+      fmap (,blk) $ case blk of
+        B.Para is ->
+          W.query linksFromInline is
+        B.Plain is ->
+          W.query linksFromInline is
+        B.LineBlock is ->
+          W.query linksFromInline is
+        B.Header _ _ is ->
+          W.query linksFromInline is
+        _ -> mempty
+
+linksFromInline :: Inline -> [FilePath]
+linksFromInline = maybeToList . getNoteLinkFilePath
 
 -- | Get the note filename from its link
 getNoteLinkFilePath :: Inline -> Maybe FilePath

@@ -2,7 +2,7 @@
 
 module Ka.App where
 
-import qualified Algebra.Graph.AdjacencyMap as AM
+import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import Commonmark (defaultSyntaxSpec)
 import qualified Commonmark.Extensions as CE
 import Control.Monad.Fix (MonadFix)
@@ -11,7 +11,7 @@ import qualified Data.Set as Set
 import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
-import Ka.Markdown (noteExtension, noteFileTitle, parseMarkdown, queryLinks)
+import Ka.Markdown (noteExtension, noteFileTitle, parseMarkdown, queryLinksWithContext)
 import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Watch (directoryFilesContent)
@@ -38,7 +38,7 @@ kaApp = do
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
       ffor pandocE $
-        Map.map (fmap $ toList . queryLinks)
+        Map.map (fmap $ fmap swap . Map.toList . queryLinksWithContext)
   pandocD :: Dynamic t (Map FilePath Pandoc) <-
     foldDyn patchMap mempty pandocE
   -- NOTE: If two plugins produce the same file, the later plugin's output will
