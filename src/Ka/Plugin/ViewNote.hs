@@ -20,18 +20,21 @@ import qualified Text.Pandoc.Walk as W
 
 render :: Graph -> FilePath -> Pandoc -> IO ByteString
 render g k doc =
-  let docWLinksFixed =
-        flip W.walk doc $ \x ->
-          case getNoteLink x of
-            Nothing -> x
-            Just (attr, inlines, (toString -> url, title)) ->
-              Link attr inlines (toText $ mdToHtmlUrl url, title)
-   in fmap snd $
-        renderStatic $ do
-          kAbs <- liftIO $ makeAbsolute k
-          let backlinks =
-                G.preSetWithLabel k g
-          noteWidget k kAbs docWLinksFixed backlinks
+  fmap snd $
+    renderStatic $ do
+      kAbs <- liftIO $ makeAbsolute k
+      let backlinks =
+            G.preSetWithLabel k g
+      noteWidget k kAbs (rewriteLinks doc) backlinks
+
+-- Rewrite *.md -> *.html in links
+rewriteLinks :: Pandoc -> Pandoc
+rewriteLinks =
+  W.walk $ \x ->
+    case getNoteLink x of
+      Nothing -> x
+      Just (attr, inlines, (toString -> url, title)) ->
+        Link attr inlines (toText $ mdToHtmlUrl url, title)
 
 mdToHtml :: FilePath -> FilePath
 mdToHtml = (-<.> ".html")
@@ -85,6 +88,7 @@ backlinksWidget xs = do
         elAttr "a" ("class" =: "item" <> "href" =: toText (mdToHtmlUrl x)) $
           text $ noteFileTitle x
         elClass "ul" "context" $ do
-          forM_ blks $ \blk ->
+          forM_ blks $ \blk -> do
+            let blkDoc = rewriteLinks $ Pandoc mempty (one blk)
             el "li" $
-              elPandoc defaultConfig $ Pandoc mempty (one blk)
+              elPandoc defaultConfig blkDoc
