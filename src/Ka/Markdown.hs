@@ -40,6 +40,8 @@ queryLinksWithContext doc =
   where
     go :: Block -> [(FilePath, Block)]
     go blk =
+      -- TODO: Handle DefinitionList? (the only other block element with
+      -- inlines)
       fmap (,blk) $ case blk of
         B.Para is ->
           W.query linksFromInline is

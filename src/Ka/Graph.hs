@@ -2,12 +2,13 @@ module Ka.Graph
   ( Graph,
     empty,
     patch,
+    postSetWithLabel,
+    preSetWithLabel,
   )
 where
 
 import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
 import Text.Pandoc.Definition (Block)
 import Prelude hiding (empty)
 
@@ -41,10 +42,22 @@ patchVertex (v, mes) =
       modify $ AM.removeVertex v
     Just es -> do
       g <- get
-      let removed = AM.postSet v g `Set.difference` (Set.fromList $ snd <$> es)
-      forM_ (toList removed) $
+      -- Remove all edges, then add new ones back in.
+      forM_ (toList $ AM.postSet v g) $
         modify . AM.removeEdge v
       modify $
         AM.overlay $
           AM.edges $
             (\(e, v1) -> (e, v, v1)) <$> es
+
+postSetWithLabel :: (Ord a, Monoid e) => a -> Graph' e a -> [(a, e)]
+postSetWithLabel v g =
+  let es = toList $ AM.postSet v g
+   in es <&> \v1 ->
+        (v1,) $ AM.edgeLabel v v1 g
+
+preSetWithLabel :: (Ord a, Monoid e) => a -> Graph' e a -> [(a, e)]
+preSetWithLabel v g =
+  let es = toList $ AM.preSet v g
+   in es <&> \v0 ->
+        (v0,) $ AM.edgeLabel v0 v g

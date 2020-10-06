@@ -2,7 +2,6 @@
 
 module Ka.App where
 
-import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import Commonmark (defaultSyntaxSpec)
 import qualified Commonmark.Extensions as CE
 import Control.Monad.Fix (MonadFix)
@@ -116,10 +115,10 @@ pluginViewNotes graphD pandocD pandocE = do
                 let -- Consider only edges that were removed, modified or added.
                     esDirty =
                       symmetricDifference
-                        (AM.postSet fp graph)
-                        (AM.postSet fp oldGraph)
+                        (Set.fromList $ G.postSetWithLabel fp graph)
+                        (Set.fromList $ G.postSetWithLabel fp oldGraph)
                     esR =
-                      fforMaybe (Set.toList esDirty) $ \fp' -> do
+                      fforMaybe (Set.toList esDirty) $ \(fp', _ctx) -> do
                         -- Add linked doc not already marked as changed.
                         guard $ Map.notMember fp' fps
                         doc' <- Map.lookup fp' docMap

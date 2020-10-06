@@ -4,8 +4,8 @@ module Ka.Plugin.ViewNote
   )
 where
 
-import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import Ka.Graph (Graph)
+import qualified Ka.Graph as G
 import Ka.Markdown (getNoteLink, noteFileTitle)
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc.Document
@@ -30,8 +30,7 @@ render g k doc =
         renderStatic $ do
           kAbs <- liftIO $ makeAbsolute k
           let backlinks =
-                (toList $ AM.preSet k g) <&> \k0 ->
-                  (k0,) $ AM.edgeLabel k0 k g
+                G.preSetWithLabel k g
           noteWidget k kAbs docWLinksFixed backlinks
 
 mdToHtml :: FilePath -> FilePath
