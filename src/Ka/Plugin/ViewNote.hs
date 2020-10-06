@@ -4,6 +4,7 @@ module Ka.Plugin.ViewNote
   )
 where
 
+import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (getNoteLink, noteFileTitle)
@@ -37,7 +38,10 @@ rewriteLinks =
         Link attr inlines (toText $ mdToHtmlUrl url, title)
 
 mdToHtml :: FilePath -> FilePath
-mdToHtml = (-<.> ".html")
+mdToHtml = replaceWhitespace . (-<.> ".html")
+  where
+    replaceWhitespace =
+      toString . T.replace " " "_" . toText
 
 mdToHtmlUrl :: FilePath -> FilePath
 mdToHtmlUrl =
