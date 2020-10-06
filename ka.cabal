@@ -19,6 +19,7 @@ executable ka
   build-depends:
     , algebraic-graphs
     , base               ^>=4.13
+    , clay
     , commonmark
     , commonmark-extensions
     , commonmark-pandoc

@@ -4,6 +4,8 @@ module Ka.Plugin.ViewNote
   )
 where
 
+import Clay (em, pct, px, (?))
+import qualified Clay as C
 import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
@@ -49,6 +51,40 @@ mdToHtmlUrl =
   -- custom protocol when it contains a colon.
   ("./" <>) . mdToHtml
 
+style :: C.Css
+style = do
+  ".ui.container" ? do
+    C.a ? do
+      -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
+      -- Like table,a. Then style only wikilinks.
+      C.important $ do
+        C.fontWeight C.bold
+        C.color C.green
+    C.a C.# C.hover ? do
+      C.important $ do
+        C.backgroundColor C.green
+        C.color C.white
+    ".backlinks" ? do
+      let smallerFont x = C.important $ C.fontSize x
+      C.backgroundColor "#eee"
+      "h2" ? smallerFont (em 1.2)
+      "h3" ? smallerFont (pct 85)
+      ".context" ? smallerFont (pct 85)
+      C.color C.gray
+      do
+        let linkColor = "#555"
+        C.a ? do
+          C.important $ do
+            C.color linkColor
+        C.a C.# C.hover ? do
+          C.important $ do
+            C.backgroundColor linkColor
+            C.color C.white
+    -- Pandoc styles
+    "#footnotes" ? do
+      C.fontSize $ pct 85
+      C.borderTop C.solid (px 1) C.black
+
 noteWidget ::
   PandocBuilder t m =>
   FilePath ->
@@ -59,23 +95,16 @@ noteWidget ::
 noteWidget fp fpAbs doc backlinks = do
   el "head" $ do
     elAttr "meta" ("content" =: "width=device-width, initial-scale=1" <> "name" =: "viewport") blank
-    -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
-    -- Like table,a. Then style only zettel links.
     elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
     el "style" $ do
-      text ".ui.container a { font-weight: bold; }"
-      text ".ui.container { zoom: 1.05; margin: 0.5em auto; }"
-      text "div#footnotes { font-size: 85%; border-top: 1px solid grey;}"
-      text ".backlinks .context { color: gray; }"
-      text ".backlinks .context a { color: gray; }"
+      text $ toStrict $ C.render style
     el "title" $ text $ noteFileTitle fp
   el "body" $ do
     divClass "ui text container" $ do
-      -- divClass "ui basic segment" $
       divClass "ui basic segment" $ do
         elClass "h1" "ui header" $ text $ noteFileTitle fp
         elPandoc defaultConfig doc
-      divClass "ui stacked backlinks segment" $ do
+      divClass "ui backlinks segment" $ do
         backlinksWidget backlinks
       divClass "ui center aligned basic segment" $ do
         let editUrl = toText $ "vscode://file" <> fpAbs
@@ -86,13 +115,15 @@ noteWidget fp fpAbs doc backlinks = do
 backlinksWidget :: PandocBuilder t m => [(FilePath, [Block])] -> m ()
 backlinksWidget xs = do
   whenNotNull xs $ \_ -> do
-    elClass "b" "header" $ text "Backlinks"
-    elClass "ul" "ui list" $ do
+    elClass "h2" "header" $ text "Backlinks"
+    divClass "" $ do
       forM_ xs $ \(x, blks) -> do
-        elAttr "a" ("class" =: "item" <> "href" =: toText (mdToHtmlUrl x)) $
-          text $ noteFileTitle x
-        elClass "ul" "context" $ do
-          forM_ blks $ \blk -> do
-            let blkDoc = rewriteLinks $ Pandoc mempty (one blk)
-            el "li" $
-              elPandoc defaultConfig blkDoc
+        divClass "ui vertical segment" $ do
+          elAttr "h3" ("class" =: "header") $ do
+            elAttr "a" ("href" =: toText (mdToHtmlUrl x)) $
+              text $ noteFileTitle x
+          elClass "ul" "ui list context" $ do
+            forM_ blks $ \blk -> do
+              let blkDoc = rewriteLinks $ Pandoc mempty (one blk)
+              el "li" $
+                elPandoc defaultConfig blkDoc
