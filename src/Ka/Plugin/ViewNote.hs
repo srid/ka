@@ -93,24 +93,27 @@ noteWidget ::
   [(FilePath, [Block])] ->
   m ()
 noteWidget fp fpAbs doc backlinks = do
-  el "head" $ do
-    elAttr "meta" ("content" =: "width=device-width, initial-scale=1" <> "name" =: "viewport") blank
-    elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
-    el "style" $ do
-      text $ toStrict $ C.render style
-    el "title" $ text $ noteFileTitle fp
-  el "body" $ do
-    divClass "ui text container" $ do
-      divClass "ui basic segment" $ do
-        elClass "h1" "ui header" $ text $ noteFileTitle fp
-        elPandoc defaultConfig doc
-      divClass "ui backlinks segment" $ do
-        backlinksWidget backlinks
-      divClass "ui center aligned basic segment" $ do
-        let editUrl = toText $ "vscode://file" <> fpAbs
-        elAttr "a" ("href" =: editUrl) $ text "Edit locally"
-        text " | "
-        elAttr "a" ("href" =: ".") $ text "Index"
+  el "!DOCTYPE html" $ blank
+  elAttr "html" ("lang" =: "en") $ do
+    el "head" $ do
+      elAttr "meta" ("http-equiv" =: "Content-Type" <> "content" =: "text/html; charset=utf-8") blank
+      elAttr "meta" ("content" =: "width=device-width, initial-scale=1" <> "name" =: "viewport") blank
+      elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
+      el "style" $ do
+        text $ toStrict $ C.render style
+      el "title" $ text $ noteFileTitle fp
+    el "body" $ do
+      divClass "ui text container" $ do
+        divClass "ui basic segment" $ do
+          elClass "h1" "ui header" $ text $ noteFileTitle fp
+          elPandoc defaultConfig doc
+        divClass "ui backlinks segment" $ do
+          backlinksWidget backlinks
+        divClass "ui center aligned basic segment" $ do
+          let editUrl = toText $ "vscode://file" <> fpAbs
+          elAttr "a" ("href" =: editUrl) $ text "Edit locally"
+          text " | "
+          elAttr "a" ("href" =: ".") $ text "Index"
 
 backlinksWidget :: PandocBuilder t m => [(FilePath, [Block])] -> m ()
 backlinksWidget xs = do
