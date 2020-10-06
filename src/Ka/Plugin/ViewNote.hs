@@ -68,7 +68,7 @@ style = do
       let smallerFont x = C.important $ C.fontSize x
       C.backgroundColor "#eee"
       "h2" ? smallerFont (em 1.2)
-      "h3" ? smallerFont (pct 85)
+      "h3" ? smallerFont (pct 90)
       ".context" ? smallerFont (pct 85)
       C.color C.gray
       do

@@ -29,10 +29,13 @@ kaApp = do
         ffor fileContentE $
           Map.mapWithKey $ \fp -> fmap $ \s ->
             let spec =
-                  defaultSyntaxSpec
-                    <> wikiLinkSpec
-                    <> CE.footnoteSpec
+                  wikiLinkSpec
                     <> CE.gfmExtensions
+                    <> CE.fancyListSpec
+                    <> CE.footnoteSpec
+                    <> CE.smartPunctuationSpec
+                    <> CE.definitionListSpec
+                    <> defaultSyntaxSpec
              in parseMarkdown spec fp s
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
