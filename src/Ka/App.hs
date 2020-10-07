@@ -13,6 +13,7 @@ import qualified Ka.Graph as G
 import Ka.Markdown (noteExtension, noteFileTitle, parseMarkdown, queryLinksWithContext)
 import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
+import qualified Ka.View as V
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Core
@@ -80,16 +81,20 @@ pluginCalendar _graphD _pandocD pandocE = do
         -- removed.
         if oldFs == fs
           then Nothing
-          else Just $
-            one $
-              ("@Calendar.html",) $
-                Just $
-                  fmap snd $
-                    renderStatic $ do
-                      el "title" $ text "Calendar"
-                      forM_ fs $ \fp ->
-                        el "li" $ elAttr "a" ("href" =: toText (ViewNote.mdToHtml fp)) $ text $ noteFileTitle fp
+          else
+            Just $
+              one $
+                ("@Calendar.html",) $
+                  Just $
+                    fmap snd $ renderStatic $ calWidget fs
   where
+    calWidget fs = do
+      V.kaTemplate mempty (text "Calendar") $ do
+        elClass "h1" "header" $ text "Calendar"
+        divClass "ui divided equal width compact seven column grid" $ do
+          forM_ fs $ \fp ->
+            elAttr "a" ("class" =: "column" <> "href" =: toText (V.mdToHtml fp)) $
+              text $ noteFileTitle fp
     isDiaryFileName =
       T.isPrefixOf "20" . toText
 
@@ -131,7 +136,7 @@ pluginViewNotes graphD pandocD pandocE = do
     ffor (attachPromptlyDyn graphD pandocAllE) $ \(graph, xs) ->
       Map.fromList $
         ffor (Map.toList xs) $ \(fp, mdoc) -> do
-          let htmlFile = ViewNote.mdToHtml fp
+          let htmlFile = V.mdToHtml fp
           case mdoc of
             Nothing -> (htmlFile, Nothing)
             Just doc -> (htmlFile, Just $ ViewNote.render graph fp doc)

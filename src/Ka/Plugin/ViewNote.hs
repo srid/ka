@@ -1,15 +1,14 @@
 module Ka.Plugin.ViewNote
   ( render,
-    mdToHtml,
   )
 where
 
 import Clay (em, pct, px, (?))
 import qualified Clay as C
-import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
-import Ka.Markdown (getNoteLink, noteFileTitle)
+import Ka.Markdown (noteFileTitle)
+import qualified Ka.View as V
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
@@ -17,9 +16,7 @@ import Reflex.Dom.Pandoc.Document
     elPandoc,
   )
 import System.Directory (makeAbsolute)
-import System.FilePath ((-<.>))
-import Text.Pandoc.Definition (Block, Inline (Link), Pandoc (Pandoc))
-import qualified Text.Pandoc.Walk as W
+import Text.Pandoc.Definition (Block, Pandoc (Pandoc))
 
 render :: Graph -> FilePath -> Pandoc -> IO ByteString
 render g k doc =
@@ -28,28 +25,13 @@ render g k doc =
       kAbs <- liftIO $ makeAbsolute k
       let backlinks =
             G.preSetWithLabel k g
-      noteWidget k kAbs (rewriteLinks doc) backlinks
-
--- Rewrite *.md -> *.html in links
-rewriteLinks :: Pandoc -> Pandoc
-rewriteLinks =
-  W.walk $ \x ->
-    case getNoteLink x of
-      Nothing -> x
-      Just (attr, inlines, (toString -> url, title)) ->
-        Link attr inlines (toText $ mdToHtmlUrl url, title)
-
-mdToHtml :: FilePath -> FilePath
-mdToHtml = replaceWhitespace . (-<.> ".html")
-  where
-    replaceWhitespace =
-      toString . T.replace " " "_" . toText
+      noteWidget k kAbs (V.rewriteLinks doc) backlinks
 
 mdToHtmlUrl :: FilePath -> FilePath
 mdToHtmlUrl =
   -- The ./ prefix is to prevent the browser from thinking that our URL is a
   -- custom protocol when it contains a colon.
-  ("./" <>) . mdToHtml
+  ("./" <>) . V.mdToHtml
 
 style :: C.Css
 style = do
@@ -93,27 +75,17 @@ noteWidget ::
   [(FilePath, [Block])] ->
   m ()
 noteWidget fp fpAbs doc backlinks = do
-  el "!DOCTYPE html" $ blank
-  elAttr "html" ("lang" =: "en") $ do
-    el "head" $ do
-      elAttr "meta" ("http-equiv" =: "Content-Type" <> "content" =: "text/html; charset=utf-8") blank
-      elAttr "meta" ("content" =: "width=device-width, initial-scale=1" <> "name" =: "viewport") blank
-      elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
-      el "style" $ do
-        text $ toStrict $ C.render style
-      el "title" $ text $ noteFileTitle fp
-    el "body" $ do
-      divClass "ui text container" $ do
-        divClass "ui basic segment" $ do
-          elClass "h1" "ui header" $ text $ noteFileTitle fp
-          elPandoc defaultConfig doc
-        divClass "ui backlinks segment" $ do
-          backlinksWidget backlinks
-        divClass "ui center aligned basic segment" $ do
-          let editUrl = toText $ "vscode://file" <> fpAbs
-          elAttr "a" ("href" =: editUrl) $ text "Edit locally"
-          text " | "
-          elAttr "a" ("href" =: ".") $ text "Index"
+  V.kaTemplate style (text $ noteFileTitle fp) $ do
+    divClass "ui basic segment" $ do
+      elClass "h1" "ui header" $ text $ noteFileTitle fp
+      elPandoc defaultConfig doc
+    divClass "ui backlinks segment" $ do
+      backlinksWidget backlinks
+    divClass "ui center aligned basic segment" $ do
+      let editUrl = toText $ "vscode://file" <> fpAbs
+      elAttr "a" ("href" =: editUrl) $ text "Edit locally"
+      text " | "
+      elAttr "a" ("href" =: ".") $ text "Index"
 
 backlinksWidget :: PandocBuilder t m => [(FilePath, [Block])] -> m ()
 backlinksWidget xs = do
@@ -127,6 +99,6 @@ backlinksWidget xs = do
               text $ noteFileTitle x
           elClass "ul" "ui list context" $ do
             forM_ blks $ \blk -> do
-              let blkDoc = rewriteLinks $ Pandoc mempty (one blk)
+              let blkDoc = V.rewriteLinks $ Pandoc mempty (one blk)
               el "li" $
                 elPandoc defaultConfig blkDoc

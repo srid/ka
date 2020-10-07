@@ -65,6 +65,7 @@ executable ka
     Ka.Markdown
     Ka.Plugin.ViewNote
     Ka.Plugin.WikiLink
+    Ka.View
     Ka.Watch
 
   ghc-options:
