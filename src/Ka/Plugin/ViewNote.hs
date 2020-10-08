@@ -24,6 +24,7 @@ render g k doc =
     renderStatic $ do
       kAbs <- liftIO $ makeAbsolute k
       let backlinks =
+            -- FIXME: backlinks order is lost
             G.preSetWithLabel k g
       noteWidget k kAbs (V.rewriteLinks doc) backlinks
 
