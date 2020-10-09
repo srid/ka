@@ -9,7 +9,7 @@ let
           cabal-install
           ghcid 
           cabal-fmt 
-          haskell-language-server 
+          # haskell-language-server  -- Let VSCode download latest
           ormolu 
         ]
       else [];
