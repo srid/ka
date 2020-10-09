@@ -1,10 +1,12 @@
 module Ka.Plugin.ViewNote
-  ( render,
+  ( runPlugin,
   )
 where
 
 import Clay (em, pct, px, (?))
 import qualified Clay as C
+import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (noteFileTitle)
@@ -17,6 +19,53 @@ import Reflex.Dom.Pandoc.Document
   )
 import System.Directory (makeAbsolute)
 import Text.Pandoc.Definition (Block, Pandoc (Pandoc))
+
+runPlugin ::
+  forall t m.
+  ( Reflex t,
+    MonadHold t m
+  ) =>
+  Dynamic t Graph ->
+  Dynamic t (Map FilePath Pandoc) ->
+  (Event t (Map FilePath (Maybe Pandoc))) ->
+  m (Event t (Map FilePath (Maybe (IO ByteString))))
+runPlugin graphD pandocD pandocE = do
+  -- Like `pandocE` but includes other notes whose backlinks have changed as a
+  -- result of the update in `pandocE`
+  let pandocAllE :: Event t (Map FilePath (Maybe Pandoc)) =
+        ffor
+          -- `attach` gets us the old graph. The promptly version gets the new
+          -- one (updated in this frame)
+          ( attach (current graphD) $
+              attachPromptlyDyn (zipDyn graphD pandocD) pandocE
+          )
+          $ \(oldGraph, ((graph, docMap), fps)) ->
+            Map.unions $
+              ffor (Map.toList fps) $ \(fp, doc) ->
+                let -- Consider only edges that were removed, modified or added.
+                    esDirty =
+                      symmetricDifference
+                        (Set.fromList $ G.postSetWithLabel fp graph)
+                        (Set.fromList $ G.postSetWithLabel fp oldGraph)
+                    esR =
+                      fforMaybe (Set.toList esDirty) $ \(fp', _ctx) -> do
+                        -- Add linked doc not already marked as changed.
+                        guard $ Map.notMember fp' fps
+                        doc' <- Map.lookup fp' docMap
+                        pure (fp', Just doc')
+                 in Map.insert fp doc $ Map.fromList esR
+  pure $
+    ffor (attachPromptlyDyn graphD pandocAllE) $ \(graph, xs) ->
+      Map.fromList $
+        ffor (Map.toList xs) $ \(fp, mdoc) -> do
+          let htmlFile = V.mdToHtml fp
+          case mdoc of
+            Nothing -> (htmlFile, Nothing)
+            Just doc -> (htmlFile, Just $ render graph fp doc)
+
+symmetricDifference :: Ord a => Set a -> Set a -> Set a
+symmetricDifference x y =
+  (x `Set.union` y) `Set.difference` (x `Set.intersection` y)
 
 render :: Graph -> FilePath -> Pandoc -> IO ByteString
 render g k doc =

@@ -2,6 +2,7 @@ module Ka.Graph
   ( Graph,
     empty,
     patch,
+    patchMap,
     postSetWithLabel,
     preSetWithLabel,
   )
@@ -49,6 +50,11 @@ patchVertex (v, mes) =
         AM.overlay $
           AM.edges $
             (\(e, v1) -> (e, v, v1)) <$> es
+
+patchMap :: Ord k => Map k (Maybe a) -> Map k a -> Map k a
+patchMap diff xs =
+  let (toAdd, toDel) = Map.mapEither (maybeToLeft ()) diff
+   in Map.union toAdd xs `Map.difference` toDel
 
 postSetWithLabel :: (Ord a, Monoid e) => a -> Graph' e a -> [(a, e)]
 postSetWithLabel v g =

@@ -63,6 +63,7 @@ executable ka
     Ka.App
     Ka.Graph
     Ka.Markdown
+    Ka.Plugin.Calendar
     Ka.Plugin.ViewNote
     Ka.Plugin.WikiLink
     Ka.View
