@@ -24,6 +24,7 @@ let
       let 
         srcs = {
           commonmark = hackGet ./dep/commonmark-hs;
+          ob = hackGet ./dep/obelisk;
         };
       in {
         ka = pkgs.lib.cleanSource (gitignoreSource ./.);
@@ -36,6 +37,9 @@ let
         algebraic-graphs = hackGet ./dep/alga;
         clay = hackGet ./dep/clay;
         pandoc-types = hackGet ./dep/pandoc-types;
+        obelisk-route = srcs.ob + "/lib/route"; 
+        obelisk-executable-config-lookup = srcs.ob + "/lib/executable-config/lookup";
+        tabulation = srcs.ob + "/lib/tabulation";
       };
     overrides = self: super: with pkgs.haskell.lib; {
       algebraic-graphs = dontCheck super.algebraic-graphs; 

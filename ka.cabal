@@ -30,6 +30,7 @@ executable ka
     , filepattern
     , fsnotify
     , mtl
+    , obelisk-route
     , pandoc-types
     , parsec
     , reflex
