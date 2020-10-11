@@ -12,6 +12,7 @@ import Ka.Markdown (noteExtension, parseMarkdown, queryLinksWithContext)
 import qualified Ka.Plugin.Calendar as Calendar
 import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
+import Ka.Route (Route)
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -20,7 +21,7 @@ import Text.Pandoc.Definition (Pandoc)
 data App t m = App
   { _app_graph :: Dynamic t Graph,
     _app_pandoc :: Dynamic t (Map FilePath Pandoc),
-    _app_render :: Dynamic t (Map FilePath (m ()))
+    _app_render :: Dynamic t (Map FilePath (m (Event t Route)))
   }
 
 kaApp ::

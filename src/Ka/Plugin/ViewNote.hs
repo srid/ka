@@ -12,6 +12,7 @@ import qualified Data.Set as Set
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (noteFileTitle)
+import Ka.Route (Route (..), routeLink)
 import qualified Ka.View as V
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc (elPandocRawSafe)
@@ -38,7 +39,7 @@ runPlugin ::
   Dynamic t Graph ->
   Dynamic t (Map FilePath Pandoc) ->
   (Event t (Map FilePath (Maybe Pandoc))) ->
-  m (Event t (Map FilePath (Maybe (m ()))))
+  m (Event t (Map FilePath (Maybe (m (Event t Route)))))
 runPlugin graphD pandocD pandocE = do
   -- Like `pandocE` but includes other notes whose backlinks have changed as a
   -- result of the update in `pandocE`
@@ -82,19 +83,13 @@ render ::
   Graph ->
   FilePath ->
   Pandoc ->
-  m ()
+  m (Event t Route)
 render g k doc = do
   kAbs <- liftIO $ makeAbsolute k
   let backlinks =
         -- FIXME: backlinks order is lost
         G.preSetWithLabel k g
   noteWidget k kAbs (V.rewriteLinks doc) backlinks
-
-mdToHtmlUrl :: FilePath -> FilePath
-mdToHtmlUrl =
-  -- The ./ prefix is to prevent the browser from thinking that our URL is a
-  -- custom protocol when it contains a colon.
-  ("./" <>) . V.mdToHtml
 
 _style :: C.Css
 _style = do
@@ -136,32 +131,37 @@ noteWidget ::
   FilePath ->
   Pandoc ->
   [(FilePath, [Block])] ->
-  m ()
+  m (Event t Route)
 noteWidget fp fpAbs doc backlinks = do
   -- V.kaTemplate style (text $ noteFileTitle fp) $ do
   divClass "ui basic segment" $ do
     elClass "h1" "ui header" $ text $ noteFileTitle fp
     elPandoc defaultConfig doc
-  divClass "ui backlinks segment" $ do
+  evt <- divClass "ui backlinks segment" $ do
     backlinksWidget backlinks
   divClass "ui center aligned basic segment" $ do
     let editUrl = toText $ "vscode://file" <> fpAbs
     elAttr "a" ("href" =: editUrl) $ text "Edit locally"
     text " | "
     elAttr "a" ("href" =: ".") $ text "Index"
+  pure evt
 
-backlinksWidget :: PandocBuilder t m => [(FilePath, [Block])] -> m ()
+backlinksWidget ::
+  PandocBuilder t m =>
+  [(FilePath, [Block])] ->
+  m (Event t Route)
 backlinksWidget xs = do
-  whenNotNull xs $ \_ -> do
-    elClass "h2" "header" $ text "Backlinks"
-    divClass "" $ do
-      forM_ xs $ \(x, blks) -> do
+  elClass "h2" "header" $ text "Backlinks"
+  divClass "" $ do
+    fmap leftmost $
+      forM xs $ \(x, blks) -> do
         divClass "ui vertical segment" $ do
-          elAttr "h3" ("class" =: "header") $ do
-            elAttr "a" ("href" =: toText (mdToHtmlUrl x)) $
+          evt <- elAttr "h3" ("class" =: "header") $ do
+            routeLink (Route_Node $ V.mdToHtml x) $
               text $ noteFileTitle x
           elClass "ul" "ui list context" $ do
             forM_ blks $ \blk -> do
               let blkDoc = V.rewriteLinks $ Pandoc mempty (one blk)
               el "li" $
                 elPandoc defaultConfig blkDoc
+          pure evt

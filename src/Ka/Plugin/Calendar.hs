@@ -9,6 +9,7 @@ import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (noteFileTitle)
+import Ka.Route (Route)
 import qualified Ka.View as V
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
@@ -23,7 +24,7 @@ runPlugin ::
   Dynamic t Graph ->
   Dynamic t (Map FilePath Pandoc) ->
   (Event t (Map FilePath (Maybe Pandoc))) ->
-  m (Event t (Map FilePath (Maybe (m ()))))
+  m (Event t (Map FilePath (Maybe (m (Event t Route)))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
@@ -45,7 +46,7 @@ runPlugin _graphD _pandocD pandocE = do
             Just $
               one $
                 ("@Calendar.html",) $
-                  Just $ calWidget fs
+                  Just $ calWidget fs >> pure never
   where
     calWidget fs = do
       V.kaTemplate mempty (text "Calendar") $ do

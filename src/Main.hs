@@ -6,6 +6,7 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import Ka.App (App (..), kaApp)
+import Ka.Route
 import Main.Utf8 (withUtf8)
 import Reflex
 import Reflex.Dom
@@ -22,11 +23,6 @@ main =
       mainWidgetWithHead
         (el "title" $ text "ka Jsaddle")
         bodyWidget
-
-data Route
-  = Route_Main
-  | Route_Node FilePath
-  deriving (Eq, Show)
 
 bodyWidget ::
   ( PandocBuilder t m,
@@ -45,7 +41,7 @@ bodyWidget = do
   rec route :: Dynamic t Route <-
         holdDyn Route_Main switches
       switches <- switchHold never <=< dyn $
-        ffor route $ \r -> renderRoute app r
+        ffor (traceDyn "route:" route) $ \r -> renderRoute app r
   pure ()
 
 renderRoute ::
@@ -66,21 +62,7 @@ renderRoute App {..} = \case
               e <- clickEvent $ el' "a" $ text $ T.pack fp
               pure $ ffor e $ \() -> Route_Node fp
   Route_Node fp -> do
-    dyn_ $
+    switchHold never <=< dyn $
       ffor (Map.lookup fp <$> _app_render) $ \case
-        Nothing -> text "404"
+        Nothing -> text "404" >> pure never
         Just w -> w
-    pure never
-
--- | Get the click event on an element
---
--- Use as:
---   clickEvent $ el' "a" ...
-clickEvent ::
-  ( DomBuilder t m,
-    HasDomEvent t target 'ClickTag
-  ) =>
-  m (target, a) ->
-  m (Event t ())
-clickEvent w =
-  fmap (fmap (const ()) . domEvent Click . fst) w
