@@ -17,15 +17,43 @@ let
   reflexPlatform = import reflexPlatformSrc { 
     inherit system;
   };
-  project = reflexPlatform.project ({pkgs, ...}: {
+  project = reflexPlatform.project ({pkgs, hackGet, ...}: {
     useWarp = true;
     withHoogle = false;
-    packages = {
-      ka = pkgs.lib.cleanSource (gitignoreSource ./.);
+    packages = 
+      let 
+        srcs = {
+          commonmark = hackGet ./dep/commonmark-hs;
+        };
+      in {
+        ka = pkgs.lib.cleanSource (gitignoreSource ./.);
+        commonmark = srcs.commonmark + "/commonmark";
+        commonmark-extensions = srcs.commonmark + "/commonmark-extensions";
+        commonmark-pandoc = srcs.commonmark + "/commonmark-pandoc";
+        reflex-dom-pandoc = hackGet ./dep/reflex-dom-pandoc;
+        with-utf8 = hackGet ./dep/with-utf8;
+        emojis = hackGet ./dep/emojis;
+        algebraic-graphs = hackGet ./dep/alga;
+        clay = hackGet ./dep/clay;
+        pandoc-types = hackGet ./dep/pandoc-types;
+      };
+    overrides = self: super: with pkgs.haskell.lib; {
+      algebraic-graphs = dontCheck super.algebraic-graphs; 
+
+      skylighting = self.callHackageDirect {
+        pkg = "skylighting";
+        ver = "0.9";
+        sha256 = "1zk8flzfafnmpb7wy7sf3q0biaqfh7svxz2da7wlc3am3n9fpxbr";
+      } {};
+      skylighting-core = self.callHackageDirect {
+        pkg = "skylighting-core";
+        ver = "0.9";
+        sha256 = "1fb3j5kmfdycxwr7vjdg1hrdz6s61ckp489qj3899klk18pcmpnh";
+      } {};
     };
     shells = {
       ghc = ["ka"];
-      ghcjs = ["ka"];
+      # ghcjs = ["ka"];
     };
   });
 in {
