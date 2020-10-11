@@ -18,7 +18,7 @@ executable ka
   main-is:            Main.hs
   build-depends:
     , algebraic-graphs
-    , base               ^>=4.13
+    , base
     , clay
     , commonmark
     , commonmark-extensions

@@ -1,30 +1,32 @@
+{ system ? builtins.currentSystem
+}:
 let 
-  sources = import ./nix/sources.nix;
+  name = "ka";
+  p = import ./project.nix { inherit system; };
+  pkgs = p.reflexPlatform.nixpkgs;
+  app = pkgs.lib.getAttr name p.project.ghcjs;
+  indexHtml = pkgs.writeText "index.html"
+    ''
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <script language="javascript" src="all.js"></script>
+    </head>
+    <body></body>
+    </html>
+    '';
 in 
-{ pkgs ? import sources.nixpkgs {} , ... }:
-let
-  extraDeps =
-    if pkgs.lib.trivial.inNixShell
-      then with pkgs.haskellPackages; [ 
-          cabal-install
-          ghcid 
-          cabal-fmt 
-          # haskell-language-server  -- Let VSCode download latest
-          ormolu 
-        ]
-      else [];
-in 
-  pkgs.haskellPackages.developPackage {
-    root = ./.;
-    name = "ka";
-    source-overrides = {
-      reflex-fsnotify = sources.reflex-fsnotify;
-      reflex-dom-pandoc = sources.reflex-dom-pandoc;
-    };
-    overrides = self: super: {
-      skylighting = super.skylighting_0_10_0_2;
-      skylighting-core = super.skylighting-core_0_10_0_2;
-    };
-    modifier = drv:
-      pkgs.haskell.lib.addBuildTools drv extraDeps;
-  }
+  pkgs.runCommand "${name}-site" {} ''
+    mkdir -p $out
+    cp ${indexHtml} $out/index.html
+    # The original all.js is pretty huge; so let's run it by the closure
+    # compiler.    
+    # cp ${app}/bin/${name}.jsexe/all.js $out/
+    ${pkgs.closurecompiler}/bin/closure-compiler \
+        --externs=${app}/bin/${name}.jsexe/all.js.externs \
+        --jscomp_off=checkVars \
+        --js_output_file="$out/all.js" \
+        -O ADVANCED \
+        -W QUIET \
+        ${app}/bin/${name}.jsexe/all.js
+  ''
