@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Ka.Plugin.ViewNote
   ( runPlugin,
   )
@@ -12,23 +14,31 @@ import qualified Ka.Graph as G
 import Ka.Markdown (noteFileTitle)
 import qualified Ka.View as V
 import Reflex.Dom.Core hiding (Link)
+import Reflex.Dom.Pandoc (elPandocRawSafe)
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
+    PandocRaw (..),
     defaultConfig,
     elPandoc,
   )
 import System.Directory (makeAbsolute)
 import Text.Pandoc.Definition (Block, Pandoc (Pandoc))
 
+instance PandocRaw (HydrationDomBuilderT s t m) where
+  type PandocRawConstraints (HydrationDomBuilderT s t m) = (DomBuilder t (HydrationDomBuilderT s t m))
+  elPandocRaw = elPandocRawSafe
+
 runPlugin ::
   forall t m.
   ( Reflex t,
-    MonadHold t m
+    MonadHold t m,
+    MonadIO m,
+    PandocBuilder t m
   ) =>
   Dynamic t Graph ->
   Dynamic t (Map FilePath Pandoc) ->
   (Event t (Map FilePath (Maybe Pandoc))) ->
-  m (Event t (Map FilePath (Maybe (IO ByteString))))
+  m (Event t (Map FilePath (Maybe (m ()))))
 runPlugin graphD pandocD pandocE = do
   -- Like `pandocE` but includes other notes whose backlinks have changed as a
   -- result of the update in `pandocE`
@@ -67,15 +77,18 @@ symmetricDifference :: Ord a => Set a -> Set a -> Set a
 symmetricDifference x y =
   (x `Set.union` y) `Set.difference` (x `Set.intersection` y)
 
-render :: Graph -> FilePath -> Pandoc -> IO ByteString
-render g k doc =
-  fmap snd $
-    renderStatic $ do
-      kAbs <- liftIO $ makeAbsolute k
-      let backlinks =
-            -- FIXME: backlinks order is lost
-            G.preSetWithLabel k g
-      noteWidget k kAbs (V.rewriteLinks doc) backlinks
+render ::
+  (PandocBuilder t m, MonadIO m) =>
+  Graph ->
+  FilePath ->
+  Pandoc ->
+  m ()
+render g k doc = do
+  kAbs <- liftIO $ makeAbsolute k
+  let backlinks =
+        -- FIXME: backlinks order is lost
+        G.preSetWithLabel k g
+  noteWidget k kAbs (V.rewriteLinks doc) backlinks
 
 mdToHtmlUrl :: FilePath -> FilePath
 mdToHtmlUrl =

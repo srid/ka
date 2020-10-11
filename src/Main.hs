@@ -4,10 +4,11 @@ import Control.Exception (catch, throwIO)
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
-import Ka.App (kaApp)
+import Ka.App (App (..), kaApp)
 import Main.Utf8 (withUtf8)
 import Reflex
 import Reflex.Dom
+import Reflex.Dom.Pandoc (PandocBuilder)
 import System.Directory (removeFile, withCurrentDirectory)
 import System.IO.Error (isDoesNotExistError)
 
@@ -23,7 +24,7 @@ main =
         bodyWidget
 
 bodyWidget ::
-  ( DomBuilder t m,
+  ( PandocBuilder t m,
     MonadIO m,
     PerformEvent t m,
     PostBuild t m,
@@ -34,10 +35,10 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  output <- kaApp
+  App {..} <- kaApp
   text "We will show file updates here"
-  widgetHold_ blank $
-    ffor (Map.keys <$> output) $ \fs ->
+  dyn_ $
+    ffor (Map.keys <$> _app_pandoc) $ \fs ->
       forM_ fs $ \fp -> do
         el "li" $ text $ T.pack fp
 

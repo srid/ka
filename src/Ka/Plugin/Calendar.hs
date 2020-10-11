@@ -17,12 +17,13 @@ runPlugin ::
   forall t m.
   ( Reflex t,
     MonadHold t m,
-    MonadFix m
+    MonadFix m,
+    DomBuilder t m
   ) =>
   Dynamic t Graph ->
   Dynamic t (Map FilePath Pandoc) ->
   (Event t (Map FilePath (Maybe Pandoc))) ->
-  m (Event t (Map FilePath (Maybe (IO ByteString))))
+  m (Event t (Map FilePath (Maybe (m ()))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
@@ -44,8 +45,7 @@ runPlugin _graphD _pandocD pandocE = do
             Just $
               one $
                 ("@Calendar.html",) $
-                  Just $
-                    fmap snd $ renderStatic $ calWidget fs
+                  Just $ calWidget fs
   where
     calWidget fs = do
       V.kaTemplate mempty (text "Calendar") $ do
