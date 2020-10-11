@@ -50,10 +50,16 @@ let
         ver = "0.9";
         sha256 = "1fb3j5kmfdycxwr7vjdg1hrdz6s61ckp489qj3899klk18pcmpnh";
       } {};
+      relude = self.callHackageDirect {
+        pkg = "relude";
+        ver = "0.7.0.0";
+        sha256 = "0flrwzxdd9bd3knk48zkhadwlad01msskjby1bfv4snr44q5xfqd";
+      } {};
     };
     shells = {
       ghc = ["ka"];
-      ghcjs = ["ka"];
+      # This project doesn't use ghcjs, as it piggybacks on jsaddle
+      # ghcjs = ["ka"];
     };
   });
 in {
