@@ -53,7 +53,7 @@ let
     };
     shells = {
       ghc = ["ka"];
-      # ghcjs = ["ka"];
+      ghcjs = ["ka"];
     };
   });
 in {
