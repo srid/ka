@@ -96,8 +96,8 @@ mdToHtmlUrl =
   -- custom protocol when it contains a colon.
   ("./" <>) . V.mdToHtml
 
-style :: C.Css
-style = do
+_style :: C.Css
+_style = do
   ".ui.container" ? do
     C.a ? do
       -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
@@ -138,17 +138,17 @@ noteWidget ::
   [(FilePath, [Block])] ->
   m ()
 noteWidget fp fpAbs doc backlinks = do
-  V.kaTemplate style (text $ noteFileTitle fp) $ do
-    divClass "ui basic segment" $ do
-      elClass "h1" "ui header" $ text $ noteFileTitle fp
-      elPandoc defaultConfig doc
-    divClass "ui backlinks segment" $ do
-      backlinksWidget backlinks
-    divClass "ui center aligned basic segment" $ do
-      let editUrl = toText $ "vscode://file" <> fpAbs
-      elAttr "a" ("href" =: editUrl) $ text "Edit locally"
-      text " | "
-      elAttr "a" ("href" =: ".") $ text "Index"
+  -- V.kaTemplate style (text $ noteFileTitle fp) $ do
+  divClass "ui basic segment" $ do
+    elClass "h1" "ui header" $ text $ noteFileTitle fp
+    elPandoc defaultConfig doc
+  divClass "ui backlinks segment" $ do
+    backlinksWidget backlinks
+  divClass "ui center aligned basic segment" $ do
+    let editUrl = toText $ "vscode://file" <> fpAbs
+    elAttr "a" ("href" =: editUrl) $ text "Edit locally"
+    text " | "
+    elAttr "a" ("href" =: ".") $ text "Index"
 
 backlinksWidget :: PandocBuilder t m => [(FilePath, [Block])] -> m ()
 backlinksWidget xs = do

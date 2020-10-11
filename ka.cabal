@@ -48,6 +48,7 @@ executable ka
     relude (Relude as Prelude)
 
   default-extensions:
+    DataKinds
     DeriveFunctor
     DerivingStrategies
     FlexibleContexts
