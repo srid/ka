@@ -4,6 +4,7 @@ module Ka.App where
 
 import Commonmark (defaultSyntaxSpec)
 import qualified Commonmark.Extensions as CE
+import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
@@ -13,12 +14,19 @@ import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
-import Reflex.Host.Headless (MonadHeadlessApp)
 import Text.Pandoc.Definition (Pandoc)
 
 kaApp ::
   forall t m.
-  MonadHeadlessApp t m =>
+  ( Reflex t,
+    MonadIO m,
+    PerformEvent t m,
+    PostBuild t m,
+    TriggerEvent t m,
+    MonadHold t m,
+    MonadFix m,
+    MonadIO (Performable m)
+  ) =>
   m (Event t (Map FilePath (Maybe (IO ByteString))))
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension

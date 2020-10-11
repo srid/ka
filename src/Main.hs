@@ -1,10 +1,13 @@
 module Main where
 
 import Control.Exception (catch, throwIO)
+import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import Ka.App (kaApp)
 import Main.Utf8 (withUtf8)
-import Reflex (Reflex (never), ffor, performEvent_)
+import Reflex
+import Reflex.Dom
 import Reflex.Host.Headless (runHeadlessApp)
 import System.Directory (createDirectoryIfMissing, removeFile, withCurrentDirectory)
 import System.FilePath ((</>))
@@ -15,6 +18,30 @@ notesDir = "/home/srid/Sync/zk"
 
 main :: IO ()
 main =
+  withCurrentDirectory notesDir $ do
+    mainWidget bodyWidget
+
+bodyWidget ::
+  ( DomBuilder t m,
+    MonadIO m,
+    PerformEvent t m,
+    PostBuild t m,
+    TriggerEvent t m,
+    MonadHold t m,
+    MonadFix m,
+    MonadIO (Performable m)
+  ) =>
+  m ()
+bodyWidget = do
+  output <- kaApp
+  text "We will show file updates here"
+  widgetHold_ blank $
+    ffor (Map.keys <$> output) $ \fs ->
+      forM_ fs $ \fp -> do
+        el "li" $ text $ T.pack fp
+
+oldMain :: IO ()
+oldMain =
   withUtf8 $ do
     let outputDir = notesDir </> ".ka" </> "output"
     createDirectoryIfMissing True outputDir

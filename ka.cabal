@@ -33,6 +33,7 @@ executable ka
     , pandoc-types
     , parsec
     , reflex
+    , reflex-dom
     , reflex-dom-core
     , reflex-dom-pandoc  >=0.2.6.0
     , reflex-fsnotify
