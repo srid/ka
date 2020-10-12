@@ -15,7 +15,7 @@ import Ka.Markdown (noteFileTitle)
 import Ka.Route (Route (..), routeLink)
 import qualified Ka.View as V
 import Reflex.Dom.Core hiding (Link)
-import Reflex.Dom.Pandoc (elPandocRawSafe)
+import Reflex.Dom.Pandoc (Config (Config), elPandocRawSafe)
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
     PandocRaw (..),
@@ -125,6 +125,16 @@ _style = do
       C.fontSize $ pct 85
       C.borderTop C.solid (px 1) C.black
 
+-- | Route monoid for use with reflex-dom-pandoc
+newtype RouteM t = RouteM
+  {unRouteM :: Event t Route}
+
+instance Reflex t => Semigroup (RouteM t) where
+  RouteM a <> RouteM b = RouteM $ leftmost [a, b]
+
+instance Reflex t => Monoid (RouteM t) where
+  mempty = RouteM never
+
 noteWidget ::
   PandocBuilder t m =>
   FilePath ->
@@ -134,17 +144,21 @@ noteWidget ::
   m (Event t Route)
 noteWidget fp fpAbs doc backlinks = do
   -- V.kaTemplate style (text $ noteFileTitle fp) $ do
-  divClass "ui basic segment" $ do
+  r1 <- divClass "ui basic segment" $ do
     elClass "h1" "ui header" $ text $ noteFileTitle fp
-    elPandoc defaultConfig doc
-  evt <- divClass "ui backlinks segment" $ do
+    let pandocCfg = Config $ \_ url _inlines -> do
+          fmap RouteM $
+            routeLink (Route_Node $ toString url) $
+              text "OOHH"
+    fmap unRouteM $ elPandoc pandocCfg doc
+  r2 <- divClass "ui backlinks segment" $ do
     backlinksWidget backlinks
   divClass "ui center aligned basic segment" $ do
     let editUrl = toText $ "vscode://file" <> fpAbs
     elAttr "a" ("href" =: editUrl) $ text "Edit locally"
     text " | "
     elAttr "a" ("href" =: ".") $ text "Index"
-  pure evt
+  pure $ leftmost [r1, r2]
 
 backlinksWidget ::
   PandocBuilder t m =>

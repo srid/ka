@@ -36,7 +36,7 @@ executable ka
     , reflex
     , reflex-dom
     , reflex-dom-core
-    , reflex-dom-pandoc  >=0.2.6.0
+    , reflex-dom-pandoc  >=0.7.0.0
     , reflex-fsnotify
     , relude             ^>=0.7.0.0
     , shower

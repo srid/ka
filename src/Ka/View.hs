@@ -20,19 +20,13 @@ rewriteLinks =
     case getNoteLink x of
       Nothing -> x
       Just (attr, inlines, (toString -> url, title)) ->
-        Link attr inlines (toText $ mdToHtmlUrl url, title)
+        Link attr inlines (toText $ mdToHtml url, title)
 
 mdToHtml :: FilePath -> FilePath
 mdToHtml = replaceWhitespace . (-<.> ".html")
   where
     replaceWhitespace =
       toString . T.replace " " "_" . toText
-
-mdToHtmlUrl :: FilePath -> FilePath
-mdToHtmlUrl =
-  -- The ./ prefix is to prevent the browser from thinking that our URL is a
-  -- custom protocol when it contains a colon.
-  ("./" <>) . mdToHtml
 
 kaTemplate :: DomBuilder t m => C.Css -> m () -> m a -> m a
 kaTemplate style titleW w = do
