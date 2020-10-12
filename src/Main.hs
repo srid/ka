@@ -63,14 +63,14 @@ renderRoute App {..} r = do
   evt1 <- case r of
     Route_Main -> do
       switchHold never <=< dyn $
-        ffor (Map.keys <$> _app_render) $ \fs -> do
+        ffor (Map.keys <$> _app_doc) $ \fs -> do
           fmap leftmost $
             forM fs $ \fp -> do
               el "li" $ do
                 routeLink (Route_Node fp) $ text $ G.unThing fp
     Route_Node fp -> do
       switchHold never <=< dyn $
-        ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_render) $ \(g, v) -> case v of
+        ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_doc) $ \(g, v) -> case v of
           Nothing -> text "404" >> pure never
           Just thingData ->
             renderDoc g fp thingData

@@ -41,7 +41,6 @@ executable ka
     , reflex-fsnotify
     , relude                 ^>=0.7.0.0
     , shower
-    , some
     , text
     , time
     , with-utf8

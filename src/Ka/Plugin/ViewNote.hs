@@ -9,12 +9,12 @@ import qualified Data.Set as Set
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Route (Route (..))
-import Ka.View (renderPandoc, renderThinkLink)
-import Reflex.Dom.Core hiding (Link)
+import Ka.View (renderPandoc)
+import Reflex.Dom.Core
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
   )
-import Text.Pandoc.Definition (Pandoc (Pandoc))
+import Text.Pandoc.Definition (Pandoc)
 
 runPlugin ::
   forall t m.
@@ -59,10 +59,10 @@ runPlugin graphD pandocD pandocE = do
           case mdoc of
             Nothing -> (fp, Nothing)
             Just doc -> (fp, Just doc)
-
-symmetricDifference :: Ord a => Set a -> Set a -> Set a
-symmetricDifference x y =
-  (x `Set.union` y) `Set.difference` (x `Set.intersection` y)
+  where
+    symmetricDifference :: Ord a => Set a -> Set a -> Set a
+    symmetricDifference x y =
+      (x `Set.union` y) `Set.difference` (x `Set.intersection` y)
 
 render ::
   PandocBuilder t m =>
@@ -70,33 +70,7 @@ render ::
   G.Thing ->
   Pandoc ->
   m (Event t Route)
-render g k doc = do
-  let backlinks =
-        -- FIXME: backlinks order is lost
-        G.preSetWithLabel k g
-  r1 <- divClass "ui basic segment" $ do
+render _g k doc = do
+  divClass "ui basic segment" $ do
     elClass "h1" "ui header" $ text $ G.unThing k
     renderPandoc doc
-  r2 <- divClass "ui backlinks segment" $ do
-    backlinksWidget backlinks
-  pure $ leftmost [r1, r2]
-
-backlinksWidget ::
-  PandocBuilder t m =>
-  [(G.Thing, [G.Context])] ->
-  m (Event t Route)
-backlinksWidget xs = do
-  elClass "h2" "header" $ text "Backlinks"
-  divClass "" $ do
-    fmap leftmost $
-      forM xs $ \(x, blks) -> do
-        divClass "ui vertical segment" $ do
-          evt1 <- elAttr "h3" ("class" =: "header") $ do
-            renderThinkLink x
-          evt2 <- elClass "ul" "ui list context" $ do
-            fmap leftmost $
-              forM blks $ \blk -> do
-                let blkDoc = Pandoc mempty (one blk)
-                el "li" $
-                  renderPandoc blkDoc
-          pure $ leftmost [evt1, evt2]

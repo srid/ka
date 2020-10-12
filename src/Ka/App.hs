@@ -21,8 +21,8 @@ import Text.Pandoc.Definition (Pandoc)
 
 data App t = App
   { _app_graph :: Dynamic t Graph,
-    _app_pandoc :: Dynamic t (Map G.Thing Pandoc),
-    _app_render :: Dynamic t (Map G.Thing (DSum Doc Identity))
+    -- _app_pandoc :: Dynamic t (Map G.Thing Pandoc),
+    _app_doc :: Dynamic t (Map G.Thing (DSum Doc Identity))
   }
 
 kaApp ::
@@ -73,7 +73,7 @@ kaApp = do
         ]
   renderD <-
     foldDyn G.patchMap mempty renderE
-  pure $ App graphD pandocD renderD
+  pure $ App graphD renderD
 
 logDiffEvent ::
   (PerformEvent t m, MonadIO (Performable m)) =>
