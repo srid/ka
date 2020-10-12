@@ -1,9 +1,8 @@
 module Ka.Markdown
   ( noteExtension,
-    noteFileTitle,
+    mdFileThing,
     parseMarkdown,
     queryLinksWithContext,
-    getNoteLink,
   )
 where
 
@@ -11,6 +10,7 @@ import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import Ka.Graph (Thing (Thing))
 import System.FilePath (dropExtension)
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Attr, Block, Inline (Link), Pandoc (..), Target)
@@ -25,8 +25,8 @@ type CMSyntaxSpec =
 noteExtension :: String
 noteExtension = ".md"
 
-noteFileTitle :: FilePath -> Text
-noteFileTitle = toText . dropExtension
+mdFileThing :: FilePath -> Thing
+mdFileThing = Thing . toText . dropExtension
 
 parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> Pandoc
 parseMarkdown spec fp s =
@@ -53,20 +53,19 @@ queryLinksWithContext doc =
           W.query linksFromInline is
         _ -> mempty
 
-linksFromInline :: Inline -> [FilePath]
-linksFromInline = maybeToList . getNoteLinkFilePath
+    linksFromInline :: Inline -> [FilePath]
+    linksFromInline = maybeToList . getNoteLinkFilePath
 
--- | Get the note filename from its link
-getNoteLinkFilePath :: Inline -> Maybe FilePath
-getNoteLinkFilePath x = do
-  (_attr, _inlines, (url, _title)) <- getNoteLink x
-  pure $ toString url
+    getNoteLinkFilePath :: Inline -> Maybe FilePath
+    getNoteLinkFilePath x = do
+      (_attr, _inlines, (url, _title)) <- getNoteLink x
+      pure $ toString url
 
-getNoteLink :: Inline -> Maybe (Attr, [Inline], Target)
-getNoteLink = \case
-  Link attr inlines target@(url, _title) -> do
-    guard $ not $ "/" `T.isInfixOf` url
-    guard $ ".md" `T.isSuffixOf` url
-    pure (attr, inlines, target)
-  _ ->
-    Nothing
+    getNoteLink :: Inline -> Maybe (Attr, [Inline], Target)
+    getNoteLink = \case
+      Link attr inlines target@(url, _title) -> do
+        guard $ not $ "/" `T.isInfixOf` url
+        guard $ toText noteExtension `T.isSuffixOf` url
+        pure (attr, inlines, target)
+      _ ->
+        Nothing

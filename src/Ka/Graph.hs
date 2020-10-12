@@ -1,5 +1,7 @@
 module Ka.Graph
   ( Graph,
+    Thing (..),
+    Context,
     empty,
     patch,
     patchMap,
@@ -13,10 +15,21 @@ import qualified Data.Map.Strict as Map
 import Text.Pandoc.Definition (Block)
 import Prelude hiding (empty)
 
+-- | A thing is anything. Usually a note file, or some"thing" created by a plugin.
+--
+-- Defined as the human readable title.
+newtype Thing = Thing {unThing :: Text}
+  deriving (Eq, Show, Ord)
+
+-- | The context of a relationship
+--
+-- Defined as the Pandoc block element from which the link was made.
+type Context = Block
+
 type Graph' = AM.AdjacencyMap
 
 -- A graph of notes, with surrounding link context as edge label.
-type Graph = Graph' [Block] FilePath
+type Graph = Graph' [Context] Thing
 
 empty :: Graph
 empty = AM.empty
