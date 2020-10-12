@@ -69,9 +69,9 @@ kaApp = do
           (fmap . fmap . fmap . fmap) (\x -> Doc_Calendar :=> Identity x) $
             Calendar.runPlugin graphD pandocD pandocE
         ]
-  renderD <-
+  docD <-
     foldDyn G.patchMap mempty renderE
-  pure $ App graphD renderD
+  pure $ App graphD docD
 
 logDiffEvent ::
   (PerformEvent t m, MonadIO (Performable m)) =>

@@ -65,7 +65,7 @@ headWidget = do
   el "style" $ do
     text $ toStrict $ C.render style
 
-renderThinkLink :: DomBuilder t m => G.Thing -> m (Event t Route)
+renderThinkLink :: (Prerender js t m, DomBuilder t m) => G.Thing -> m (Event t Route)
 renderThinkLink x = do
   routeLink (Route_Node x) $ do
     text $ G.unThing x
@@ -87,7 +87,7 @@ instance Reflex t => Semigroup (RouteM t) where
 instance Reflex t => Monoid (RouteM t) where
   mempty = RouteM never
 
-renderPandoc :: PandocBuilder t m => Pandoc -> m (Event t Route)
+renderPandoc :: (PandocBuilder t m, Prerender js t m) => Pandoc -> m (Event t Route)
 renderPandoc doc = do
   fmap unRouteM $ elPandoc pandocCfg doc
   where

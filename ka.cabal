@@ -30,6 +30,8 @@ executable ka
     , filepath
     , filepattern
     , fsnotify
+    , ghcjs-dom
+    , lens
     , mtl
     , obelisk-route
     , pandoc-types

@@ -18,7 +18,7 @@ data Doc a where
 
 type D t = Dynamic t (Map G.Thing (DSum Doc Identity))
 
-renderDoc :: PandocBuilder t m => Graph -> G.Thing -> DSum Doc Identity -> m (Event t Route)
+renderDoc :: (Prerender js t m, PandocBuilder t m) => Graph -> G.Thing -> DSum Doc Identity -> m (Event t Route)
 renderDoc g th v = do
   r1 <- divClass "ui basic segment" $ do
     elClass "h1" "ui header" $ text $ G.unThing th
@@ -33,7 +33,7 @@ renderDoc g th v = do
   pure $ leftmost [r1, r2]
 
 backlinksWidget ::
-  PandocBuilder t m =>
+  (Prerender js t m, PandocBuilder t m) =>
   [(G.Thing, [G.Context])] ->
   m (Event t Route)
 backlinksWidget xs = do
