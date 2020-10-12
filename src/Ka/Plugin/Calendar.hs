@@ -10,7 +10,7 @@ import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Route (Route)
-import Ka.View (renderLink)
+import Ka.View (renderThinkLink)
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
@@ -54,6 +54,6 @@ runPlugin _graphD _pandocD pandocE = do
         fmap leftmost $
           forM fs $ \fp ->
             elAttr "a" ("class" =: "column") $
-              renderLink fp
+              renderThinkLink fp
     isDiaryFileName =
       T.isPrefixOf "20" . G.unThing

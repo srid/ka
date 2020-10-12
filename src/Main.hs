@@ -25,9 +25,7 @@ main =
         headWidget
         bodyWidget
 
-headWidget ::
-  (DomBuilder t m) =>
-  m ()
+headWidget :: DomBuilder t m => m ()
 headWidget = do
   View.headWidget
   el "title" $ text "ka Jsaddle"

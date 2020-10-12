@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Ka.Plugin.ViewNote
   ( runPlugin,
   )
@@ -7,24 +5,15 @@ where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
-import Ka.Markdown (mdFileThing)
 import Ka.Route (Route (..))
-import Ka.View (renderLink)
+import Ka.View (renderPandoc, renderThinkLink)
 import Reflex.Dom.Core hiding (Link)
-import Reflex.Dom.Pandoc (Config (Config), elPandocRawSafe)
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
-    PandocRaw (..),
-    elPandoc,
   )
-import Text.Pandoc.Definition (Block, Pandoc (Pandoc))
-
-instance PandocRaw (HydrationDomBuilderT s t m) where
-  type PandocRawConstraints (HydrationDomBuilderT s t m) = (DomBuilder t (HydrationDomBuilderT s t m))
-  elPandocRaw = elPandocRawSafe
+import Text.Pandoc.Definition (Pandoc (Pandoc))
 
 runPlugin ::
   forall t m.
@@ -84,27 +73,8 @@ render g k doc = do
   let backlinks =
         -- FIXME: backlinks order is lost
         G.preSetWithLabel k g
-  noteWidget k doc backlinks
-
--- | Route monoid for use with reflex-dom-pandoc
-newtype RouteM t = RouteM
-  {unRouteM :: Event t Route}
-
-instance Reflex t => Semigroup (RouteM t) where
-  RouteM a <> RouteM b = RouteM $ leftmost [a, b]
-
-instance Reflex t => Monoid (RouteM t) where
-  mempty = RouteM never
-
-noteWidget ::
-  PandocBuilder t m =>
-  G.Thing ->
-  Pandoc ->
-  [(G.Thing, [Block])] ->
-  m (Event t Route)
-noteWidget fp doc backlinks = do
   r1 <- divClass "ui basic segment" $ do
-    elClass "h1" "ui header" $ text $ G.unThing fp
+    elClass "h1" "ui header" $ text $ G.unThing k
     renderPandoc doc
   r2 <- divClass "ui backlinks segment" $ do
     backlinksWidget backlinks
@@ -121,7 +91,7 @@ backlinksWidget xs = do
       forM xs $ \(x, blks) -> do
         divClass "ui vertical segment" $ do
           evt1 <- elAttr "h3" ("class" =: "header") $ do
-            renderLink x
+            renderThinkLink x
           evt2 <- elClass "ul" "ui list context" $ do
             fmap leftmost $
               forM blks $ \blk -> do
@@ -129,13 +99,3 @@ backlinksWidget xs = do
                 el "li" $
                   renderPandoc blkDoc
           pure $ leftmost [evt1, evt2]
-
-renderPandoc :: (PandocBuilder t m) => Pandoc -> m (Event t Route)
-renderPandoc doc = do
-  fmap unRouteM $ elPandoc pandocCfg doc
-  where
-    pandocCfg = Config $ \f url _inlines ->
-      fmap RouteM $ do
-        if "://" `T.isInfixOf` url
-          then f >> pure never
-          else renderLink $ mdFileThing (toString url)

@@ -3,7 +3,6 @@ module Ka.Markdown
     mdFileThing,
     parseMarkdown,
     queryLinksWithContext,
-    getNoteLink,
   )
 where
 
@@ -54,20 +53,19 @@ queryLinksWithContext doc =
           W.query linksFromInline is
         _ -> mempty
 
-linksFromInline :: Inline -> [FilePath]
-linksFromInline = maybeToList . getNoteLinkFilePath
+    linksFromInline :: Inline -> [FilePath]
+    linksFromInline = maybeToList . getNoteLinkFilePath
 
--- | Get the note filename from its link
-getNoteLinkFilePath :: Inline -> Maybe FilePath
-getNoteLinkFilePath x = do
-  (_attr, _inlines, (url, _title)) <- getNoteLink x
-  pure $ toString url
+    getNoteLinkFilePath :: Inline -> Maybe FilePath
+    getNoteLinkFilePath x = do
+      (_attr, _inlines, (url, _title)) <- getNoteLink x
+      pure $ toString url
 
-getNoteLink :: Inline -> Maybe (Attr, [Inline], Target)
-getNoteLink = \case
-  Link attr inlines target@(url, _title) -> do
-    guard $ not $ "/" `T.isInfixOf` url
-    guard $ ".md" `T.isSuffixOf` url
-    pure (attr, inlines, target)
-  _ ->
-    Nothing
+    getNoteLink :: Inline -> Maybe (Attr, [Inline], Target)
+    getNoteLink = \case
+      Link attr inlines target@(url, _title) -> do
+        guard $ not $ "/" `T.isInfixOf` url
+        guard $ toText noteExtension `T.isSuffixOf` url
+        pure (attr, inlines, target)
+      _ ->
+        Nothing

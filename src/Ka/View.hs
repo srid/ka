@@ -1,14 +1,27 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Ka.View
   ( headWidget,
-    renderLink,
+    renderThinkLink,
+    renderPandoc,
   )
 where
 
 import Clay (em, pct, px, (?))
 import qualified Clay as C
+import qualified Data.Text as T
 import qualified Ka.Graph as G
+import Ka.Markdown (mdFileThing)
 import Ka.Route (Route (..), routeLink)
 import Reflex.Dom.Core
+import Reflex.Dom.Pandoc
+  ( Config (Config),
+    PandocBuilder,
+    PandocRaw (..),
+    elPandoc,
+    elPandocRawSafe,
+  )
+import Text.Pandoc.Definition (Pandoc)
 
 style :: C.Css
 style = do
@@ -52,7 +65,34 @@ headWidget = do
   el "style" $ do
     text $ toStrict $ C.render style
 
-renderLink :: DomBuilder t m => G.Thing -> m (Event t Route)
-renderLink x = do
+renderThinkLink :: DomBuilder t m => G.Thing -> m (Event t Route)
+renderThinkLink x = do
   routeLink (Route_Node x) $ do
     text $ G.unThing x
+
+-- Pandoc rendering
+-- ----------------
+
+instance PandocRaw (HydrationDomBuilderT s t m) where
+  type PandocRawConstraints (HydrationDomBuilderT s t m) = (DomBuilder t (HydrationDomBuilderT s t m))
+  elPandocRaw = elPandocRawSafe
+
+-- | Route monoid for use with reflex-dom-pandoc
+newtype RouteM t = RouteM
+  {unRouteM :: Event t Route}
+
+instance Reflex t => Semigroup (RouteM t) where
+  RouteM a <> RouteM b = RouteM $ leftmost [a, b]
+
+instance Reflex t => Monoid (RouteM t) where
+  mempty = RouteM never
+
+renderPandoc :: PandocBuilder t m => Pandoc -> m (Event t Route)
+renderPandoc doc = do
+  fmap unRouteM $ elPandoc pandocCfg doc
+  where
+    pandocCfg = Config $ \f url _inlines ->
+      fmap RouteM $ do
+        if "://" `T.isInfixOf` url
+          then f >> pure never
+          else renderThinkLink $ mdFileThing (toString url)
