@@ -1,10 +1,13 @@
 module Ka.Route
   ( Route (..),
+    style,
     routeLink,
     renderThingLink,
   )
 where
 
+import Clay ((?))
+import qualified Clay as C
 import Control.Lens.Operators
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.Types as DOM
@@ -40,6 +43,19 @@ renderThingLink :: (Prerender js t m, DomBuilder t m) => ThingName -> m (Event t
 renderThingLink x = do
   routeLink (Route_Node x) $ do
     text $ unThingName x
+
+style :: C.Css
+style = do
+  let linkColor = C.purple
+  "a.route" ? do
+    C.important $ do
+      C.fontWeight C.bold
+      C.color linkColor
+      C.cursor C.pointer
+  "a.route:hover" ? do
+    C.important $ do
+      C.backgroundColor linkColor
+      C.color C.white
 
 scrollToTop :: forall m t js. (Prerender js t m, Monad m) => Event t () -> m ()
 scrollToTop e = prerender_ blank $

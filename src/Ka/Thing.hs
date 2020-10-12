@@ -1,9 +1,12 @@
 module Ka.Thing
   ( Thing (..),
     render,
+    style,
   )
 where
 
+import Clay (em, pct, (?))
+import qualified Clay as C
 import Data.Dependent.Sum (DSum (..))
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
@@ -38,6 +41,25 @@ render g th v = do
     let backlinks = G.preSetWithLabel th g
     backlinksWidget backlinks
   pure $ leftmost [r1, r2]
+
+style :: C.Css
+style = do
+  ".backlinks" ? do
+    let smallerFont x = C.important $ C.fontSize x
+    C.backgroundColor "#eee"
+    "h2" ? smallerFont (em 1.2)
+    "h3" ? smallerFont (pct 90)
+    ".context" ? smallerFont (pct 85)
+    C.color C.gray
+    do
+      let linkColorFaded = "#555"
+      C.a ? do
+        C.important $ do
+          C.color linkColorFaded
+      C.a C.# C.hover ? do
+        C.important $ do
+          C.backgroundColor linkColorFaded
+          C.color C.white
 
 backlinksWidget ::
   (Prerender js t m, PandocBuilder t m) =>
