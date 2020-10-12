@@ -25,6 +25,7 @@ executable ka
     , commonmark-pandoc
     , containers
     , data-default
+    , dependent-sum
     , directory
     , filepath
     , filepattern
@@ -36,10 +37,11 @@ executable ka
     , reflex
     , reflex-dom
     , reflex-dom-core
-    , reflex-dom-pandoc  >=0.7.0.0
+    , reflex-dom-pandoc      >=0.7.0.0
     , reflex-fsnotify
-    , relude             ^>=0.7.0.0
+    , relude                 ^>=0.7.0.0
     , shower
+    , some
     , text
     , time
     , with-utf8
@@ -53,6 +55,7 @@ executable ka
     DeriveFunctor
     DerivingStrategies
     FlexibleContexts
+    GADTs
     LambdaCase
     OverloadedStrings
     RecordWildCards
@@ -66,6 +69,7 @@ executable ka
     Ka.App
     Ka.Graph
     Ka.Markdown
+    Ka.Plugin
     Ka.Plugin.Calendar
     Ka.Plugin.ViewNote
     Ka.Plugin.WikiLink

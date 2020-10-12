@@ -1,5 +1,6 @@
 module Ka.Plugin.ViewNote
   ( runPlugin,
+    render,
   )
 where
 
@@ -25,7 +26,7 @@ runPlugin ::
   Dynamic t Graph ->
   Dynamic t (Map G.Thing Pandoc) ->
   (Event t (Map G.Thing (Maybe Pandoc))) ->
-  m (Event t (Map G.Thing (Maybe (m (Event t Route)))))
+  m (Event t (Map G.Thing (Maybe Pandoc)))
 runPlugin graphD pandocD pandocE = do
   -- Like `pandocE` but includes other notes whose backlinks have changed as a
   -- result of the update in `pandocE`
@@ -52,19 +53,19 @@ runPlugin graphD pandocD pandocE = do
                         pure (fp', Just doc')
                  in Map.insert fp doc $ Map.fromList esR
   pure $
-    ffor (attachPromptlyDyn graphD pandocAllE) $ \(graph, xs) ->
+    ffor pandocAllE $ \xs ->
       Map.fromList $
         ffor (Map.toList xs) $ \(fp, mdoc) -> do
           case mdoc of
             Nothing -> (fp, Nothing)
-            Just doc -> (fp, Just $ render graph fp doc)
+            Just doc -> (fp, Just doc)
 
 symmetricDifference :: Ord a => Set a -> Set a -> Set a
 symmetricDifference x y =
   (x `Set.union` y) `Set.difference` (x `Set.intersection` y)
 
 render ::
-  (PandocBuilder t m, MonadIO m) =>
+  PandocBuilder t m =>
   Graph ->
   G.Thing ->
   Pandoc ->

@@ -5,23 +5,24 @@ module Ka.App where
 import Commonmark (defaultSyntaxSpec)
 import qualified Commonmark.Extensions as CE
 import Control.Monad.Fix (MonadFix)
+import Data.Dependent.Sum (DSum (..))
 import qualified Data.Map.Strict as Map
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
+import Ka.Plugin
 import qualified Ka.Plugin.Calendar as Calendar
 import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
-import Ka.Route (Route)
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
 import Text.Pandoc.Definition (Pandoc)
 
-data App t m = App
+data App t = App
   { _app_graph :: Dynamic t Graph,
     _app_pandoc :: Dynamic t (Map G.Thing Pandoc),
-    _app_render :: Dynamic t (Map G.Thing (m (Event t Route)))
+    _app_render :: Dynamic t (Map G.Thing (DSum Doc Identity))
   }
 
 kaApp ::
@@ -36,7 +37,7 @@ kaApp ::
     MonadIO (Performable m),
     PandocBuilder t m
   ) =>
-  m (App t m)
+  m (App t)
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   logDiffEvent fileContentE
@@ -65,8 +66,10 @@ kaApp = do
     fmap (mergeWith $ flip Map.union) $
       sequence
         -- TODO: Eventually create a proper Plugin type to hold these functions.
-        [ ViewNote.runPlugin graphD pandocD pandocE,
-          Calendar.runPlugin graphD pandocD pandocE
+        [ (fmap . fmap . fmap . fmap) (\x -> Doc_Pandoc :=> Identity x) $
+            ViewNote.runPlugin graphD pandocD pandocE,
+          (fmap . fmap . fmap . fmap) (\x -> Doc_Calendar :=> Identity x) $
+            Calendar.runPlugin graphD pandocD pandocE
         ]
   renderD <-
     foldDyn G.patchMap mempty renderE

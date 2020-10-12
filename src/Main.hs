@@ -6,6 +6,7 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Graph as G
+import Ka.Plugin (renderDoc)
 import Ka.Route
 import qualified Ka.View as View
 import Main.Utf8 (withUtf8)
@@ -51,11 +52,11 @@ bodyWidget = do
     pure ()
 
 renderRoute ::
-  ( DomBuilder t m,
+  ( PandocBuilder t m,
     MonadHold t m,
     PostBuild t m
   ) =>
-  App t m ->
+  App t ->
   Route ->
   m (Event t Route)
 renderRoute App {..} r = do
@@ -69,9 +70,10 @@ renderRoute App {..} r = do
                 routeLink (Route_Node fp) $ text $ G.unThing fp
     Route_Node fp -> do
       switchHold never <=< dyn $
-        ffor (Map.lookup fp <$> _app_render) $ \case
+        ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_render) $ \(g, v) -> case v of
           Nothing -> text "404" >> pure never
-          Just w -> w
+          Just thingData ->
+            renderDoc g fp thingData
   evt2 <- divClass "ui center aligned basic segment" $ do
     routeLink Route_Main $
       text "Index"

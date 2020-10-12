@@ -1,5 +1,6 @@
 module Ka.Plugin.Calendar
   ( runPlugin,
+    render,
   )
 where
 
@@ -24,7 +25,7 @@ runPlugin ::
   Dynamic t Graph ->
   Dynamic t (Map G.Thing Pandoc) ->
   (Event t (Map G.Thing (Maybe Pandoc))) ->
-  m (Event t (Map G.Thing (Maybe (m (Event t Route)))))
+  m (Event t (Map G.Thing (Maybe (Set G.Thing))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
@@ -46,14 +47,16 @@ runPlugin _graphD _pandocD pandocE = do
             Just $
               one $
                 (G.Thing "0-Calendar",) $
-                  Just $ calWidget (Set.toList fs)
+                  Just fs
   where
-    calWidget fs = do
-      elClass "h1" "header" $ text "Calendar"
-      divClass "ui divided equal width compact seven column grid" $ do
-        fmap leftmost $
-          forM fs $ \fp ->
-            elAttr "a" ("class" =: "column") $
-              renderThinkLink fp
     isDiaryFileName =
       T.isPrefixOf "20" . G.unThing
+
+render :: DomBuilder t m => Set G.Thing -> m (Event t Route)
+render (Set.toList -> fs) = do
+  elClass "h1" "header" $ text "Calendar"
+  divClass "ui divided equal width compact seven column grid" $ do
+    fmap leftmost $
+      forM fs $ \fp ->
+        elAttr "a" ("class" =: "column") $
+          renderThinkLink fp
