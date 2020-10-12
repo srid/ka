@@ -12,7 +12,6 @@ import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
 import Ka.Plugin
 import qualified Ka.Plugin.Calendar as Calendar
-import qualified Ka.Plugin.ViewNote as ViewNote
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
@@ -66,8 +65,7 @@ kaApp = do
     fmap (mergeWith $ flip Map.union) $
       sequence
         -- TODO: Eventually create a proper Plugin type to hold these functions.
-        [ (fmap . fmap . fmap . fmap) (\x -> Doc_Pandoc :=> Identity x) $
-            ViewNote.runPlugin graphD pandocD pandocE,
+        [ pure $ (fmap . fmap . fmap) (\x -> Doc_Pandoc :=> Identity x) pandocE,
           (fmap . fmap . fmap . fmap) (\x -> Doc_Calendar :=> Identity x) $
             Calendar.runPlugin graphD pandocD pandocE
         ]

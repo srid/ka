@@ -54,7 +54,6 @@ runPlugin _graphD _pandocD pandocE = do
 
 render :: DomBuilder t m => Set G.Thing -> m (Event t Route)
 render (Set.toList -> fs) = do
-  elClass "h1" "header" $ text "Calendar"
   divClass "ui divided equal width compact seven column grid" $ do
     fmap leftmost $
       forM fs $ \fp ->

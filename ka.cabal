@@ -70,7 +70,6 @@ executable ka
     Ka.Markdown
     Ka.Plugin
     Ka.Plugin.Calendar
-    Ka.Plugin.ViewNote
     Ka.Plugin.WikiLink
     Ka.Route
     Ka.View
