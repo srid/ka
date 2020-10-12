@@ -10,6 +10,7 @@ import Clay (Css, render, (?))
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
+import Ka.Breadcrumb (Breadcrumbs)
 import qualified Ka.Breadcrumb as Breadcrumb
 import Ka.Graph (ThingName (unThingName))
 import Ka.Route (Route (..), routeLink)
@@ -50,7 +51,7 @@ bodyWidget = do
     app <- kaApp
     rec route :: Dynamic t Route <-
           holdDyn Route_Main nextRoute
-        routeHist <- foldDyn Breadcrumb.pushCrumb (one Route_Main) nextRoute
+        routeHist <- foldDyn Breadcrumb.putCrumb (Breadcrumb.init Route_Main) nextRoute
         nextRoute <- switchHold never <=< dyn $
           ffor (traceDyn "route" route) $ \r -> renderRoute app routeHist r
     pure ()
@@ -62,7 +63,7 @@ renderRoute ::
     Prerender js t m
   ) =>
   App t ->
-  Dynamic t (NonEmpty Route) ->
+  Dynamic t (Breadcrumbs Route) ->
   Route ->
   m (Event t Route)
 renderRoute App {..} routeHist r = do
