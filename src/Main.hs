@@ -49,7 +49,7 @@ bodyWidget = do
     rec route :: Dynamic t Route <-
           holdDyn Route_Main switches
         switches <- switchHold never <=< dyn $
-          ffor (traceDyn "route:" route) $ \r -> renderRoute app r
+          ffor (traceDyn "route" route) $ \r -> renderRoute app r
     pure ()
 
 renderRoute ::
@@ -60,16 +60,21 @@ renderRoute ::
   App t m ->
   Route ->
   m (Event t Route)
-renderRoute App {..} = \case
-  Route_Main -> do
-    switchHold never <=< dyn $
-      ffor (Map.keys <$> _app_render) $ \fs -> do
-        fmap leftmost $
-          forM fs $ \fp -> do
-            el "li" $ do
-              routeLink (Route_Node fp) $ text $ G.unThing fp
-  Route_Node fp -> do
-    switchHold never <=< dyn $
-      ffor (Map.lookup fp <$> _app_render) $ \case
-        Nothing -> text "404" >> pure never
-        Just w -> w
+renderRoute App {..} r = do
+  evt1 <- case r of
+    Route_Main -> do
+      switchHold never <=< dyn $
+        ffor (Map.keys <$> _app_render) $ \fs -> do
+          fmap leftmost $
+            forM fs $ \fp -> do
+              el "li" $ do
+                routeLink (Route_Node fp) $ text $ G.unThing fp
+    Route_Node fp -> do
+      switchHold never <=< dyn $
+        ffor (Map.lookup fp <$> _app_render) $ \case
+          Nothing -> text "404" >> pure never
+          Just w -> w
+  evt2 <- divClass "ui center aligned basic segment" $ do
+    routeLink Route_Main $
+      text "Index"
+  pure $ leftmost [evt1, evt2]

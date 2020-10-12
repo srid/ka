@@ -10,7 +10,8 @@ import qualified Data.Set as Set
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing)
-import Ka.Route (Route (..), routeLink)
+import Ka.Route (Route (..))
+import Ka.View (renderLink)
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc (Config (Config), elPandocRawSafe)
 import Reflex.Dom.Pandoc.Document
@@ -106,8 +107,6 @@ noteWidget fp doc backlinks = do
     renderPandoc doc
   r2 <- divClass "ui backlinks segment" $ do
     backlinksWidget backlinks
-  divClass "ui center aligned basic segment" $ do
-    elAttr "a" ("href" =: ".") $ text "Index"
   pure $ leftmost [r1, r2]
 
 backlinksWidget ::
@@ -136,8 +135,3 @@ renderPandoc doc = do
         fmap RouteM $
           renderLink $ mdFileThing $ toString url
   fmap unRouteM $ elPandoc pandocCfg doc
-
-renderLink :: DomBuilder t m => G.Thing -> m (Event t Route)
-renderLink x = do
-  routeLink (Route_Node x) $ do
-    text $ G.unThing x

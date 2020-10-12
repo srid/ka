@@ -1,24 +1,29 @@
 module Ka.View
   ( headWidget,
+    renderLink,
   )
 where
 
 import Clay (em, pct, px, (?))
 import qualified Clay as C
-import Reflex.Dom.Core hiding (Link)
+import qualified Ka.Graph as G
+import Ka.Route (Route (..), routeLink)
+import Reflex.Dom.Core
 
 style :: C.Css
 style = do
   ".ui.container" ? do
-    C.a ? do
+    let linkColor = C.purple
+    "a.route" ? do
       -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
       -- Like table,a. Then style only wikilinks.
       C.important $ do
         C.fontWeight C.bold
-        C.color C.green
-    C.a C.# C.hover ? do
+        C.color linkColor
+        C.cursor C.pointer
+    "a.route:hover" ? do
       C.important $ do
-        C.backgroundColor C.green
+        C.backgroundColor linkColor
         C.color C.white
     ".backlinks" ? do
       let smallerFont x = C.important $ C.fontSize x
@@ -28,13 +33,13 @@ style = do
       ".context" ? smallerFont (pct 85)
       C.color C.gray
       do
-        let linkColor = "#555"
+        let linkColorFaded = "#555"
         C.a ? do
           C.important $ do
-            C.color linkColor
+            C.color linkColorFaded
         C.a C.# C.hover ? do
           C.important $ do
-            C.backgroundColor linkColor
+            C.backgroundColor linkColorFaded
             C.color C.white
     -- Pandoc styles
     "#footnotes" ? do
@@ -48,3 +53,8 @@ headWidget = do
   elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
   el "style" $ do
     text $ toStrict $ C.render style
+
+renderLink :: DomBuilder t m => G.Thing -> m (Event t Route)
+renderLink x = do
+  routeLink (Route_Node x) $ do
+    text $ G.unThing x

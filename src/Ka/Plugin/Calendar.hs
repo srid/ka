@@ -5,10 +5,12 @@ where
 
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Route (Route)
+import Ka.View (renderLink)
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
@@ -43,15 +45,15 @@ runPlugin _graphD _pandocD pandocE = do
           else
             Just $
               one $
-                (G.Thing "Calendar",) $
-                  Just $ calWidget fs >> pure never
+                (G.Thing "0-Calendar",) $
+                  Just $ calWidget (Set.toList fs)
   where
     calWidget fs = do
-      -- V.kaTemplate mempty (text "Calendar") $ do
       elClass "h1" "header" $ text "Calendar"
       divClass "ui divided equal width compact seven column grid" $ do
-        forM_ fs $ \fp ->
-          elAttr "a" ("class" =: "column" <> "href" =: G.unThing fp) $
-            text $ G.unThing fp
+        fmap leftmost $
+          forM fs $ \fp ->
+            elAttr "a" ("class" =: "column") $
+              renderLink fp
     isDiaryFileName =
       T.isPrefixOf "20" . G.unThing
