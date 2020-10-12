@@ -3,6 +3,7 @@
 module Main where
 
 import Control.Monad.Fix (MonadFix)
+import Data.List (elemIndex)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Graph as G
@@ -50,7 +51,7 @@ bodyWidget = do
     app <- kaApp
     rec route :: Dynamic t Route <-
           holdDyn Route_Main nextRoute
-        routeHist <- foldDyn (:) mempty nextRoute
+        routeHist <- foldDyn pushCrumb (one Route_Main) nextRoute
         nextRoute <- switchHold never <=< dyn $
           ffor (traceDyn "route" route) $ \r -> renderRoute app routeHist r
     pure ()
@@ -66,17 +67,7 @@ renderRoute ::
   Route ->
   m (Event t Route)
 renderRoute App {..} routeHist r = do
-  evt0 <- divClass "ui mini steps" $ do
-    switchHold never <=< dyn $
-      ffor (reverse <$> routeHist) $ \rh -> fmap leftmost $
-        forM rh $ \rPrev -> do
-          elClass "a" "step" $ do
-            divClass "content" $ do
-              divClass "title" $ do
-                -- TODO: clicking on this should discard later items in stack
-                routeLink rPrev $ case rPrev of
-                  Route_Main -> text "Main"
-                  Route_Node th -> text $ G.unThing th
+  evt0 <- breadcrumbTrail routeHist
   evt1 <- case r of
     Route_Main -> do
       switchHold never <=< dyn $
@@ -95,3 +86,26 @@ renderRoute App {..} routeHist r = do
     routeLink Route_Main $
       text "Index"
   pure $ leftmost [evt0, evt1, evt2]
+
+pushCrumb :: Eq a => a -> [a] -> [a]
+pushCrumb x xs =
+  case elemIndex x xs of
+    Nothing -> x : xs
+    Just idx -> drop idx xs
+
+breadcrumbTrail ::
+  (DomBuilder t m, PostBuild t m, MonadHold t m, Prerender js t m) =>
+  Dynamic t [Route] ->
+  m (Event t Route)
+breadcrumbTrail routeHist = do
+  divClass "ui mini steps" $ do
+    switchHold never <=< dyn $
+      ffor (reverse <$> routeHist) $ \rh -> fmap leftmost $
+        forM rh $ \rPrev -> do
+          elClass "a" "step" $ do
+            divClass "content" $ do
+              divClass "title" $ do
+                -- TODO: clicking on this should discard later items in stack
+                routeLink rPrev $ case rPrev of
+                  Route_Main -> text "Main"
+                  Route_Node th -> text $ G.unThing th
