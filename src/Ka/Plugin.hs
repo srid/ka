@@ -3,10 +3,10 @@ module Ka.Plugin where
 import Data.Dependent.Sum (DSum (..))
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
+import qualified Ka.PandocView as PandocView
+import qualified Ka.PandocView as ViewPandoc
 import qualified Ka.Plugin.Calendar as Calendar
-import Ka.Route (Route)
-import Ka.View (renderPandoc, renderThingLink)
-import qualified Ka.View as View
+import Ka.Route (Route, renderThingLink)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -24,7 +24,7 @@ renderDoc g th v = do
     elClass "h1" "ui header" $ text $ G.unThing th
     case v of
       Doc_Pandoc :=> Identity doc ->
-        View.renderPandoc doc
+        ViewPandoc.render doc
       Doc_Calendar :=> Identity days ->
         Calendar.render days
   r2 <- divClass "ui backlinks segment" $ do
@@ -49,5 +49,5 @@ backlinksWidget xs = do
               forM blks $ \blk -> do
                 let blkDoc = Pandoc mempty (one blk)
                 el "li" $
-                  renderPandoc blkDoc
+                  PandocView.render blkDoc
           pure $ leftmost [evt1, evt2]

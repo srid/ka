@@ -2,7 +2,7 @@ module Ka.Breadcrumb where
 
 import Data.List (elemIndex)
 import qualified Ka.Graph as G
-import Ka.Route (Route (..), routeLink)
+import Ka.Route
 import Reflex.Dom.Core
 
 pushCrumb :: Eq a => a -> [a] -> [a]

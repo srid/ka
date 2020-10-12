@@ -1,10 +1,16 @@
-module Ka.Route where
+module Ka.Route
+  ( Route (..),
+    routeLink,
+    renderThingLink,
+  )
+where
 
 import Control.Lens.Operators
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.Types as DOM
 import qualified GHCJS.DOM.Window as Window
 import Ka.Graph (Thing)
+import qualified Ka.Graph as G
 import Reflex.Dom
 
 data Route
@@ -31,6 +37,11 @@ routeLink r w = do
   scrollToTop clicked
   pure $ r <$ clicked
 
+renderThingLink :: (Prerender js t m, DomBuilder t m) => G.Thing -> m (Event t Route)
+renderThingLink x = do
+  routeLink (Route_Node x) $ do
+    text $ G.unThing x
+
 scrollToTop :: forall m t js. (Prerender js t m, Monad m) => Event t () -> m ()
 scrollToTop e = prerender_ blank $
   performEvent_ $
@@ -39,16 +50,3 @@ scrollToTop e = prerender_ blank $
         DOM.currentWindow >>= \case
           Nothing -> pure ()
           Just win -> Window.scrollTo win 0 0
-
--- | Get the click event on an element
---
--- Use as:
---   clickEvent $ el' "a" ...
-clickEvent ::
-  ( DomBuilder t m,
-    HasDomEvent t target 'ClickTag
-  ) =>
-  m (target, a) ->
-  m (Event t ())
-clickEvent w =
-  fmap (fmap (const ()) . domEvent Click . fst) w

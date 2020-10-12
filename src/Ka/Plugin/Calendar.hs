@@ -10,8 +10,7 @@ import qualified Data.Set as Set
 import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
-import Ka.Route (Route)
-import Ka.View (renderThingLink)
+import Ka.Route (Route, renderThingLink)
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
