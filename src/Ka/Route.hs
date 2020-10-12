@@ -8,6 +8,7 @@ data Route
   | Route_Node Thing
   deriving (Eq, Show)
 
+-- TODO: This should scroll to top after route switch
 routeLink :: DomBuilder t m => Route -> m () -> m (Event t Route)
 routeLink r w = do
   e <- clickEvent $ elClass' "a" "route" w

@@ -7,6 +7,7 @@ where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
+import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing)
@@ -131,7 +132,10 @@ backlinksWidget xs = do
 
 renderPandoc :: (PandocBuilder t m) => Pandoc -> m (Event t Route)
 renderPandoc doc = do
-  let pandocCfg = Config $ \_ url _inlines -> do
-        fmap RouteM $
-          renderLink $ mdFileThing $ toString url
   fmap unRouteM $ elPandoc pandocCfg doc
+  where
+    pandocCfg = Config $ \f url _inlines ->
+      fmap RouteM $ do
+        if "://" `T.isInfixOf` url
+          then f >> pure never
+          else renderLink $ mdFileThing (toString url)

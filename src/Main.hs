@@ -47,8 +47,8 @@ bodyWidget = do
   divClass "ui text container" $ do
     app <- kaApp
     rec route :: Dynamic t Route <-
-          holdDyn Route_Main switches
-        switches <- switchHold never <=< dyn $
+          holdDyn Route_Main nextRoute
+        nextRoute <- switchHold never <=< dyn $
           ffor (traceDyn "route" route) $ \r -> renderRoute app r
     pure ()
 

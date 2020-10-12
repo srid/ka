@@ -15,8 +15,6 @@ style = do
   ".ui.container" ? do
     let linkColor = C.purple
     "a.route" ? do
-      -- TODO: Extend reflex-dom-pandoc to set custom attriutes on elements
-      -- Like table,a. Then style only wikilinks.
       C.important $ do
         C.fontWeight C.bold
         C.color linkColor
