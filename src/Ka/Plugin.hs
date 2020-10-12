@@ -5,7 +5,7 @@ import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route)
-import Ka.View (renderPandoc, renderThinkLink)
+import Ka.View (renderPandoc, renderThingLink)
 import qualified Ka.View as View
 import Reflex
 import Reflex.Dom
@@ -43,7 +43,7 @@ backlinksWidget xs = do
       forM xs $ \(x, blks) -> do
         divClass "ui vertical segment" $ do
           evt1 <- elAttr "h3" ("class" =: "header") $ do
-            renderThinkLink x
+            renderThingLink x
           evt2 <- elClass "ul" "ui list context" $ do
             fmap leftmost $
               forM blks $ \blk -> do

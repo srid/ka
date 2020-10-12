@@ -68,6 +68,7 @@ executable ka
 
   other-modules:
     Ka.App
+    Ka.Breadcrumb
     Ka.Graph
     Ka.Markdown
     Ka.Plugin

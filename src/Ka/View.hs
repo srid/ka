@@ -2,7 +2,7 @@
 
 module Ka.View
   ( headWidget,
-    renderThinkLink,
+    renderThingLink,
     renderPandoc,
   )
 where
@@ -65,8 +65,8 @@ headWidget = do
   el "style" $ do
     text $ toStrict $ C.render style
 
-renderThinkLink :: (Prerender js t m, DomBuilder t m) => G.Thing -> m (Event t Route)
-renderThinkLink x = do
+renderThingLink :: (Prerender js t m, DomBuilder t m) => G.Thing -> m (Event t Route)
+renderThingLink x = do
   routeLink (Route_Node x) $ do
     text $ G.unThing x
 
@@ -95,4 +95,4 @@ renderPandoc doc = do
       fmap RouteM $ do
         if "://" `T.isInfixOf` url
           then f >> pure never
-          else renderThinkLink $ mdFileThing (toString url)
+          else renderThingLink $ mdFileThing (toString url)

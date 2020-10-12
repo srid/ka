@@ -11,7 +11,7 @@ import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
 import Ka.Route (Route)
-import Ka.View (renderThinkLink)
+import Ka.View (renderThingLink)
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
@@ -58,4 +58,4 @@ render (Set.toList -> fs) = do
     fmap leftmost $
       forM fs $ \fp ->
         elAttr "a" ("class" =: "column") $
-          renderThinkLink fp
+          renderThingLink fp
