@@ -21,8 +21,16 @@ main =
   withUtf8 $
     withCurrentDirectory notesDir $ do
       mainWidgetWithHead
-        (el "title" $ text "ka Jsaddle")
+        headWidget
         bodyWidget
+
+headWidget ::
+  (DomBuilder t m) =>
+  m ()
+headWidget = do
+  el "title" $ text "ka Jsaddle"
+  el "style" $ do
+    text "a { color: green; }"
 
 bodyWidget ::
   ( PandocBuilder t m,

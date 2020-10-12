@@ -9,7 +9,7 @@ data Route
 
 routeLink :: DomBuilder t m => Route -> m () -> m (Event t Route)
 routeLink r w = do
-  e <- clickEvent $ el' "a" w
+  e <- clickEvent $ elClass' "a" "route" w
   pure $ r <$ e
 
 -- | Get the click event on an element

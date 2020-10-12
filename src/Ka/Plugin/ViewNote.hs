@@ -19,7 +19,6 @@ import Reflex.Dom.Pandoc (Config (Config), elPandocRawSafe)
 import Reflex.Dom.Pandoc.Document
   ( PandocBuilder,
     PandocRaw (..),
-    defaultConfig,
     elPandoc,
   )
 import System.Directory (makeAbsolute)
@@ -146,11 +145,7 @@ noteWidget fp fpAbs doc backlinks = do
   -- V.kaTemplate style (text $ noteFileTitle fp) $ do
   r1 <- divClass "ui basic segment" $ do
     elClass "h1" "ui header" $ text $ noteFileTitle fp
-    let pandocCfg = Config $ \_ url _inlines -> do
-          fmap RouteM $
-            routeLink (Route_Node $ toString url) $
-              text "OOHH"
-    fmap unRouteM $ elPandoc pandocCfg doc
+    renderPandoc doc
   r2 <- divClass "ui backlinks segment" $ do
     backlinksWidget backlinks
   divClass "ui center aligned basic segment" $ do
@@ -170,12 +165,24 @@ backlinksWidget xs = do
     fmap leftmost $
       forM xs $ \(x, blks) -> do
         divClass "ui vertical segment" $ do
-          evt <- elAttr "h3" ("class" =: "header") $ do
-            routeLink (Route_Node $ V.mdToHtml x) $
-              text $ noteFileTitle x
-          elClass "ul" "ui list context" $ do
-            forM_ blks $ \blk -> do
-              let blkDoc = V.rewriteLinks $ Pandoc mempty (one blk)
-              el "li" $
-                elPandoc defaultConfig blkDoc
-          pure evt
+          evt1 <- elAttr "h3" ("class" =: "header") $ do
+            renderLink (toText $ V.mdToHtml x)
+          evt2 <- elClass "ul" "ui list context" $ do
+            fmap leftmost $
+              forM blks $ \blk -> do
+                let blkDoc = V.rewriteLinks $ Pandoc mempty (one blk)
+                el "li" $
+                  renderPandoc blkDoc
+          pure $ leftmost [evt1, evt2]
+
+renderPandoc :: (PandocBuilder t m) => Pandoc -> m (Event t Route)
+renderPandoc doc = do
+  let pandocCfg = Config $ \_ url _inlines -> do
+        fmap RouteM $
+          renderLink url
+  fmap unRouteM $ elPandoc pandocCfg doc
+
+renderLink :: DomBuilder t m => Text -> m (Event t Route)
+renderLink x = do
+  routeLink (Route_Node $ toString x) $ do
+    text x
