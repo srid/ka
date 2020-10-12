@@ -8,7 +8,7 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import Ka.Graph (Graph)
+import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import Ka.Route (Route, renderThingLink)
 import Reflex.Dom.Core hiding (Link)
@@ -22,9 +22,9 @@ runPlugin ::
     DomBuilder t m
   ) =>
   Dynamic t Graph ->
-  Dynamic t (Map G.Thing Pandoc) ->
-  (Event t (Map G.Thing (Maybe Pandoc))) ->
-  m (Event t (Map G.Thing (Maybe (Set G.Thing))))
+  Dynamic t (Map ThingName Pandoc) ->
+  (Event t (Map ThingName (Maybe Pandoc))) ->
+  m (Event t (Map ThingName (Maybe (Set ThingName))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
@@ -45,13 +45,13 @@ runPlugin _graphD _pandocD pandocE = do
           else
             Just $
               one $
-                (G.Thing "0-Calendar",) $
+                (ThingName "0-Calendar",) $
                   Just fs
   where
     isDiaryFileName =
-      T.isPrefixOf "20" . G.unThing
+      T.isPrefixOf "20" . unThingName
 
-render :: (Prerender js t m, DomBuilder t m) => Set G.Thing -> m (Event t Route)
+render :: (Prerender js t m, DomBuilder t m) => Set ThingName -> m (Event t Route)
 render (Set.toList -> fs) = do
   divClass "ui divided equal width compact seven column grid" $ do
     fmap leftmost $

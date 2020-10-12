@@ -1,7 +1,7 @@
 module Ka.Breadcrumb where
 
 import Data.List (elemIndex)
-import qualified Ka.Graph as G
+import Ka.Graph (ThingName (unThingName))
 import Ka.Route
 import Reflex.Dom.Core
 
@@ -26,4 +26,4 @@ render routeHist = do
                 -- TODO: clicking on this should discard later items in stack
                 routeLink rPrev $ case rPrev of
                   Route_Main -> text "Main"
-                  Route_Node th -> text $ G.unThing th
+                  Route_Node th -> text $ unThingName th

@@ -1,31 +1,38 @@
-module Ka.Plugin where
+module Ka.Thing
+  ( Thing (..),
+    render,
+  )
+where
 
 import Data.Dependent.Sum (DSum (..))
-import Ka.Graph (Graph)
+import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
-import qualified Ka.PandocView as ViewPandoc
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route, renderThingLink)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
-import Text.Pandoc.Definition (Pandoc (Pandoc))
+import Text.Pandoc.Definition (Pandoc (..))
 
-data Doc a where
-  Doc_Pandoc :: Doc Pandoc
-  Doc_Calendar :: Doc (Set G.Thing)
+-- | All kinds of things managed by plugins.
+data Thing a where
+  Thing_Pandoc :: Thing Pandoc
+  Thing_Calendar :: Thing (Set ThingName)
 
-type D t = Dynamic t (Map G.Thing (DSum Doc Identity))
-
-renderDoc :: (Prerender js t m, PandocBuilder t m) => Graph -> G.Thing -> DSum Doc Identity -> m (Event t Route)
-renderDoc g th v = do
+render ::
+  (Prerender js t m, PandocBuilder t m) =>
+  Graph ->
+  ThingName ->
+  DSum Thing Identity ->
+  m (Event t Route)
+render g th v = do
   r1 <- divClass "ui basic segment" $ do
-    elClass "h1" "ui header" $ text $ G.unThing th
+    elClass "h1" "ui header" $ text $ unThingName th
     case v of
-      Doc_Pandoc :=> Identity doc ->
-        ViewPandoc.render doc
-      Doc_Calendar :=> Identity days ->
+      Thing_Pandoc :=> Identity doc ->
+        PandocView.render doc
+      Thing_Calendar :=> Identity days ->
         Calendar.render days
   r2 <- divClass "ui backlinks segment" $ do
     let backlinks = G.preSetWithLabel th g
@@ -34,7 +41,7 @@ renderDoc g th v = do
 
 backlinksWidget ::
   (Prerender js t m, PandocBuilder t m) =>
-  [(G.Thing, [G.Context])] ->
+  [(ThingName, [G.Context])] ->
   m (Event t Route)
 backlinksWidget xs = do
   elClass "h2" "header" $ text "Backlinks"
@@ -47,7 +54,7 @@ backlinksWidget xs = do
           evt2 <- elClass "ul" "ui list context" $ do
             fmap leftmost $
               forM blks $ \blk -> do
-                let blkDoc = Pandoc mempty (one blk)
+                let blkThing = Pandoc mempty (one blk)
                 el "li" $
-                  PandocView.render blkDoc
+                  PandocView.render blkThing
           pure $ leftmost [evt1, evt2]

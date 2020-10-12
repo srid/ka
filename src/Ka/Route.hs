@@ -9,13 +9,12 @@ import Control.Lens.Operators
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.Types as DOM
 import qualified GHCJS.DOM.Window as Window
-import Ka.Graph (Thing)
-import qualified Ka.Graph as G
+import Ka.Graph (ThingName (..))
 import Reflex.Dom
 
 data Route
   = Route_Main
-  | Route_Node Thing
+  | Route_Node ThingName
   deriving (Eq, Show)
 
 -- TODO: This should scroll to top after route switch
@@ -37,10 +36,10 @@ routeLink r w = do
   scrollToTop clicked
   pure $ r <$ clicked
 
-renderThingLink :: (Prerender js t m, DomBuilder t m) => G.Thing -> m (Event t Route)
+renderThingLink :: (Prerender js t m, DomBuilder t m) => ThingName -> m (Event t Route)
 renderThingLink x = do
   routeLink (Route_Node x) $ do
-    text $ G.unThing x
+    text $ unThingName x
 
 scrollToTop :: forall m t js. (Prerender js t m, Monad m) => Event t () -> m ()
 scrollToTop e = prerender_ blank $

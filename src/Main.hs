@@ -6,9 +6,9 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Breadcrumb as Breadcrumb
-import qualified Ka.Graph as G
-import Ka.Plugin (renderDoc)
+import Ka.Graph (ThingName (unThingName))
 import Ka.Route
+import qualified Ka.Thing as Thing
 import qualified Ka.View as View
 import Main.Utf8 (withUtf8)
 import Reflex
@@ -75,13 +75,13 @@ renderRoute App {..} routeHist r = do
           fmap leftmost $
             forM fs $ \fp -> do
               el "li" $ do
-                routeLink (Route_Node fp) $ text $ G.unThing fp
+                routeLink (Route_Node fp) $ text $ unThingName fp
     Route_Node fp -> do
       switchHold never <=< dyn $
         ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_doc) $ \(g, v) -> case v of
           Nothing -> text "404" >> pure never
           Just thingData ->
-            renderDoc g fp thingData
+            Thing.render g fp thingData
   evt2 <- divClass "ui center aligned basic segment" $ do
     routeLink Route_Main $
       text "Index"

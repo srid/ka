@@ -1,6 +1,6 @@
 module Ka.Graph
   ( Graph,
-    Thing (..),
+    ThingName (..),
     Context,
     empty,
     patch,
@@ -18,7 +18,7 @@ import Prelude hiding (empty)
 -- | A thing is anything. Usually a note file, or some"thing" created by a plugin.
 --
 -- Defined as the human readable title.
-newtype Thing = Thing {unThing :: Text}
+newtype ThingName = ThingName {unThingName :: Text}
   deriving (Eq, Show, Ord)
 
 -- | The context of a relationship
@@ -29,7 +29,7 @@ type Context = Block
 type Graph' = AM.AdjacencyMap
 
 -- A graph of notes, with surrounding link context as edge label.
-type Graph = Graph' [Context] Thing
+type Graph = Graph' [Context] ThingName
 
 empty :: Graph
 empty = AM.empty

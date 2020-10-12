@@ -10,7 +10,7 @@ import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
-import Ka.Graph (Thing (Thing))
+import Ka.Graph (ThingName (..))
 import System.FilePath (dropExtension)
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Attr, Block, Inline (Link), Pandoc (..), Target)
@@ -25,8 +25,8 @@ type CMSyntaxSpec =
 noteExtension :: String
 noteExtension = ".md"
 
-mdFileThing :: FilePath -> Thing
-mdFileThing = Thing . toText . dropExtension
+mdFileThing :: FilePath -> ThingName
+mdFileThing = ThingName . toText . dropExtension
 
 parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> Pandoc
 parseMarkdown spec fp s =
