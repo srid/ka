@@ -1,6 +1,6 @@
 module Ka.Markdown
   ( noteExtension,
-    noteFileTitle,
+    mdFileThing,
     parseMarkdown,
     queryLinksWithContext,
     getNoteLink,
@@ -11,6 +11,7 @@ import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import Ka.Graph (Thing (Thing))
 import System.FilePath (dropExtension)
 import qualified Text.Pandoc.Builder as B
 import Text.Pandoc.Definition (Attr, Block, Inline (Link), Pandoc (..), Target)
@@ -25,8 +26,8 @@ type CMSyntaxSpec =
 noteExtension :: String
 noteExtension = ".md"
 
-noteFileTitle :: FilePath -> Text
-noteFileTitle = toText . dropExtension
+mdFileThing :: FilePath -> Thing
+mdFileThing = Thing . toText . dropExtension
 
 parseMarkdown :: CMSyntaxSpec -> FilePath -> Text -> Pandoc
 parseMarkdown spec fp s =

@@ -4,9 +4,10 @@ module Main where
 
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
 import Ka.App (App (..), kaApp)
+import qualified Ka.Graph as G
 import Ka.Route
+import qualified Ka.View as View
 import Main.Utf8 (withUtf8)
 import Reflex
 import Reflex.Dom
@@ -28,9 +29,8 @@ headWidget ::
   (DomBuilder t m) =>
   m ()
 headWidget = do
+  View.headWidget
   el "title" $ text "ka Jsaddle"
-  el "style" $ do
-    text "a { color: green; }"
 
 bodyWidget ::
   ( PandocBuilder t m,
@@ -44,13 +44,13 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  app <- kaApp
-  text "We will show file updates here"
-  rec route :: Dynamic t Route <-
-        holdDyn Route_Main switches
-      switches <- switchHold never <=< dyn $
-        ffor (traceDyn "route:" route) $ \r -> renderRoute app r
-  pure ()
+  divClass "ui text container" $ do
+    app <- kaApp
+    rec route :: Dynamic t Route <-
+          holdDyn Route_Main switches
+        switches <- switchHold never <=< dyn $
+          ffor (traceDyn "route:" route) $ \r -> renderRoute app r
+    pure ()
 
 renderRoute ::
   ( DomBuilder t m,
@@ -67,8 +67,7 @@ renderRoute App {..} = \case
         fmap leftmost $
           forM fs $ \fp -> do
             el "li" $ do
-              e <- clickEvent $ el' "a" $ text $ T.pack fp
-              pure $ ffor e $ \() -> Route_Node fp
+              routeLink (Route_Node fp) $ text $ G.unThing fp
   Route_Node fp -> do
     switchHold never <=< dyn $
       ffor (Map.lookup fp <$> _app_render) $ \case

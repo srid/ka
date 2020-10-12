@@ -8,9 +8,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import Ka.Graph (Graph)
 import qualified Ka.Graph as G
-import Ka.Markdown (noteFileTitle)
 import Ka.Route (Route)
-import qualified Ka.View as V
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
@@ -22,9 +20,9 @@ runPlugin ::
     DomBuilder t m
   ) =>
   Dynamic t Graph ->
-  Dynamic t (Map FilePath Pandoc) ->
-  (Event t (Map FilePath (Maybe Pandoc))) ->
-  m (Event t (Map FilePath (Maybe (m (Event t Route)))))
+  Dynamic t (Map G.Thing Pandoc) ->
+  (Event t (Map G.Thing (Maybe Pandoc))) ->
+  m (Event t (Map G.Thing (Maybe (m (Event t Route)))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
@@ -45,15 +43,15 @@ runPlugin _graphD _pandocD pandocE = do
           else
             Just $
               one $
-                ("@Calendar.html",) $
+                (G.Thing "Calendar",) $
                   Just $ calWidget fs >> pure never
   where
     calWidget fs = do
-      V.kaTemplate mempty (text "Calendar") $ do
-        elClass "h1" "header" $ text "Calendar"
-        divClass "ui divided equal width compact seven column grid" $ do
-          forM_ fs $ \fp ->
-            elAttr "a" ("class" =: "column" <> "href" =: toText (V.mdToHtml fp)) $
-              text $ noteFileTitle fp
+      -- V.kaTemplate mempty (text "Calendar") $ do
+      elClass "h1" "header" $ text "Calendar"
+      divClass "ui divided equal width compact seven column grid" $ do
+        forM_ fs $ \fp ->
+          elAttr "a" ("class" =: "column" <> "href" =: G.unThing fp) $
+            text $ G.unThing fp
     isDiaryFileName =
-      T.isPrefixOf "20" . toText
+      T.isPrefixOf "20" . G.unThing

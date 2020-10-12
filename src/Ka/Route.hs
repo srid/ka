@@ -1,10 +1,11 @@
 module Ka.Route where
 
+import Ka.Graph (Thing)
 import Reflex.Dom
 
 data Route
   = Route_Main
-  | Route_Node FilePath
+  | Route_Node Thing
   deriving (Eq, Show)
 
 routeLink :: DomBuilder t m => Route -> m () -> m (Event t Route)
