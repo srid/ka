@@ -20,7 +20,10 @@ import Text.Pandoc.Definition (Pandoc (..))
 
 -- | All kinds of things managed by plugins.
 data Thing a where
+  -- | The most common type; simply corresponds to Markdown files written by the
+  -- user.
   Thing_Pandoc :: Thing Pandoc
+  -- | The type used by the Calendar plugin; holds the list of daily notes.
   Thing_Calendar :: Thing (Set ThingName)
 
 render ::
@@ -44,6 +47,7 @@ render g th v = do
 
 style :: C.Css
 style = do
+  PandocView.style
   ".backlinks" ? do
     let smallerFont x = C.important $ C.fontSize x
     C.backgroundColor "#eee"

@@ -12,7 +12,6 @@ import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Breadcrumb as Breadcrumb
 import Ka.Graph (ThingName (unThingName))
-import qualified Ka.PandocView as PandocView
 import Ka.Route (Route (..), routeLink)
 import qualified Ka.Route as Route
 import qualified Ka.Thing as Thing
@@ -32,7 +31,6 @@ headWidget = do
     style = do
       ".ui.container" ? do
         Route.style
-        PandocView.style
         Thing.style
 
 bodyWidget ::
@@ -64,7 +62,7 @@ renderRoute ::
     Prerender js t m
   ) =>
   App t ->
-  Dynamic t [Route] ->
+  Dynamic t (NonEmpty Route) ->
   Route ->
   m (Event t Route)
 renderRoute App {..} routeHist r = do

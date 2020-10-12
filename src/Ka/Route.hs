@@ -2,6 +2,7 @@ module Ka.Route
   ( Route (..),
     style,
     routeLink,
+    renderRouteText,
     renderThingLink,
   )
 where
@@ -39,10 +40,15 @@ routeLink r w = do
   scrollToTop clicked
   pure $ r <$ clicked
 
+renderRouteText :: DomBuilder t m => Route -> m ()
+renderRouteText = \case
+  Route_Main -> text "Main"
+  Route_Node t -> text $ unThingName t
+
 renderThingLink :: (Prerender js t m, DomBuilder t m) => ThingName -> m (Event t Route)
 renderThingLink x = do
-  routeLink (Route_Node x) $ do
-    text $ unThingName x
+  let r = Route_Node x
+  routeLink r $ renderRouteText r
 
 style :: C.Css
 style = do
