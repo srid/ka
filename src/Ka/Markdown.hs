@@ -8,6 +8,7 @@ where
 
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
+import Data.List (nub)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import Ka.Graph (ThingName (..))
@@ -36,7 +37,7 @@ parseMarkdown spec fp s =
 
 queryLinksWithContext :: Pandoc -> Map FilePath [Block]
 queryLinksWithContext doc =
-  Map.fromListWith (<>) . fmap (second one) $ W.query go doc
+  fmap nub $ Map.fromListWith (<>) . fmap (second one) $ W.query go doc
   where
     go :: Block -> [(FilePath, Block)]
     go blk =

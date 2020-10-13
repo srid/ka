@@ -56,7 +56,8 @@ kaApp = do
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
       ffor pandocE $
-        Map.map (fmap $ fmap (swap . first mdFileThing) . Map.toList . queryLinksWithContext)
+        Map.map $
+          fmap $ fmap (swap . first mdFileThing) . Map.toList . queryLinksWithContext
   pandocD :: Dynamic t (Map ThingName Pandoc) <-
     foldDyn G.patchMap mempty pandocE
   -- NOTE: If two plugins produce the same file, the later plugin's output will

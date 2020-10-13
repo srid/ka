@@ -26,8 +26,7 @@ instance PandocRaw (HydrationDomBuilderT s t m) where
   elPandocRaw = elPandocRawSafe
 
 -- | Route monoid for use with reflex-dom-pandoc
-newtype RouteM t = RouteM
-  {unRouteM :: Event t Route}
+newtype RouteM t = RouteM {unRouteM :: Event t Route}
 
 instance Reflex t => Semigroup (RouteM t) where
   RouteM a <> RouteM b = RouteM $ leftmost [a, b]
