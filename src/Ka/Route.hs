@@ -60,8 +60,7 @@ style = do
       C.cursor C.pointer
   "a.route:hover" ? do
     C.important $ do
-      C.backgroundColor linkColor
-      C.color C.white
+      C.textDecoration C.underline
 
 scrollToTop :: forall m t js. (Prerender js t m, Monad m) => Event t () -> m ()
 scrollToTop e = prerender_ blank $
