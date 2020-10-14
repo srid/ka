@@ -49,8 +49,7 @@ runPlugin _graphD _pandocD pandocE = do
           else
             Just $
               one $
-                (ThingName "0-Calendar",) $
-                  Just fs
+                (calThing, Just fs)
 
 isDiaryFileName :: ThingName -> Bool
 isDiaryFileName =
@@ -70,6 +69,10 @@ render (Set.toList -> fs) = do
         elAttr "a" ("class" =: "column") $
           renderThingLink fp
 
+calThing :: ThingName
+calThing =
+  ThingName "0-Calendar"
+
 thingPanel ::
   ( DomBuilder t m,
     PostBuild t m,
@@ -88,13 +91,16 @@ thingPanel _g th = do
           next = addDays 1 day
           prevR = Route_Node . ThingName . show $ prev
           nextR = Route_Node . ThingName . show $ next
-      divClass "ui calendar small basic segment two column grid" $ do
+      divClass "ui calendar small basic segment three column grid" $ do
         -- TODO: Show these only if they exist in the graph (but first make the
         -- graph a dynamic)
         e1 <-
           divClass "column" $
             routeLink prevR $ text $ show prev
+        ec <-
+          divClass "center aligned column" $
+            routeLink (Route_Node calThing) $ text "Calendar"
         e2 <-
           divClass "right aligned column" $
             routeLink nextR $ text $ show next
-        pure $ leftmost [e1, e2]
+        pure $ leftmost [e1, ec, e2]
