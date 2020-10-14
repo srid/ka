@@ -40,6 +40,8 @@ render doc = do
   where
     pandocCfg = Config $ \f url _inlines ->
       fmap RouteM $ do
+        -- Treat everything but normal URLs as a wiki link (to local Markdown
+        -- file)
         if "://" `T.isInfixOf` url
           then f >> pure never
           else renderThingLink $ mdFileThing (toString url)
