@@ -43,13 +43,13 @@ render g th v = do
         PandocView.render doc
       Thing_Calendar :=> Identity days ->
         Calendar.render days
-    r2 <- divClass "ui backlinks segment" $ do
-      Backlinks.backlinksWidget g th
-    pure $ leftmost [r1, r2]
+    -- TODO: Have to figure our UI order of plugins
+    r3 <- Calendar.thingPanel g th
+    r2 <- Backlinks.thingPanel g th
+    pure $ leftmost [r1, r2, r3]
 
 style :: C.Css
 style = do
   ".thing" ? do
     PandocView.style
-    ".backlinks" ? do
-      Backlinks.style
+    Backlinks.style

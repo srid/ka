@@ -85,6 +85,8 @@ renderRoute App {..} routeHist r = do
                   routeLink (Route_Node fp) $ text $ unThingName fp
       Route_Node fp -> do
         switchHold never <=< dyn $
+          -- TODO: Pass the graph dynamic as-is deep inside
+          -- TODO: Also factor the thingData dyn
           ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_doc) $ \(g, v) -> case v of
             Nothing -> text "404" >> pure never
             Just thingData ->

@@ -1,6 +1,7 @@
 module Ka.Plugin.Calendar
   ( runPlugin,
     render,
+    thingPanel,
   )
 where
 
@@ -8,9 +9,12 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
+import Data.Time (parseTimeM)
+import Data.Time.Calendar (Day, addDays)
+import Data.Time.Format (defaultTimeLocale)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
-import Ka.Route (Route, renderThingLink)
+import Ka.Route (Route (..), renderThingLink, routeLink)
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
@@ -47,9 +51,10 @@ runPlugin _graphD _pandocD pandocE = do
               one $
                 (ThingName "0-Calendar",) $
                   Just fs
-  where
-    isDiaryFileName =
-      T.isPrefixOf "20" . unThingName
+
+isDiaryFileName :: ThingName -> Bool
+isDiaryFileName =
+  T.isPrefixOf "20" . unThingName
 
 render ::
   ( Prerender js t m,
@@ -64,3 +69,32 @@ render (Set.toList -> fs) = do
       forM fs $ \fp ->
         elAttr "a" ("class" =: "column") $
           renderThingLink fp
+
+thingPanel ::
+  ( DomBuilder t m,
+    PostBuild t m,
+    Prerender js t m
+  ) =>
+  Graph ->
+  ThingName ->
+  m (Event t Route)
+thingPanel _g th = do
+  let mdate :: Maybe Day = parseTimeM True defaultTimeLocale "%Y-%-m-%-d" (toString $ unThingName th)
+  case mdate of
+    Nothing ->
+      pure never
+    Just day -> do
+      let prev = addDays (-1) day
+          next = addDays 1 day
+          prevR = Route_Node . ThingName . show $ prev
+          nextR = Route_Node . ThingName . show $ next
+      divClass "ui calendar small basic segment two column grid" $ do
+        -- TODO: Show these only if they exist in the graph (but first make the
+        -- graph a dynamic)
+        e1 <-
+          divClass "column" $
+            routeLink prevR $ text $ show prev
+        e2 <-
+          divClass "right aligned column" $
+            routeLink nextR $ text $ show next
+        pure $ leftmost [e1, e2]
