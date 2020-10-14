@@ -2,18 +2,15 @@ module Main where
 
 import qualified Ka.View as View
 import Main.Utf8 (withUtf8)
-import Reflex.Dom
-import System.Directory (withCurrentDirectory)
+import Reflex.Dom (mainWidgetWithHead)
+import System.Directory (getCurrentDirectory)
 import System.IO (BufferMode (LineBuffering), hSetBuffering)
-
-notesDir :: FilePath
-notesDir = "/home/srid/Sync/zk"
 
 main :: IO ()
 main =
-  withUtf8 $
-    withCurrentDirectory notesDir $ do
-      hSetBuffering stdout LineBuffering
-      mainWidgetWithHead
-        View.headWidget
-        View.bodyWidget
+  withUtf8 $ do
+    hSetBuffering stdout LineBuffering
+    putStrLn . ("Notes dir " <>) =<< getCurrentDirectory
+    mainWidgetWithHead
+      View.headWidget
+      View.bodyWidget

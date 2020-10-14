@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+nix-shell --run \
+    "JSADDLE_WARP_PORT=8080 ghcid -T 'System.Directory.withCurrentDirectory \"$1\" Main.main'"

@@ -1,5 +1,6 @@
 # ka
 
 ```bash
-nix-shell --run 'JSADDLE_WARP_PORT=8080 ghcid -T "Main.main"'
+# Setup reflex-frp nix cache first: https://github.com/obsidiansystems/obelisk#installing-obelisk
+bin/run /your/notes/dir
 ```
