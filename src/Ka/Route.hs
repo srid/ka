@@ -2,6 +2,7 @@ module Ka.Route
   ( Route (..),
     style,
     routeLink,
+    routeLinkWithAttr,
     renderRouteText,
     renderThingLink,
   )
@@ -21,7 +22,7 @@ data Route
   | Route_Node ThingName
   deriving (Eq, Show)
 
--- TODO: This should scroll to top after route switch
+-- TODO: This should scroll to top *after* route switch
 routeLink ::
   forall js t m.
   ( DomBuilder t m,
@@ -31,10 +32,22 @@ routeLink ::
   m () ->
   m (Event t Route)
 routeLink r w = do
+  routeLinkWithAttr r ("class" =: "route") w
+
+routeLinkWithAttr ::
+  forall js t m.
+  ( DomBuilder t m,
+    Prerender js t m
+  ) =>
+  Route ->
+  Map AttributeName Text ->
+  m () ->
+  m (Event t Route)
+routeLinkWithAttr r attr w = do
   let cfg =
         (def :: ElementConfig EventResult t (DomBuilderSpace m))
           & elementConfig_eventSpec %~ addEventSpecFlags (Proxy :: Proxy (DomBuilderSpace m)) Click (\_ -> preventDefault)
-          & elementConfig_initialAttributes .~ "class" =: "route"
+          & elementConfig_initialAttributes .~ attr
   (e, _a) <- element "a" cfg w
   let clicked = domEvent Click e
   scrollToTop clicked
@@ -42,7 +55,7 @@ routeLink r w = do
 
 renderRouteText :: DomBuilder t m => Route -> m ()
 renderRouteText = \case
-  Route_Main -> text "Main"
+  Route_Main -> elClass "i" "home icon" blank
   Route_Node t -> text $ unThingName t
 
 renderThingLink :: (Prerender js t m, DomBuilder t m) => ThingName -> m (Event t Route)

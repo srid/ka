@@ -30,9 +30,9 @@ headWidget = do
   where
     style :: Css
     style = do
-      ".ui.container" ? do
+      Thing.style
+      ".main" ? do
         Route.style
-        Thing.style
 
 bodyWidget ::
   ( PandocBuilder t m,
@@ -47,7 +47,7 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  divClass "ui text container" $ do
+  divClass "ui two column grid container" $ do
     app <- kaApp
     rec route :: Dynamic t Route <-
           holdDyn Route_Main nextRoute
@@ -67,22 +67,21 @@ renderRoute ::
   Route ->
   m (Event t Route)
 renderRoute App {..} routeHist r = do
-  evt0 <- Breadcrumb.render routeHist
-  evt1 <- case r of
-    Route_Main -> do
-      switchHold never <=< dyn $
-        ffor (Map.keys <$> _app_doc) $ \fs -> do
-          fmap leftmost $
-            forM fs $ \fp -> do
-              el "li" $ do
-                routeLink (Route_Node fp) $ text $ unThingName fp
-    Route_Node fp -> do
-      switchHold never <=< dyn $
-        ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_doc) $ \(g, v) -> case v of
-          Nothing -> text "404" >> pure never
-          Just thingData ->
-            Thing.render g fp thingData
-  evt2 <- divClass "ui center aligned basic segment" $ do
-    routeLink Route_Main $
-      text "Index"
-  pure $ leftmost [evt0, evt1, evt2]
+  evt0 <- divClass "five wide column" $ do
+    Breadcrumb.render routeHist
+  divClass "eleven wide left floated left aligned main column" $ do
+    evt1 <- divClass "ui basic segment" $ case r of
+      Route_Main -> do
+        switchHold never <=< dyn $
+          ffor (Map.keys <$> _app_doc) $ \fs -> do
+            fmap leftmost $
+              forM fs $ \fp -> do
+                el "li" $ do
+                  routeLink (Route_Node fp) $ text $ unThingName fp
+      Route_Node fp -> do
+        switchHold never <=< dyn $
+          ffor (zipDyn _app_graph $ fmap (Map.lookup fp) _app_doc) $ \(g, v) -> case v of
+            Nothing -> text "404" >> pure never
+            Just thingData ->
+              Thing.render g fp thingData
+    pure $ leftmost [evt0, evt1]

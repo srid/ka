@@ -1,6 +1,6 @@
 module Ka.Breadcrumb where
 
-import Ka.Route
+import Ka.Route (Route, renderRouteText, routeLinkWithAttr)
 import Reflex.Dom.Core hiding (current)
 
 -- | A non empty list with cursor
@@ -34,12 +34,19 @@ render ::
   Dynamic t (Breadcrumbs Route) ->
   m (Event t Route)
 render routeHist = do
-  divClass "ui mini steps" $ do
-    switchHold never <=< dyn $
-      ffor routeHist $ \bc@Breadcrumbs {..} -> do
-        fmap leftmost $
-          forM (toList bc) $ \rPrev -> do
-            elClass "a" (bool "completed step" "active step" $ rPrev == _breadcrumbs_current) $ do
-              divClass "content" $ do
-                divClass "title" $ do
-                  routeLink rPrev $ renderRouteText rPrev
+  divClass "ui basic segment" $
+    divClass "ui right floated inverted vertical menu" $ do
+      evt <- switchHold never <=< dyn $
+        ffor routeHist $ \bc@Breadcrumbs {..} -> do
+          fmap leftmost $
+            forM (toList bc) $ \rPrev -> do
+              -- TODO: write routeLinkWithAttr to supplant this
+              routeLinkWithAttr rPrev ("class" =: bool "item" "active purple item" (rPrev == _breadcrumbs_current)) $ do
+                divClass "content" $ do
+                  divClass "title" $ do
+                    renderRouteText rPrev
+      void $
+        divClass "item" $ do
+          divClass "ui input" $ do
+            inputElement def
+      pure evt
