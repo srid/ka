@@ -61,16 +61,20 @@ renderRoute ::
     MonadHold t m,
     PostBuild t m,
     MonadFix m,
-    Prerender js t m
+    Prerender js t m,
+    MonadIO (Performable m),
+    MonadIO m,
+    PerformEvent t m,
+    TriggerEvent t m
   ) =>
   App t ->
   Dynamic t (Breadcrumbs Route) ->
   Route ->
   m (Event t Route)
 renderRoute App {..} routeHist r = do
-  evt0 <- divClass "five wide column" $ do
+  evt0 <- divClass "four wide column" $ do
     Breadcrumb.render routeHist
-  divClass "eleven wide left floated left aligned main column" $ do
+  divClass "twelve wide left floated left aligned main column" $ do
     evt1 <- divClass "ui basic segment" $ case r of
       Route_Main -> do
         switchHold never <=< dyn $

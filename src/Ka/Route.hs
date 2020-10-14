@@ -59,7 +59,7 @@ routeLinkWithAttr r attr w = do
 
 renderRouteText :: DomBuilder t m => Route -> m ()
 renderRouteText = \case
-  Route_Main -> elClass "i" "home icon" blank
+  Route_Main -> text "Home"
   Route_Node t -> text $ unThingName t
 
 renderThingLink ::
