@@ -60,6 +60,7 @@ renderRoute ::
   ( PandocBuilder t m,
     MonadHold t m,
     PostBuild t m,
+    MonadFix m,
     Prerender js t m
   ) =>
   App t ->

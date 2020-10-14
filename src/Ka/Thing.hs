@@ -27,7 +27,10 @@ data Thing a where
   Thing_Calendar :: Thing (Set ThingName)
 
 render ::
-  (Prerender js t m, PandocBuilder t m) =>
+  ( Prerender js t m,
+    PostBuild t m,
+    PandocBuilder t m
+  ) =>
   Graph ->
   ThingName ->
   DSum Thing Identity ->
@@ -67,7 +70,7 @@ style = do
             C.color C.white
 
 backlinksWidget ::
-  (Prerender js t m, PandocBuilder t m) =>
+  (Prerender js t m, PostBuild t m, PandocBuilder t m) =>
   [(ThingName, [G.Context])] ->
   m (Event t Route)
 backlinksWidget xs = do

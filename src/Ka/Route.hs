@@ -26,28 +26,32 @@ data Route
 routeLink ::
   forall js t m.
   ( DomBuilder t m,
+    PostBuild t m,
     Prerender js t m
   ) =>
   Route ->
   m () ->
   m (Event t Route)
 routeLink r w = do
-  routeLinkWithAttr r ("class" =: "route") w
+  routeLinkWithAttr r (constDyn $ "class" =: "route") w
 
 routeLinkWithAttr ::
   forall js t m.
   ( DomBuilder t m,
+    PostBuild t m,
     Prerender js t m
   ) =>
   Route ->
-  Map AttributeName Text ->
+  Dynamic t (Map AttributeName Text) ->
   m () ->
   m (Event t Route)
 routeLinkWithAttr r attr w = do
+  attrE <- dynamicAttributesToModifyAttributes attr
   let cfg =
         (def :: ElementConfig EventResult t (DomBuilderSpace m))
           & elementConfig_eventSpec %~ addEventSpecFlags (Proxy :: Proxy (DomBuilderSpace m)) Click (\_ -> preventDefault)
-          & elementConfig_initialAttributes .~ attr
+          -- & elementConfig_initialAttributes .~ attr
+          & elementConfig_modifyAttributes .~ attrE
   (e, _a) <- element "a" cfg w
   let clicked = domEvent Click e
   scrollToTop clicked
@@ -58,7 +62,13 @@ renderRouteText = \case
   Route_Main -> elClass "i" "home icon" blank
   Route_Node t -> text $ unThingName t
 
-renderThingLink :: (Prerender js t m, DomBuilder t m) => ThingName -> m (Event t Route)
+renderThingLink ::
+  ( Prerender js t m,
+    PostBuild t m,
+    DomBuilder t m
+  ) =>
+  ThingName ->
+  m (Event t Route)
 renderThingLink x = do
   let r = Route_Node x
   routeLink r $ renderRouteText r

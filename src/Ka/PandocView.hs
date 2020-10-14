@@ -34,7 +34,13 @@ instance Reflex t => Semigroup (RouteM t) where
 instance Reflex t => Monoid (RouteM t) where
   mempty = RouteM never
 
-render :: (PandocBuilder t m, Prerender js t m) => Pandoc -> m (Event t Route)
+render ::
+  ( PandocBuilder t m,
+    PostBuild t m,
+    Prerender js t m
+  ) =>
+  Pandoc ->
+  m (Event t Route)
 render doc = do
   fmap unRouteM $ elPandoc pandocCfg doc
   where

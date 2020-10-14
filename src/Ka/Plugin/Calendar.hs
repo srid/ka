@@ -51,7 +51,13 @@ runPlugin _graphD _pandocD pandocE = do
     isDiaryFileName =
       T.isPrefixOf "20" . unThingName
 
-render :: (Prerender js t m, DomBuilder t m) => Set ThingName -> m (Event t Route)
+render ::
+  ( Prerender js t m,
+    PostBuild t m,
+    DomBuilder t m
+  ) =>
+  Set ThingName ->
+  m (Event t Route)
 render (Set.toList -> fs) = do
   divClass "ui divided equal width compact seven column grid" $ do
     fmap leftmost $
