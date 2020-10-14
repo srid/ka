@@ -72,6 +72,7 @@ executable ka
     Ka.Graph
     Ka.Markdown
     Ka.PandocView
+    Ka.Plugin.Backlinks
     Ka.Plugin.Calendar
     Ka.Plugin.WikiLink
     Ka.Route

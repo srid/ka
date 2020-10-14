@@ -45,24 +45,26 @@ render ::
   ) =>
   Dynamic t (Breadcrumbs Route) ->
   m (Event t Route)
-render routeHist =
-  do
-    divClass "ui basic segment" $
-      divClass "ui right floated small fluid inverted vertical menu" $ do
-        evt <- fmap (switch . current . fmap leftmost) $
-          simpleList (toList <$> routeHist) $ \rPrevD -> switchHold never <=< dyn $
-            ffor (zipDyn rPrevD $ _breadcrumbs_current <$> routeHist) $ \(rPrev, rCurr) -> do
-              let itemClass = bool "item" "active purple item" $ rPrev == rCurr
-              routeLinkWithAttr rPrev (constDyn $ "class" =: itemClass) $ do
-                if (rPrev == Route_Main)
-                  then divClass "content" $ elClass "i" "home icon" blank
-                  else renderRouteText rPrev
-        void $
-          divClass "item" $ do
-            divClass "ui input" $ do
-              inputElement def
-        divClass "item" $ divClass "content" renderClock
-        pure evt
+render routeHist = do
+  divClass "ui basic segment" $
+    divClass "ui right floated small fluid inverted vertical menu" $ do
+      evt <- fmap (switch . current . fmap leftmost) $
+        simpleList (toList <$> routeHist) $ \rPrevD -> switchHold never <=< dyn $
+          ffor (zipDyn rPrevD $ _breadcrumbs_current <$> routeHist) $ \(rPrev, rCurr) -> do
+            let itemClass = bool "item" "active purple item" $ rPrev == rCurr
+            routeLinkWithAttr rPrev (constDyn $ "class" =: itemClass) $ do
+              if (rPrev == Route_Main)
+                then divClass "content" $ elClass "i" "home icon" blank
+                else renderRouteText rPrev
+      -- TODO: Move to Search.hs and implement
+      void $
+        divClass "item" $ do
+          divClass "ui input" $ do
+            inputElement $
+              def
+                & initialAttributes .~ ("placeholder" =: "Press / to search")
+      divClass "item" $ divClass "content" renderClock
+      pure evt
 
 renderClock ::
   ( MonadIO m,
