@@ -2,6 +2,7 @@ module Ka.Plugin.Backlinks where
 
 import Clay (em, pct, (?))
 import qualified Clay as C
+import Control.Monad.Fix (MonadFix)
 import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
@@ -31,23 +32,27 @@ style =
           C.color C.white
 
 thingPanel ::
-  (Prerender js t m, PostBuild t m, PandocBuilder t m) =>
-  Graph ->
+  ( Prerender js t m,
+    PostBuild t m,
+    MonadHold t m,
+    MonadFix m,
+    PandocBuilder t m
+  ) =>
+  Dynamic t Graph ->
   ThingName ->
   m (Event t Route)
 thingPanel g th =
   divClass "ui backlinks segment" $ do
-    let backlinks = G.preSetWithLabel th g
+    let backlinks = G.preSetWithLabel th <$> g
     elClass "h2" "header" $ text "Backlinks"
-    fmap leftmost $
-      forM backlinks $ \(x, blks) -> do
+    fmap (switch . current . fmap leftmost) $
+      simpleList backlinks $ \ctxDyn -> do
         divClass "ui vertical segment" $ do
           evt1 <- elAttr "h3" ("class" =: "header") $ do
-            renderThingLink x
+            switchHold never <=< dyn $ ffor (fst <$> ctxDyn) renderThingLink
           evt2 <- elClass "ul" "ui list context" $ do
-            fmap leftmost $
-              forM blks $ \blk -> do
-                let blkThing = Pandoc mempty (one blk)
+            fmap (switch . current . fmap leftmost) $
+              simpleList (snd <$> ctxDyn) $ \blkDyn -> do
                 el "li" $
-                  PandocView.render blkThing
+                  PandocView.render $ ffor blkDyn $ Pandoc mempty . one
           pure $ leftmost [evt1, evt2]

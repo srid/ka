@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Ka.Thing
   ( Thing (..),
     render,
@@ -7,7 +9,10 @@ where
 
 import Clay ((?))
 import qualified Clay as C
+import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
+import Data.GADT.Compare.TH (deriveGCompare, deriveGEq)
+import Data.GADT.Show.TH (deriveGShow)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Backlinks as Backlinks
@@ -29,20 +34,24 @@ data Thing a where
 render ::
   ( Prerender js t m,
     PostBuild t m,
+    MonadHold t m,
+    MonadFix m,
     PandocBuilder t m
   ) =>
-  Graph ->
+  Dynamic t Graph ->
   ThingName ->
-  DSum Thing Identity ->
+  Dynamic t (DSum Thing Identity) ->
   m (Event t Route)
-render g th v = do
+render g th thVal = do
   divClass "thing" $ do
     elClass "h1" "ui header" $ text $ unThingName th
-    r1 <- case v of
-      Thing_Pandoc :=> Identity doc ->
-        PandocView.render doc
-      Thing_Calendar :=> Identity days ->
-        Calendar.render days
+    thValF <- factorDyn thVal
+    r1 <- switchHold never <=< dyn $
+      ffor thValF $ \case
+        Thing_Pandoc :=> (fmap runIdentity . getCompose -> doc) ->
+          PandocView.render doc
+        Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
+          Calendar.render days
     -- TODO: Have to figure our UI order of plugins
     r3 <- Calendar.thingPanel g th
     r2 <- Backlinks.thingPanel g th
@@ -53,3 +62,10 @@ style = do
   ".thing" ? do
     PandocView.style
     Backlinks.style
+
+fmap concat $
+  sequence
+    [ deriveGShow ''Thing,
+      deriveGEq ''Thing,
+      deriveGCompare ''Thing
+    ]

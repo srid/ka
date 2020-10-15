@@ -58,16 +58,18 @@ isDiaryFileName =
 render ::
   ( Prerender js t m,
     PostBuild t m,
-    DomBuilder t m
+    DomBuilder t m,
+    MonadHold t m,
+    MonadFix m
   ) =>
-  Set ThingName ->
+  Dynamic t (Set ThingName) ->
   m (Event t Route)
-render (Set.toList -> fs) = do
+render (fmap Set.toList -> fs) = do
   divClass "ui divided equal width compact seven column grid" $ do
-    fmap leftmost $
-      forM fs $ \fp ->
+    fmap (switch . current . fmap leftmost) $
+      simpleList fs $ \fp ->
         elAttr "a" ("class" =: "column") $
-          renderThingLink fp
+          switchHold never <=< dyn $ ffor fp $ renderThingLink
 
 calThing :: ThingName
 calThing =
@@ -78,7 +80,7 @@ thingPanel ::
     PostBuild t m,
     Prerender js t m
   ) =>
-  Graph ->
+  Dynamic t Graph ->
   ThingName ->
   m (Event t Route)
 thingPanel _g th = do
@@ -92,8 +94,7 @@ thingPanel _g th = do
           prevR = Route_Node . ThingName . show $ prev
           nextR = Route_Node . ThingName . show $ next
       divClass "ui calendar small basic segment three column grid" $ do
-        -- TODO: Show these only if they exist in the graph (but first make the
-        -- graph a dynamic)
+        -- TODO: Show these only if they exist in the graph
         e1 <-
           divClass "column" $
             routeLink prevR $ text $ show prev

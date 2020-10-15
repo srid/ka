@@ -37,12 +37,14 @@ instance Reflex t => Monoid (RouteM t) where
 render ::
   ( PandocBuilder t m,
     PostBuild t m,
+    MonadHold t m,
     Prerender js t m
   ) =>
-  Pandoc ->
+  Dynamic t Pandoc ->
   m (Event t Route)
 render doc = do
-  fmap unRouteM $ elPandoc pandocCfg doc
+  switchHold never <=< dyn $
+    ffor doc $ fmap unRouteM . elPandoc pandocCfg
   where
     pandocCfg = Config $ \f url _inlines ->
       fmap RouteM $ do
