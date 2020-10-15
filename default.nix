@@ -1,7 +1,10 @@
 let 
   src = import ./nix/sources.nix;
 in 
-{ pkgs ? import src.nixpkgs {} , ... }:
+{ pkgs ? import src.nixpkgs {} 
+, useWarp ? false
+, ... 
+}:
 let
   extraDeps =
     if pkgs.lib.trivial.inNixShell
@@ -29,6 +32,10 @@ in
     overrides = self: super: with pkgs.haskell.lib; {
       skylighting = super.skylighting_0_10_0_2;
       skylighting-core = super.skylighting-core_0_10_0_2;
+      reflex-dom = 
+        if useWarp
+          then addBuildDepend (enableCabalFlag super.reflex-dom "use-warp") self.jsaddle-warp
+          else super.reflex-dom;
     };
     modifier = drv:
       pkgs.haskell.lib.addBuildTools drv extraDeps;

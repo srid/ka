@@ -12,25 +12,28 @@ The first two goals in particular are relevant for preparing `ka` to eventually 
 
 To run `ka` as a GTK+ app on your notebook:
 
-```bash
-# Setup reflex-frp nix cache first: 
-# https://github.com/obsidiansystems/obelisk#installing-obelisk
-$(nix-build)/bin/ka /your/notes/dir
-```
-
 ## Development
 
 This spins up a local server, rather than a GTK+ app (as the latter cannot be reloaded by ghcid):
 
-```
-# TODO: WIP
+```bash
+# Setup reflex-frp nix cache first: 
+# https://github.com/obsidiansystems/obelisk#installing-obelisk
 bin/run /your/notes/dir
 ```
 
-## Deployment as web app
+## Running as GTK+ app
 
-Set the `useWarp` flag in `reflex-dom` if you want to build it as a web app, instead of as GTK+ app.
+```bash
+# Run this from your notes directory
+$(nix-build)/bin/ka
+```
 
-TODO: WIP
+## Running as web app
+
+```bash
+nix-build --arg useWarp true
+JSADDLE_WARP_PORT=8080 ./result/bin/ka /your/notes/dir
+```
 
 [neuron]: https://github.com/srid/neuron
