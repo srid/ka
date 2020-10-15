@@ -7,12 +7,14 @@ module Ka.View
 where
 
 import Clay (Css, render, (?))
+import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import Ka.Breadcrumb (Breadcrumbs)
 import qualified Ka.Breadcrumb as Breadcrumb
 import Ka.Graph (ThingName (unThingName))
+import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route (..), routeLink)
 import qualified Ka.Route as Route
 import qualified Ka.Thing as Thing
@@ -33,6 +35,17 @@ headWidget = do
       Thing.style
       ".main" ? do
         Route.style
+      -- Get rid of gutters from grid columns
+      ".grid" ? do
+        ".column" ? do
+          C.important $ do
+            C.sym C.margin $ C.px 0
+            C.paddingRight $ C.px 0
+        ".column.main" ? do
+          C.important $ do
+            C.sym C.padding $ C.px 0
+      "body" ? do
+        C.backgroundColor "#fcfcfc"
 
 bodyWidget ::
   ( PandocBuilder t m,
@@ -47,14 +60,15 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  divClass "ui two column grid container" $ do
-    app <- kaApp
-    rec route :: Dynamic t Route <-
-          holdDyn Route_Main nextRoute
-        routeHist <- foldDyn Breadcrumb.putCrumb (Breadcrumb.init Route_Main) nextRoute
-        nextRoute <- switchHold never <=< dyn $
-          ffor (traceDyn "route" route) $ \r -> renderRoute app routeHist r
-    pure ()
+  divClass "ui fluid container" $
+    divClass "ui two column grid" $ do
+      app <- kaApp
+      rec route :: Dynamic t Route <-
+            holdDyn Route_Main nextRoute
+          routeHist <- foldDyn Breadcrumb.putCrumb (Breadcrumb.init Route_Main) nextRoute
+          nextRoute <- switchHold never <=< dyn $
+            ffor (traceDyn "route" route) $ \r -> renderRoute app routeHist r
+      pure ()
 
 renderRoute ::
   ( PandocBuilder t m,
@@ -73,16 +87,19 @@ renderRoute ::
   m (Event t Route)
 renderRoute App {..} routeHist r = do
   evt0 <- divClass "four wide column" $ do
-    Breadcrumb.render routeHist
-  divClass "twelve wide left floated left aligned main column" $ do
-    evt1 <- divClass "ui basic segment" $ case r of
+    let sidebarThings = filter Calendar.includeInSidebar . Map.keys <$> _app_doc
+    Breadcrumb.render sidebarThings routeHist
+  divClass "twelve wide main column" $ do
+    evt1 <- case r of
       Route_Main -> do
-        switchHold never <=< dyn $
-          ffor (Map.keys <$> _app_doc) $ \fs -> do
-            fmap leftmost $
-              forM fs $ \fp -> do
-                el "li" $ do
-                  routeLink (Route_Node fp) $ text $ unThingName fp
+        divClass "ui basic segment" $ do
+          elClass "h1" "header" $ text "ka"
+          switchHold never <=< dyn $
+            ffor (Map.keys <$> _app_doc) $ \fs -> do
+              fmap leftmost $
+                forM fs $ \fp -> do
+                  el "li" $ do
+                    routeLink (Route_Node fp) $ text $ unThingName fp
       Route_Node fp -> do
         let thingDyn = fmap (Map.lookup fp) _app_doc
         thingDynM <- maybeDyn thingDyn

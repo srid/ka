@@ -41,15 +41,16 @@ render ::
   Dynamic t (DSum Thing Identity) ->
   m (Event t Route)
 render g th thVal = do
-  divClass "thing" $ do
-    elClass "h1" "ui header" $ text $ unThingName th
+  divClass "ui basic attached segments thing" $ do
     thValF <- factorDyn thVal
-    r1 <- switchHold never <=< dyn $
-      ffor thValF $ \case
-        Thing_Pandoc :=> (fmap runIdentity . getCompose -> doc) ->
-          PandocView.render doc
-        Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
-          Calendar.render days
+    r1 <- divClass "ui attached basic segment" $ do
+      elClass "h1" "header" $ text $ unThingName th
+      switchHold never <=< dyn $
+        ffor thValF $ \case
+          Thing_Pandoc :=> (fmap runIdentity . getCompose -> doc) ->
+            PandocView.render doc
+          Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
+            Calendar.render days
     -- TODO: Have to figure our UI order of plugins
     r3 <- Calendar.thingPanel g th
     r2 <- Backlinks.thingPanel g th

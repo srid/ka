@@ -2,6 +2,7 @@ module Ka.Breadcrumb where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
+import Ka.Graph (ThingName)
 import Ka.Route (Route (..), renderRouteText, routeLinkWithAttr)
 import Reflex.Dom.Core
 
@@ -43,28 +44,36 @@ render ::
     PerformEvent t m,
     TriggerEvent t m
   ) =>
+  Dynamic t [ThingName] ->
   Dynamic t (Breadcrumbs Route) ->
   m (Event t Route)
-render routeHist = do
-  divClass "ui basic segment" $
-    divClass "ui right floated small fluid inverted vertical menu" $ do
-      evt <- fmap (switch . current . fmap leftmost) $
-        simpleList (toList <$> routeHist) $ \rPrevD -> switchHold never <=< dyn $
-          ffor (zipDyn rPrevD $ _breadcrumbs_current <$> routeHist) $ \(rPrev, rCurr) -> do
-            let itemClass = bool "item" "active purple item" $ rPrev == rCurr
-            routeLinkWithAttr rPrev (constDyn $ "class" =: itemClass) $ do
-              if (rPrev == Route_Main)
-                then divClass "content" $ elClass "i" "home icon" blank
-                else renderRouteText rPrev
-      -- TODO: Move to Search.hs and implement
-      void $
-        divClass "item" $ do
-          divClass "ui input" $ do
-            inputElement $
-              def
-                & initialAttributes .~ ("placeholder" =: "Press / to search")
-      divClass "item" $ divClass "content" renderClock
-      pure evt
+render ths routeHist = do
+  divClass "ui right floated small fluid inverted vertical menu" $ do
+    evt1 <- fmap (switch . current . fmap leftmost) $
+      simpleList (toList <$> routeHist) $ \rPrevD -> switchHold never <=< dyn $
+        ffor (zipDyn rPrevD $ _breadcrumbs_current <$> routeHist) $ \(rPrev, rCurr) -> do
+          let itemClass = bool "item" "active purple item" $ rPrev == rCurr
+          routeLinkWithAttr rPrev (constDyn $ "class" =: itemClass) $ do
+            if (rPrev == Route_Main)
+              then divClass "content" $ do
+                elClass "i" "home icon" blank
+                renderClock
+              else renderRouteText rPrev
+    -- TODO: Move to Search.hs and implement
+    void $
+      divClass "item" $ do
+        divClass "ui input" $ do
+          inputElement $
+            def
+              & initialAttributes .~ ("placeholder" =: "Press / to search")
+    evt2 <- fmap (switch . current . fmap leftmost) $
+      simpleList ths $ \thD -> do
+        switchHold never <=< dyn $
+          ffor thD $ \th -> do
+            let r = Route_Node th
+            routeLinkWithAttr r (constDyn $ "class" =: "gray active item") $ do
+              renderRouteText r
+    pure $ leftmost [evt1, evt2]
 
 renderClock ::
   ( MonadIO m,

@@ -2,6 +2,7 @@ module Ka.Plugin.Calendar
   ( runPlugin,
     render,
     thingPanel,
+    includeInSidebar,
   )
 where
 
@@ -99,6 +100,10 @@ thingPanel _g th = do
           divClass "right aligned column" $
             routeLink nextR $ text $ show next
         pure $ leftmost [e1, ec, e2]
+
+includeInSidebar :: ThingName -> Bool
+includeInSidebar =
+  isNothing . parseDairyThing
 
 parseDairyThing :: ThingName -> Maybe Day
 parseDairyThing th =

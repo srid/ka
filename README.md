@@ -1,6 +1,6 @@
 # ka
 
-`ka` is in active research phase, and is highly volatile. But, if you are curious, you may run it on your notebook (such as [neuron] notes); `ka` works with a folder of Markdown files linked to one another (wiki-links are supported).
+`ka` is in active research phase, and is highly volatile. But, if you are curious, you may run it on your notebook ([neuron] notes work with title IDs); `ka` works with a folder of Markdown files linked to one another (wiki-links are supported).
 
 Project goals:
 
