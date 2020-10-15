@@ -25,15 +25,13 @@ bin/run /your/notes/dir
 ## Running as GTK+ app
 
 ```bash
-# Run this from your notes directory
-$(nix-build)/bin/ka
+$(nix-build)/bin/ka /your/notes/dir
 ```
 
 ## Running as web app
 
 ```bash
-nix-build --arg useWarp true
-JSADDLE_WARP_PORT=8080 ./result/bin/ka /your/notes/dir
+JSADDLE_WARP_PORT=8080 $(nix-build --arg useWarp true)/bin/ka /your/notes/dir
 ```
 
 [neuron]: https://github.com/srid/neuron
