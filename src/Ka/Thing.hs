@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Ka.Thing
   ( Thing (..),
     render,
@@ -11,8 +9,8 @@ import Clay ((?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
-import Data.GADT.Compare.TH (deriveGCompare, deriveGEq)
-import Data.GADT.Show.TH (deriveGShow)
+import Data.GADT.Compare (GEq (geq))
+import Data.Type.Equality
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Backlinks as Backlinks
@@ -63,9 +61,20 @@ style = do
     PandocView.style
     Backlinks.style
 
+-- This breaks ghcide :-/
+-- https://github.com/haskell/haskell-language-server/pull/463
+{-
+import Data.GADT.Compare.TH (deriveGEq)
 fmap concat $
   sequence
-    [ deriveGShow ''Thing,
-      deriveGEq ''Thing,
-      deriveGCompare ''Thing
+    [ deriveGEq ''Thing
     ]
+-}
+
+-- Why derive manually? See above.
+instance GEq Thing where
+  geq Thing_Pandoc Thing_Pandoc =
+    pure Refl
+  geq Thing_Calendar Thing_Calendar =
+    pure Refl
+  geq _ _ = Nothing
