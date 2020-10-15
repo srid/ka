@@ -1,0 +1,98 @@
+{
+    "alga": {
+        "branch": "master",
+        "description": "Algebraic graphs",
+        "homepage": "",
+        "owner": "snowleopard",
+        "repo": "alga",
+        "rev": "d6a91d10a8132d93c4ba7004e8dd15692a4ab8b0",
+        "sha256": "02pgdykdndnizga9b92cpp2nby4lhq4vd7nx94jpmxc57fg871s4",
+        "type": "tarball",
+        "url": "https://github.com/snowleopard/alga/archive/d6a91d10a8132d93c4ba7004e8dd15692a4ab8b0.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "commonmark-hs": {
+        "branch": "master",
+        "description": "Pure Haskell commonmark parsing library, designed to be flexible and extensible",
+        "homepage": null,
+        "owner": "jgm",
+        "repo": "commonmark-hs",
+        "rev": "5b5cc67a56c420ff65c6970bddadb39e94dbaa51",
+        "sha256": "0g5b5gf7fzcfbckihz15hnnasmrdc1nin70j4hgi1a81jpgqwdd6",
+        "type": "tarball",
+        "url": "https://github.com/jgm/commonmark-hs/archive/5b5cc67a56c420ff65c6970bddadb39e94dbaa51.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "haskell-with-utf8": {
+        "branch": "master",
+        "description": "Get your IO right on the first try",
+        "homepage": "https://serokell.io/blog/haskell-with-utf8",
+        "owner": "serokell",
+        "repo": "haskell-with-utf8",
+        "rev": "57b6845f5eb361b477bb927d96fb9a3bee8a45d5",
+        "sha256": "1wsg7my77fd8p9s1y7f83pbp41j1grx96v83hjc8wxmicmh63j2m",
+        "type": "tarball",
+        "url": "https://github.com/serokell/haskell-with-utf8/archive/57b6845f5eb361b477bb927d96fb9a3bee8a45d5.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "niv": {
+        "branch": "master",
+        "description": "Easy dependency management for Nix projects",
+        "homepage": "https://github.com/nmattia/niv",
+        "owner": "nmattia",
+        "repo": "niv",
+        "rev": "9d35b9e4837ab88517210b1701127612c260eccf",
+        "sha256": "0q50xhnm8g2yfyakrh0nly4swyygxpi0a8cb9gp65wcakcgvzvdh",
+        "type": "tarball",
+        "url": "https://github.com/nmattia/niv/archive/9d35b9e4837ab88517210b1701127612c260eccf.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "release-20.03",
+        "description": "Nix Packages collection",
+        "homepage": "",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "420f89ceb267",
+        "sha256": "0c9kr76p6nmf4z2j2afgcddckbaxq6kxlmp1895h6qamm1c0ypb9",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs/archive/420f89ceb267.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs-static": {
+        "branch": "static",
+        "description": "Nix Packages collection",
+        "homepage": null,
+        "owner": "srid",
+        "repo": "nixpkgs",
+        "rev": "312f5dc940b1a2c627e8cce4adc192cfa3e730db",
+        "sha256": "1x1h6j43wp2fgzjlv0nf8h5syvpdp3nhp8xb85hxzdz8k7hkhi4s",
+        "type": "tarball",
+        "url": "https://github.com/srid/nixpkgs/archive/312f5dc940b1a2c627e8cce4adc192cfa3e730db.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "reflex-dom-pandoc": {
+        "branch": "remove-urilink",
+        "description": "Render Pandoc documents in reflex-dom",
+        "homepage": "",
+        "owner": "srid",
+        "repo": "reflex-dom-pandoc",
+        "rev": "0d97f346eb3ac3af14af9dbe9f034c8056fadcdd",
+        "sha256": "1j7ykk4y31f1w0gcbh51liw1435p1nay40isgk8rkjf4369rwphx",
+        "type": "tarball",
+        "url": "https://github.com/srid/reflex-dom-pandoc/archive/0d97f346eb3ac3af14af9dbe9f034c8056fadcdd.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "reflex-fsnotify": {
+        "branch": "develop",
+        "description": "Watch files and directories for changes using a functional-reactive interface!",
+        "homepage": "https://reflex-frp.org",
+        "owner": "reflex-frp",
+        "repo": "reflex-fsnotify",
+        "rev": "a30e8567ed6e9e60dfd031198709537a15e5f6c7",
+        "sha256": "09z3rz8xray9lzvdllydclyvz17hagv3v3dw2a1ql2i2l6jmhwjy",
+        "type": "tarball",
+        "url": "https://github.com/reflex-frp/reflex-fsnotify/archive/a30e8567ed6e9e60dfd031198709537a15e5f6c7.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}

@@ -10,12 +10,14 @@ Project goals:
 
 The first two goals in particular are relevant for preparing `ka` to eventually supplant rib and shake in neuron.
 
-To run `ka` locally on your notebook:
+To run `ka` as a GTK+ app on your notebook:
 
 ```bash
 # Setup reflex-frp nix cache first: 
 # https://github.com/obsidiansystems/obelisk#installing-obelisk
 bin/run /your/notes/dir
 ```
+
+(Set the `useWarp` flag in `reflex-dom` if you want to start a local HTTP server instead)
 
 [neuron]: https://github.com/srid/neuron

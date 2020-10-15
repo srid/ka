@@ -34,7 +34,6 @@ executable ka
     , ghcjs-dom
     , lens
     , mtl
-    , obelisk-route
     , pandoc-types
     , parsec
     , reflex
