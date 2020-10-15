@@ -8,7 +8,6 @@ where
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import qualified Data.Text as T
 import Data.Time (parseTimeM)
 import Data.Time.Calendar (Day, addDays)
 import Data.Time.Format (defaultTimeLocale)
@@ -32,7 +31,7 @@ runPlugin ::
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
-          Map.filterWithKey (\k _ -> isDiaryFileName k) <$> pandocE
+          Map.filterWithKey (\k _ -> isJust $ parseDairyThing k) <$> pandocE
   diaryFilesD <-
     fmap Map.keysSet
       <$> foldDyn G.patchMap mempty diaryFilesE
@@ -50,10 +49,6 @@ runPlugin _graphD _pandocD pandocE = do
             Just $
               one $
                 (calThing, Just fs)
-
-isDiaryFileName :: ThingName -> Bool
-isDiaryFileName =
-  T.isPrefixOf "20" . unThingName
 
 render ::
   ( Prerender js t m,
@@ -84,8 +79,7 @@ thingPanel ::
   ThingName ->
   m (Event t Route)
 thingPanel _g th = do
-  let mdate :: Maybe Day = parseTimeM True defaultTimeLocale "%Y-%-m-%-d" (toString $ unThingName th)
-  case mdate of
+  case parseDairyThing th of
     Nothing ->
       pure never
     Just day -> do
@@ -105,3 +99,7 @@ thingPanel _g th = do
           divClass "right aligned column" $
             routeLink nextR $ text $ show next
         pure $ leftmost [e1, ec, e2]
+
+parseDairyThing :: ThingName -> Maybe Day
+parseDairyThing th =
+  parseTimeM True defaultTimeLocale "%Y-%-m-%-d" (toString $ unThingName th)
