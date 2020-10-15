@@ -1,6 +1,6 @@
 # ka
 
-`ka` is in research phase, and is highly volatile. But, if you are curious, you may run it on your notebook (such as [neuron] notes); `ka` works with a folder of Markdown files linked to one another (wiki-links are supported).
+`ka` is in active research phase, and is highly volatile. But, if you are curious, you may run it on your notebook (such as [neuron] notes); `ka` works with a folder of Markdown files linked to one another (wiki-links are supported).
 
 Project goals:
 
@@ -15,9 +15,22 @@ To run `ka` as a GTK+ app on your notebook:
 ```bash
 # Setup reflex-frp nix cache first: 
 # https://github.com/obsidiansystems/obelisk#installing-obelisk
+$(nix-build)/bin/ka /your/notes/dir
+```
+
+## Development
+
+This spins up a local server, rather than a GTK+ app (as the latter cannot be reloaded by ghcid):
+
+```
+# TODO: WIP
 bin/run /your/notes/dir
 ```
 
-(Set the `useWarp` flag in `reflex-dom` if you want to start a local HTTP server instead)
+## Deployment as web app
+
+Set the `useWarp` flag in `reflex-dom` if you want to build it as a web app, instead of as GTK+ app.
+
+TODO: WIP
 
 [neuron]: https://github.com/srid/neuron
