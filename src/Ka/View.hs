@@ -47,6 +47,9 @@ headWidget = do
         C.important $ do
           C.maxHeight $ C.vh 100
           C.overflow C.auto
+          C.position C.sticky
+          C.paddingTop $ C.px 0
+          C.top $ C.px 0
       "body" ? do
         C.backgroundColor "#fcfcfc"
 
