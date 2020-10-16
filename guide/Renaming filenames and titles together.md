@@ -1,0 +1,1 @@
+Files should not be renamed on its own if you use [[Filenames as title]]. When renaming the filename you should also rename all the references. The [[VSCode memo extension]] does this automatically.

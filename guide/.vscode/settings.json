@@ -1,0 +1,29 @@
+{
+    "files.autoSave": "afterDelay",
+    "editor.minimap.enabled": false,
+    "workbench.colorTheme": "GitHub Dark",
+    "workbench.editor.revealIfOpen": true,
+    "autoSnippet.snippets": [
+
+        {
+            // "pattern": "**/\\d{4}-\\d{2}-\\d{2}.md",
+            "snippet": "daily"
+        }
+    ],
+    "git.autofetch": true,
+    "git.postCommitCommand": "push",
+    "cSpell.words": [
+        "actualist",
+        "zindex"
+    ],
+    "workbench.colorCustomizations": {
+        "tab.activeBorder": "#463838",
+        "tab.activeBackground": "#d497d4",
+        "tab.activeForeground": "#301f1f",
+        "tab.unfocusedActiveBorder": "#000000"
+    },
+    "dateTime.showDayOfMonth": true,
+    "dateTime.showMonth": true,
+    "dateTime.showHours": false,
+    "dateTime.showMinutes": false
+}
