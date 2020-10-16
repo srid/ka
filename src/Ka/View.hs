@@ -66,8 +66,7 @@ bodyWidget = do
       rec route :: Dynamic t Route <-
             holdDyn Route_Main nextRoute
           routeHist <- foldDyn Breadcrumb.putCrumb (Breadcrumb.init Route_Main) nextRoute
-          nextRoute <- switchHold never <=< dyn $
-            ffor (traceDyn "route" route) $ \r -> renderRoute app routeHist r
+          nextRoute <- renderRoute app routeHist (traceDyn "route" route)
       pure ()
 
 renderRoute ::
@@ -83,29 +82,37 @@ renderRoute ::
   ) =>
   App t ->
   Dynamic t (Breadcrumbs Route) ->
-  Route ->
+  Dynamic t Route ->
   m (Event t Route)
 renderRoute App {..} routeHist r = do
-  evt0 <- divClass "four wide column" $ do
-    let sidebarThings = filter Calendar.includeInSidebar . Map.keys <$> _app_doc
+  evt0 <- divClass "four wide navbar column" $ do
+    let sidebarThings = filter Calendar.includeInSidebar . Map.keys <$> (traceDynWith (const "doc") _app_doc)
     Breadcrumb.render sidebarThings routeHist
   divClass "twelve wide main column" $ do
-    evt1 <- case r of
-      Route_Main -> do
-        divClass "ui basic segment" $ do
-          elClass "h1" "header" $ text "ka"
+    -- TODO: Do this properly using GADT and factorDyn
+    hackR <- maybeDyn $
+      ffor r $ \case
+        Route_Main -> Nothing
+        Route_Node th -> Just th
+    evt1 <- switchHold never <=< dyn $
+      ffor hackR $ \case
+        -- Route_Main
+        Nothing -> do
+          divClass "ui basic segment" $ do
+            elClass "h1" "header" $ text "ka"
+            switchHold never <=< dyn $
+              ffor (Map.keys <$> _app_doc) $ \fs -> do
+                fmap leftmost $
+                  forM fs $ \fp -> do
+                    el "li" $ do
+                      routeLink (Route_Node fp) $ text $ unThingName fp
+        -- Route_Node
+        Just fpDyn -> do
+          let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
+          thingDynM <- maybeDyn thingDyn
           switchHold never <=< dyn $
-            ffor (Map.keys <$> _app_doc) $ \fs -> do
-              fmap leftmost $
-                forM fs $ \fp -> do
-                  el "li" $ do
-                    routeLink (Route_Node fp) $ text $ unThingName fp
-      Route_Node fp -> do
-        let thingDyn = fmap (Map.lookup fp) _app_doc
-        thingDynM <- maybeDyn thingDyn
-        switchHold never <=< dyn $
-          ffor thingDynM $ \case
-            Nothing -> text "404" >> pure never
-            Just thingDataM ->
-              Thing.render _app_graph fp thingDataM
+            ffor thingDynM $ \case
+              Nothing -> text "404" >> pure never
+              Just thingDataM ->
+                Thing.render _app_graph thingDataM
     pure $ leftmost [evt0, evt1]

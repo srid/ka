@@ -74,32 +74,38 @@ calThing =
 thingPanel ::
   ( DomBuilder t m,
     PostBuild t m,
+    MonadFix m,
+    MonadHold t m,
     Prerender js t m
   ) =>
   Dynamic t Graph ->
-  ThingName ->
+  Dynamic t ThingName ->
   m (Event t Route)
-thingPanel _g th = do
-  case parseDairyThing th of
-    Nothing ->
-      pure never
-    Just day -> do
-      let prev = addDays (-1) day
-          next = addDays 1 day
-          prevR = Route_Node . ThingName . show $ prev
-          nextR = Route_Node . ThingName . show $ next
-      divClass "ui calendar small basic segment three column grid" $ do
-        -- TODO: Show these only if they exist in the graph
-        e1 <-
-          divClass "column" $
-            routeLink prevR $ text $ show prev
-        ec <-
-          divClass "center aligned column" $
-            routeLink (Route_Node calThing) $ text "Calendar"
-        e2 <-
-          divClass "right aligned column" $
-            routeLink nextR $ text $ show next
-        pure $ leftmost [e1, ec, e2]
+thingPanel _g thDyn = do
+  thDynM <- maybeDyn $ parseDairyThing <$> thDyn
+  switchHold never <=< dyn $
+    ffor thDynM $ \case
+      Nothing ->
+        pure never
+      Just dayDyn -> do
+        divClass "ui calendar small basic segment three column grid" $ do
+          switchHold never <=< dyn $
+            ffor dayDyn $ \day -> do
+              let prev = addDays (-1) day
+                  next = addDays 1 day
+                  prevR = Route_Node . ThingName . show $ prev
+                  nextR = Route_Node . ThingName . show $ next
+              -- TODO: Show these only if they exist in the graph
+              e1 <-
+                divClass "column" $
+                  routeLink prevR $ text $ show prev
+              ec <-
+                divClass "center aligned column" $
+                  routeLink (Route_Node calThing) $ text "Calendar"
+              e2 <-
+                divClass "right aligned column" $
+                  routeLink nextR $ text $ show next
+              pure $ leftmost [e1, ec, e2]
 
 includeInSidebar :: ThingName -> Bool
 includeInSidebar =

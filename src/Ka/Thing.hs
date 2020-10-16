@@ -37,14 +37,13 @@ render ::
     PandocBuilder t m
   ) =>
   Dynamic t Graph ->
-  ThingName ->
-  Dynamic t (DSum Thing Identity) ->
+  Dynamic t (ThingName, DSum Thing Identity) ->
   m (Event t Route)
-render g th thVal = do
+render g thVal = do
   divClass "ui basic attached segments thing" $ do
-    thValF <- factorDyn thVal
+    thValF <- factorDyn $ snd <$> thVal
     r1 <- divClass "ui attached basic segment" $ do
-      elClass "h1" "header" $ text $ unThingName th
+      elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal
       switchHold never <=< dyn $
         ffor thValF $ \case
           Thing_Pandoc :=> (fmap runIdentity . getCompose -> doc) ->
@@ -52,8 +51,8 @@ render g th thVal = do
           Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
             Calendar.render days
     -- TODO: Have to figure our UI order of plugins
-    r3 <- Calendar.thingPanel g th
-    r2 <- Backlinks.thingPanel g th
+    r3 <- Calendar.thingPanel g $ fst <$> thVal
+    r2 <- Backlinks.thingPanel g $ fst <$> thVal
     pure $ leftmost [r1, r2, r3]
 
 style :: C.Css

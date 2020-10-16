@@ -10,7 +10,7 @@ where
 
 import Clay ((?))
 import qualified Clay as C
-import Control.Lens.Operators
+import Control.Lens.Operators ((%~))
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.Types as DOM
 import qualified GHCJS.DOM.Window as Window

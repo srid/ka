@@ -39,11 +39,11 @@ thingPanel ::
     PandocBuilder t m
   ) =>
   Dynamic t Graph ->
-  ThingName ->
+  Dynamic t ThingName ->
   m (Event t Route)
-thingPanel g th =
+thingPanel g thDyn =
   divClass "ui backlinks segment" $ do
-    let backlinks = G.preSetWithLabel th <$> g
+    let backlinks = zipDynWith G.preSetWithLabel thDyn g
     elClass "h2" "header" $ text "Backlinks"
     fmap (switch . current . fmap leftmost) $
       simpleList backlinks $ \ctxDyn -> do

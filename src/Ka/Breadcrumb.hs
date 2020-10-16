@@ -48,17 +48,19 @@ render ::
   Dynamic t (Breadcrumbs Route) ->
   m (Event t Route)
 render ths routeHist = do
-  divClass "ui right floated small fluid inverted vertical menu" $ do
-    evt1 <- fmap (switch . current . fmap leftmost) $
-      simpleList (toList <$> routeHist) $ \rPrevD -> switchHold never <=< dyn $
-        ffor (zipDyn rPrevD $ _breadcrumbs_current <$> routeHist) $ \(rPrev, rCurr) -> do
-          let itemClass = bool "item" "active purple item" $ rPrev == rCurr
-          routeLinkWithAttr rPrev (constDyn $ "class" =: itemClass) $ do
-            if (rPrev == Route_Main)
+  divClass "ui right floated small fluid inverted vertical menu nav" $ do
+    evt1 <- fmap (switch . current . fmap leftmost) $ do
+      routeHistL <- holdUniqDyn $ fmap toList routeHist
+      currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
+      simpleList routeHistL $ \crumb -> switchHold never <=< dyn $
+        ffor crumb $ \x -> do
+          let itemClass = ("class" =:) . bool "item" "active purple item" . (x ==) <$> currentCrumb
+          routeLinkWithAttr x itemClass $ do
+            if (x == Route_Main)
               then divClass "content" $ do
                 elClass "i" "home icon" blank
                 renderClock
-              else renderRouteText rPrev
+              else renderRouteText x
     -- TODO: Move to Search.hs and implement
     void $
       divClass "item" $ do
@@ -67,7 +69,7 @@ render ths routeHist = do
             def
               & initialAttributes .~ ("placeholder" =: "Press / to search")
     evt2 <- fmap (switch . current . fmap leftmost) $
-      simpleList ths $ \thD -> do
+      simpleList (traceDynWith (\_x -> "crumb") ths) $ \thD -> do
         switchHold never <=< dyn $
           ffor thD $ \th -> do
             let r = Route_Node th
