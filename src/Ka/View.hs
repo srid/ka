@@ -13,9 +13,8 @@ import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import Ka.Breadcrumb (Breadcrumbs)
 import qualified Ka.Breadcrumb as Breadcrumb
-import Ka.Graph (ThingName (unThingName))
 import qualified Ka.Plugin.Calendar as Calendar
-import Ka.Route (Route (..), routeLink)
+import Ka.Route (Route (..))
 import qualified Ka.Route as Route
 import qualified Ka.Thing as Thing
 import Reflex.Dom.Core
@@ -44,6 +43,10 @@ headWidget = do
         ".column.main" ? do
           C.important $ do
             C.sym C.padding $ C.px 0
+      ".navbar.column" ? do
+        C.important $ do
+          C.maxHeight $ C.vh 100
+          C.overflow C.auto
       "body" ? do
         C.backgroundColor "#fcfcfc"
 
@@ -100,12 +103,11 @@ renderRoute App {..} routeHist r = do
         Nothing -> do
           divClass "ui basic segment" $ do
             elClass "h1" "header" $ text "ka"
-            switchHold never <=< dyn $
-              ffor (Map.keys <$> _app_doc) $ \fs -> do
-                fmap leftmost $
-                  forM fs $ \fp -> do
-                    el "li" $ do
-                      routeLink (Route_Node fp) $ text $ unThingName fp
+            let cnt = Map.size <$> _app_doc
+            el "p" $ do
+              text "Note count: "
+              dynText $ show <$> cnt
+            pure never
         -- Route_Node
         Just fpDyn -> do
           let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
