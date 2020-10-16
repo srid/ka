@@ -43,6 +43,7 @@ executable ka
     , reflex-fsnotify
     , relude                  ^>=0.7.0.0
     , shower
+    , tagged
     , text
     , time
     , with-utf8
@@ -68,7 +69,6 @@ executable ka
 
   other-modules:
     Ka.App
-    Ka.Breadcrumb
     Ka.Graph
     Ka.Markdown
     Ka.PandocView
@@ -76,6 +76,9 @@ executable ka
     Ka.Plugin.Calendar
     Ka.Plugin.WikiLink
     Ka.Route
+    Ka.Sidebar
+    Ka.Sidebar.Breadcrumb
+    Ka.Sidebar.Listing
     Ka.Thing
     Ka.View
     Ka.Watch

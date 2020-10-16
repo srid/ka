@@ -1,10 +1,16 @@
-module Ka.Breadcrumb where
+module Ka.Sidebar.Breadcrumb
+  ( Breadcrumbs,
+    init,
+    putCrumb,
+    render,
+  )
+where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
-import Ka.Graph (ThingName)
 import Ka.Route (Route (..), renderRouteText, routeLinkWithAttr)
 import Reflex.Dom.Core
+import Prelude hiding (init)
 
 -- | A non empty list with cursor
 data Breadcrumbs a = Breadcrumbs
@@ -44,38 +50,21 @@ render ::
     PerformEvent t m,
     TriggerEvent t m
   ) =>
-  Dynamic t [ThingName] ->
   Dynamic t (Breadcrumbs Route) ->
   m (Event t Route)
-render ths routeHist = do
-  divClass "ui right floated small fluid inverted vertical menu nav" $ do
-    evt1 <- fmap (switch . current . fmap leftmost) $ do
-      routeHistL <- holdUniqDyn $ fmap toList routeHist
-      currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
-      simpleList routeHistL $ \crumb -> switchHold never <=< dyn $
-        ffor crumb $ \x -> do
-          let itemClass = ("class" =:) . bool "item" "active purple item" . (x ==) <$> currentCrumb
-          routeLinkWithAttr x itemClass $ do
-            if (x == Route_Main)
-              then divClass "content" $ do
-                elClass "i" "home icon" blank
-                renderClock
-              else renderRouteText x
-    -- TODO: Move to Search.hs and implement
-    void $
-      divClass "item" $ do
-        divClass "ui input" $ do
-          inputElement $
-            def
-              & initialAttributes .~ ("placeholder" =: "Press / to search")
-    evt2 <- fmap (switch . current . fmap leftmost) $
-      simpleList (traceDynWith (\_x -> "crumb") ths) $ \thD -> do
-        switchHold never <=< dyn $
-          ffor thD $ \th -> do
-            let r = Route_Node th
-            routeLinkWithAttr r (constDyn $ "class" =: "gray active item") $ do
-              renderRouteText r
-    pure $ leftmost [evt1, evt2]
+render routeHist = do
+  fmap (switch . current . fmap leftmost) $ do
+    routeHistL <- holdUniqDyn $ fmap toList routeHist
+    currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
+    simpleList routeHistL $ \crumb -> switchHold never <=< dyn $
+      ffor crumb $ \x -> do
+        let itemClass = ("class" =:) . bool "item" "active purple item" . (x ==) <$> currentCrumb
+        routeLinkWithAttr x itemClass $ do
+          if (x == Route_Main)
+            then divClass "content" $ do
+              elClass "i" "home icon" blank
+              renderClock
+            else renderRouteText x
 
 renderClock ::
   ( MonadIO m,

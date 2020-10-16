@@ -11,11 +11,11 @@ import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
-import Ka.Breadcrumb (Breadcrumbs)
-import qualified Ka.Breadcrumb as Breadcrumb
-import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route (..))
 import qualified Ka.Route as Route
+import qualified Ka.Sidebar as Sidebar
+import Ka.Sidebar.Breadcrumb (Breadcrumbs)
+import qualified Ka.Sidebar.Breadcrumb as Breadcrumb
 import qualified Ka.Thing as Thing
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -44,14 +44,17 @@ headWidget = do
           C.important $ do
             C.sym C.padding $ C.px 0
       ".navbar.column" ? do
-        C.important $ do
-          C.maxHeight $ C.vh 100
-          C.overflow C.auto
-          C.position C.sticky
-          C.paddingTop $ C.px 0
-          C.top $ C.px 0
+        stickyColumn
       "body" ? do
         C.backgroundColor "#fcfcfc"
+    stickyColumn = do
+      C.important $ do
+        C.maxHeight $ C.vh 100
+        C.overflow C.auto
+        C.position C.sticky
+        -- FIXME: padding here is janky on Chrome
+        -- C.paddingTop $ C.px 0
+        C.top $ C.px 0
 
 bodyWidget ::
   ( PandocBuilder t m,
@@ -92,8 +95,7 @@ renderRoute ::
   m (Event t Route)
 renderRoute App {..} routeHist r = do
   evt0 <- divClass "four wide navbar column" $ do
-    let sidebarThings = filter Calendar.includeInSidebar . Map.keys <$> (traceDynWith (const "doc") _app_doc)
-    Breadcrumb.render sidebarThings routeHist
+    Sidebar.render (Map.keys <$> _app_doc) routeHist
   divClass "twelve wide main column" $ do
     -- TODO: Do this properly using GADT and factorDyn
     hackR <- maybeDyn $
