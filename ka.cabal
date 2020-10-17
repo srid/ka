@@ -50,8 +50,7 @@ executable ka
 
   mixins:
     base hiding (Prelude),
-    relude (Relude as Prelude),
-    relude (Relude.Extra.Group as Prelude.Extra.Group)
+    relude (Relude as Prelude, Relude.Extra)
 
   default-extensions:
     DataKinds

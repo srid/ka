@@ -73,7 +73,11 @@ bodyWidget = do
       app <- kaApp
       rec route :: Dynamic t Route <-
             holdDyn Route_Main nextRoute
-          routeHist <- foldDyn Breadcrumb.putCrumb (Breadcrumb.init Route_Main) nextRoute
+          routeHist <-
+            foldDyn
+              Breadcrumb.putCrumb
+              (Breadcrumb.init Route_Main)
+              nextRoute
           nextRoute <- renderRoute app routeHist (traceDyn "route" route)
       pure ()
 

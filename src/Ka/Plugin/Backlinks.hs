@@ -6,6 +6,7 @@ import Control.Monad.Fix (MonadFix)
 import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
+import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route, renderThingLink)
 import Reflex
 import Reflex.Dom
@@ -32,6 +33,7 @@ style =
           C.color C.white
 
 thingPanel ::
+  forall js t m.
   ( Prerender js t m,
     PostBuild t m,
     MonadHold t m,
@@ -43,16 +45,28 @@ thingPanel ::
   m (Event t Route)
 thingPanel g thDyn =
   divClass "ui backlinks segment" $ do
-    let backlinks = zipDynWith G.preSetWithLabel thDyn g
     elClass "h2" "header" $ text "Backlinks"
-    fmap (switch . current . fmap leftmost) $
-      simpleList backlinks $ \ctxDyn -> do
-        divClass "ui vertical segment" $ do
-          evt1 <- elAttr "h3" ("class" =: "header") $ do
-            switchHold never <=< dyn $ ffor (fst <$> ctxDyn) renderThingLink
-          evt2 <- elClass "ul" "ui list context" $ do
-            fmap (switch . current . fmap leftmost) $
-              simpleList (snd <$> ctxDyn) $ \blkDyn -> do
-                el "li" $
-                  PandocView.render $ ffor blkDyn $ Pandoc mempty . one
-          pure $ leftmost [evt1, evt2]
+    -- Push dairy entries below, as well in reverse chronological order.
+    let ((fmap lefts &&& fmap (reverse . rights)) -> (backlinks, dailyBacklinks)) =
+          partitionBacklinks <$> zipDynWith G.preSetWithLabel thDyn g
+    e1 <-
+      fmap (switch . current . fmap leftmost) $
+        simpleList backlinks renderBacklink
+    e2 <-
+      fmap (switch . current . fmap leftmost) $
+        simpleList dailyBacklinks renderBacklink
+    pure $ leftmost [e1, e2]
+  where
+    partitionBacklinks bs =
+      fmap (\bl -> if Calendar.includeInSidebar (fst bl) then Left bl else Right bl) bs
+    renderBacklink :: Dynamic t (ThingName, [G.Context]) -> m (Event t Route)
+    renderBacklink ctxDyn = do
+      divClass "ui vertical segment" $ do
+        evt1 <- elAttr "h3" ("class" =: "header") $ do
+          switchHold never <=< dyn $ ffor (fst <$> ctxDyn) renderThingLink
+        evt2 <- elClass "ul" "ui list context" $ do
+          fmap (switch . current . fmap leftmost) $
+            simpleList (snd <$> ctxDyn) $ \blkDyn -> do
+              el "li" $
+                PandocView.render $ ffor blkDyn $ Pandoc mempty . one
+        pure $ leftmost [evt1, evt2]

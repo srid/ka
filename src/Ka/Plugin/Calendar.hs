@@ -15,8 +15,8 @@ import Data.Time.Format (defaultTimeLocale, formatTime)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import Ka.Route (Route (..), routeLink)
-import Prelude.Extra.Group (groupBy)
 import Reflex.Dom.Core hiding (Link)
+import Relude.Extra (groupBy)
 import Text.Pandoc.Definition (Pandoc)
 
 runPlugin ::
