@@ -10,6 +10,7 @@ import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
 import Data.GADT.Compare (GEq (geq))
+import Data.Time.Calendar (Day)
 import Data.Type.Equality
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
@@ -27,7 +28,7 @@ data Thing a where
   -- user.
   Thing_Pandoc :: Thing Pandoc
   -- | The type used by the Calendar plugin; holds the list of daily notes.
-  Thing_Calendar :: Thing (Set ThingName)
+  Thing_Calendar :: Thing (Set Day)
 
 render ::
   ( Prerender js t m,

@@ -10,11 +10,12 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.Time (parseTimeM)
-import Data.Time.Calendar (Day, addDays)
-import Data.Time.Format (defaultTimeLocale)
+import Data.Time.Calendar (Day, addDays, toGregorian)
+import Data.Time.Format (defaultTimeLocale, formatTime)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
-import Ka.Route (Route (..), renderThingLink, routeLink)
+import Ka.Route (Route (..), routeLink)
+import Prelude.Extra.Group (groupBy)
 import Reflex.Dom.Core hiding (Link)
 import Text.Pandoc.Definition (Pandoc)
 
@@ -28,13 +29,13 @@ runPlugin ::
   Dynamic t Graph ->
   Dynamic t (Map ThingName Pandoc) ->
   (Event t (Map ThingName (Maybe Pandoc))) ->
-  m (Event t (Map ThingName (Maybe (Set ThingName))))
+  m (Event t (Map ThingName (Maybe (Set Day))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
-          Map.filterWithKey (\k _ -> isJust $ parseDairyThing k) <$> pandocE
+          Map.mapMaybeWithKey (\k mv -> ffor mv $ \_ -> parseDairyThing k) <$> pandocE
   diaryFilesD <-
-    fmap Map.keysSet
+    fmap (Set.fromList . Map.elems)
       <$> foldDyn G.patchMap mempty diaryFilesE
   pure $
     fforMaybe
@@ -52,20 +53,34 @@ runPlugin _graphD _pandocD pandocE = do
                 (calThing, Just fs)
 
 render ::
+  forall js t m.
   ( Prerender js t m,
     PostBuild t m,
     DomBuilder t m,
     MonadHold t m,
     MonadFix m
   ) =>
-  Dynamic t (Set ThingName) ->
+  Dynamic t (Set Day) ->
   m (Event t Route)
 render (fmap Set.toList -> fs) = do
-  divClass "ui divided equal width compact seven column grid" $ do
+  divClass "ui basic segment" $ do
+    let grouped :: Dynamic t (Map (Integer, Int) (NonEmpty Day)) =
+          groupBy ((\(y, m, _) -> (y, m)) . toGregorian) . reverse <$> fs
+    divClass "ui message" $ do
+      el "p" $ text "This is not a real calendar layout."
     fmap (switch . current . fmap leftmost) $
-      simpleList fs $ \fp ->
-        elAttr "a" ("class" =: "column") $
-          switchHold never <=< dyn $ ffor fp $ renderThingLink
+      simpleList (Map.toList <$> grouped) $ \monthDyn -> do
+        elClass "h2" "header" $
+          dynText $ show . fst <$> monthDyn
+        divClass "ui seven column right aligned padded grid" $ do
+          fmap (switch . current . fmap leftmost) $
+            simpleList (toList . snd <$> monthDyn) $ \dayD ->
+              elAttr "a" ("class" =: "column") $
+                switchHold never <=< dyn $
+                  ffor dayD $ \day -> do
+                    let r = Route_Node $ dayThing day
+                        (_y, _m, d) = toGregorian day
+                    routeLink r $ text $ show d
 
 calThing :: ThingName
 calThing =
@@ -113,4 +128,8 @@ includeInSidebar =
 
 parseDairyThing :: ThingName -> Maybe Day
 parseDairyThing th =
-  parseTimeM True defaultTimeLocale "%Y-%-m-%-d" (toString $ unThingName th)
+  parseTimeM True defaultTimeLocale "%Y-%m-%d" (toString $ unThingName th)
+
+dayThing :: Day -> ThingName
+dayThing d =
+  ThingName . toText $ formatTime defaultTimeLocale "%Y-%m-%d" d

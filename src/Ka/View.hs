@@ -35,14 +35,13 @@ headWidget = do
       ".main" ? do
         Route.style
       -- Get rid of gutters from grid columns
-      ".grid" ? do
-        ".column" ? do
-          C.important $ do
-            C.sym C.margin $ C.px 0
-            C.paddingRight $ C.px 0
-        ".column.main" ? do
-          C.important $ do
-            C.sym C.padding $ C.px 0
+      ".ka.grid > .column" ? do
+        C.important $ do
+          C.sym C.margin $ C.px 0
+          C.paddingRight $ C.px 0
+      ".ka.grid > .column.main" ? do
+        C.important $ do
+          C.sym C.padding $ C.px 0
       ".navbar.column" ? do
         stickyColumn
       "body" ? do
@@ -70,7 +69,7 @@ bodyWidget ::
   m ()
 bodyWidget = do
   divClass "ui fluid container" $
-    divClass "ui two column grid" $ do
+    divClass "ui two column ka grid" $ do
       app <- kaApp
       rec route :: Dynamic t Route <-
             holdDyn Route_Main nextRoute

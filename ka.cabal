@@ -41,7 +41,7 @@ executable ka
     , reflex-dom-core
     , reflex-dom-pandoc       >=0.7.0.0
     , reflex-fsnotify
-    , relude                  ^>=0.7.0.0
+    , relude                  >=0.7.0.0
     , shower
     , tagged
     , text
@@ -50,7 +50,8 @@ executable ka
 
   mixins:
     base hiding (Prelude),
-    relude (Relude as Prelude)
+    relude (Relude as Prelude),
+    relude (Relude.Extra.Group as Prelude.Extra.Group)
 
   default-extensions:
     DataKinds
