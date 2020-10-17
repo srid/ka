@@ -84,7 +84,7 @@ render (fmap Set.toList -> fs) = do
 
 calThing :: ThingName
 calThing =
-  ThingName "0-Calendar"
+  ThingName "+Calendar"
 
 thingPanel ::
   ( DomBuilder t m,
