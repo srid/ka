@@ -41,8 +41,6 @@ queryLinksWithContext doc =
   where
     go :: Block -> [(FilePath, Block)]
     go blk =
-      -- TODO: Handle DefinitionList? (the only other block element with
-      -- inlines)
       fmap (,blk) $ case blk of
         B.Para is ->
           W.query linksFromInline is
@@ -52,6 +50,14 @@ queryLinksWithContext doc =
           W.query linksFromInline is
         B.Header _ _ is ->
           W.query linksFromInline is
+        B.DefinitionList xs ->
+          -- Gather all filenames linked, and have them put (see above) in the
+          -- same definition list block.
+          fmap concat $
+            forM xs $ \(is, bss) ->
+              let def = W.query linksFromInline is
+                  body = fmap (fmap (fmap fst . go)) bss
+               in def <> concat (concat body)
         _ -> mempty
 
     linksFromInline :: Inline -> [FilePath]
