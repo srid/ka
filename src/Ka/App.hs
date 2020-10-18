@@ -51,6 +51,7 @@ kaApp = do
                       <> CE.footnoteSpec
                       <> CE.smartPunctuationSpec
                       <> CE.definitionListSpec
+                      <> CE.bracketedSpanSpec
                       <> defaultSyntaxSpec
                in parseMarkdown spec fp s
   graphD :: Dynamic t Graph <-
