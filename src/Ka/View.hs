@@ -29,18 +29,21 @@ headWidget = do
   where
     style :: Css
     style = do
+      "body" ? do
+        -- Force scrollbar
+        C.overflowY C.scroll
       Thing.style
       ".main" ? do
         Route.style
       -- Get rid of gutters from grid columns
-      ".ka.grid > .column" ? do
+      ".ka.grid > .row > .column" ? do
         C.important $ do
           C.sym C.margin $ C.px 0
           C.paddingRight $ C.px 0
-      ".ka.grid > .column.main" ? do
+      ".ka.grid > .row .column.main" ? do
         C.important $ do
           C.sym C.padding $ C.px 0
-      ".navbar.column" ? do
+      ".ka.grid > .row .column.navbar" ? do
         stickyColumn
       "body" ? do
         C.backgroundColor "#fcfcfc"
@@ -68,11 +71,12 @@ bodyWidget ::
 bodyWidget = do
   divClass "ui fluid container" $
     divClass "ui two column ka grid" $ do
-      app <- kaApp
-      rec route :: Dynamic t Route <-
-            holdDyn Route_Main nextRoute
-          nextRoute <- renderRoute app (traceDyn "route" route)
-      pure ()
+      divClass "row" $ do
+        app <- kaApp
+        rec route :: Dynamic t Route <-
+              holdDyn Route_Main nextRoute
+            nextRoute <- renderRoute app (traceDyn "route" route)
+        pure ()
 
 renderRoute ::
   ( PandocBuilder t m,
