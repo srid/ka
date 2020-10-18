@@ -28,7 +28,7 @@ init :: a -> Breadcrumbs a
 init x =
   Breadcrumbs [] x []
 
--- | Put a new crumb, such that it behaves like the stacked navigation of
+-- | Put a new crumbR, such that it behaves like the stacked navigation of
 -- https://notes.andymatuschak.org/
 putCrumb :: Eq a => a -> Breadcrumbs a -> Breadcrumbs a
 putCrumb x bc@(Breadcrumbs before curr _) =
@@ -59,30 +59,28 @@ render r = do
       putCrumb
       (init Route_Main)
       (updated r)
+  routeHistL <- holdUniqDyn $ fmap toList routeHist
+  currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
   fmap (switch . current . fmap leftmost) $ do
-    routeHistL <- holdUniqDyn $ fmap toList routeHist
-    currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
-    simpleList routeHistL $ \crumb -> do
-      -- TODO: Do this properly using GADT and factorDyn
-      hackR <- maybeDyn $
-        ffor crumb $ \case
-          Route_Main -> Nothing
-          Route_Node th -> Just th
-      let itemClass = ffor2 currentCrumb crumb $ \curr x ->
+    simpleList routeHistL $ \crumbR -> do
+      let itemClass = ffor2 currentCrumb crumbR $ \curr x ->
             "class" =: bool "item" "active purple item" (curr == x)
-      switchHold never <=< dyn $
-        ffor hackR $ \case
-          -- Route_Main
-          Nothing -> do
-            dynRouteLink (constDyn Route_Main) itemClass $ do
+      dynRouteLink crumbR itemClass $ do
+        -- TODO: Do this properly using GADT and factorDyn
+        hackR <- maybeDyn $
+          ffor crumbR $ \case
+            Route_Main -> Nothing
+            Route_Node _th -> Just ()
+        dyn_ $
+          ffor hackR $ \case
+            -- Route_Main
+            Nothing -> do
               divClass "content" $ do
                 elClass "i" "home icon" blank
                 renderClock
-          -- Route_Node
-          Just rDyn -> do
-            let hereR = Route_Node <$> rDyn
-            dynRouteLink hereR itemClass $ do
-              dyn_ $ ffor hereR $ renderRouteText
+            -- Route_Node
+            Just _ -> do
+              dyn_ $ renderRouteText <$> crumbR
 
 renderClock ::
   ( MonadIO m,
