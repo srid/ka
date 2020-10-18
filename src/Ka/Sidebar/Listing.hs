@@ -5,7 +5,7 @@ import Data.Tagged
 import qualified Data.Text as T
 import Ka.Graph (ThingName (..))
 import qualified Ka.Plugin.Calendar as Calendar
-import Ka.Route (Route (..), renderRouteText, routeLinkWithAttr)
+import Ka.Route (Route (..), dynRouteLink, renderRouteText)
 import Reflex.Dom.Core
 
 type SearchQuery = Tagged "SearchQuery" Text
@@ -39,10 +39,8 @@ render ths = do
   fmap (switch . current . fmap leftmost) $
     simpleList res $ \th -> do
       let rDyn = Route_Node <$> th
-      switchHold never <=< dyn $
-        ffor rDyn $ \r -> do
-          routeLinkWithAttr r (constDyn $ "class" =: "gray active item") $ do
-            renderRouteText r
+      dynRouteLink rDyn (constDyn $ "class" =: "gray active item") $ do
+        dyn_ $ renderRouteText <$> rDyn
 
 -- | Include the given thing in the listing?
 includeInListing :: Maybe SearchQuery -> ThingName -> Bool

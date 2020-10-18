@@ -8,7 +8,7 @@ where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
-import Ka.Route (Route (..), renderRouteText, routeLinkWithAttr)
+import Ka.Route (Route (..), dynRouteLink, renderRouteText)
 import Reflex.Dom.Core
 import Prelude hiding (init)
 
@@ -34,6 +34,7 @@ putCrumb :: Eq a => a -> Breadcrumbs a -> Breadcrumbs a
 putCrumb x bc@(Breadcrumbs before curr _) =
   case break (== x) (toList bc) of
     (_, []) ->
+      -- Discard 'after'
       Breadcrumbs (before <> [curr]) x []
     (before', _x : after') ->
       Breadcrumbs before' x after'
@@ -50,21 +51,38 @@ render ::
     PerformEvent t m,
     TriggerEvent t m
   ) =>
-  Dynamic t (Breadcrumbs Route) ->
+  Dynamic t Route ->
   m (Event t Route)
-render routeHist = do
+render r = do
+  routeHist <-
+    foldDyn
+      putCrumb
+      (init Route_Main)
+      (updated r)
   fmap (switch . current . fmap leftmost) $ do
     routeHistL <- holdUniqDyn $ fmap toList routeHist
     currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
-    simpleList routeHistL $ \crumb -> switchHold never <=< dyn $
-      ffor crumb $ \x -> do
-        let itemClass = ("class" =:) . bool "item" "active purple item" . (x ==) <$> currentCrumb
-        routeLinkWithAttr x itemClass $ do
-          if (x == Route_Main)
-            then divClass "content" $ do
-              elClass "i" "home icon" blank
-              renderClock
-            else renderRouteText x
+    simpleList routeHistL $ \crumb -> do
+      -- TODO: Do this properly using GADT and factorDyn
+      hackR <- maybeDyn $
+        ffor crumb $ \case
+          Route_Main -> Nothing
+          Route_Node th -> Just th
+      let itemClass = ffor2 currentCrumb crumb $ \curr x ->
+            "class" =: bool "item" "active purple item" (curr == x)
+      switchHold never <=< dyn $
+        ffor hackR $ \case
+          -- Route_Main
+          Nothing -> do
+            dynRouteLink (constDyn Route_Main) itemClass $ do
+              divClass "content" $ do
+                elClass "i" "home icon" blank
+                renderClock
+          -- Route_Node
+          Just rDyn -> do
+            let hereR = Route_Node <$> rDyn
+            dynRouteLink hereR itemClass $ do
+              dyn_ $ ffor hereR $ renderRouteText
 
 renderClock ::
   ( MonadIO m,

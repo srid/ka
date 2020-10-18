@@ -14,8 +14,6 @@ import Ka.App (App (..), kaApp)
 import Ka.Route (Route (..))
 import qualified Ka.Route as Route
 import qualified Ka.Sidebar as Sidebar
-import Ka.Sidebar.Breadcrumb (Breadcrumbs)
-import qualified Ka.Sidebar.Breadcrumb as Breadcrumb
 import qualified Ka.Thing as Thing
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -73,12 +71,7 @@ bodyWidget = do
       app <- kaApp
       rec route :: Dynamic t Route <-
             holdDyn Route_Main nextRoute
-          routeHist <-
-            foldDyn
-              Breadcrumb.putCrumb
-              (Breadcrumb.init Route_Main)
-              nextRoute
-          nextRoute <- renderRoute app routeHist (traceDyn "route" route)
+          nextRoute <- renderRoute app (traceDyn "route" route)
       pure ()
 
 renderRoute ::
@@ -93,12 +86,11 @@ renderRoute ::
     TriggerEvent t m
   ) =>
   App t ->
-  Dynamic t (Breadcrumbs Route) ->
   Dynamic t Route ->
   m (Event t Route)
-renderRoute App {..} routeHist r = do
+renderRoute App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
-    Sidebar.render (Map.keys <$> _app_doc) routeHist
+    Sidebar.render (Map.keys <$> _app_doc) r
   divClass "twelve wide main column" $ do
     -- TODO: Do this properly using GADT and factorDyn
     hackR <- maybeDyn $

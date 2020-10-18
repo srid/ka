@@ -2,7 +2,7 @@ module Ka.Route
   ( Route (..),
     style,
     routeLink,
-    routeLinkWithAttr,
+    dynRouteLink,
     renderRouteText,
     renderThingLink,
   )
@@ -22,7 +22,6 @@ data Route
   | Route_Node ThingName
   deriving (Eq, Show)
 
--- TODO: This should scroll to top *after* route switch
 routeLink ::
   forall js t m.
   ( DomBuilder t m,
@@ -32,20 +31,20 @@ routeLink ::
   Route ->
   m () ->
   m (Event t Route)
-routeLink r w = do
-  routeLinkWithAttr r (constDyn $ "class" =: "route") w
+routeLink r =
+  dynRouteLink (constDyn r) (constDyn $ "class" =: "route")
 
-routeLinkWithAttr ::
+dynRouteLink ::
   forall js t m.
   ( DomBuilder t m,
     PostBuild t m,
     Prerender js t m
   ) =>
-  Route ->
+  Dynamic t Route ->
   Dynamic t (Map AttributeName Text) ->
   m () ->
   m (Event t Route)
-routeLinkWithAttr r attr w = do
+dynRouteLink rDyn attr w = do
   attrE <- dynamicAttributesToModifyAttributes attr
   let cfg =
         (def :: ElementConfig EventResult t (DomBuilderSpace m))
@@ -55,7 +54,7 @@ routeLinkWithAttr r attr w = do
   (e, _a) <- element "a" cfg w
   let clicked = domEvent Click e
   scrollToTop clicked
-  pure $ r <$ clicked
+  pure $ tag (current rDyn) clicked
 
 renderRouteText :: DomBuilder t m => Route -> m ()
 renderRouteText = \case
