@@ -37,6 +37,9 @@ headWidget = do
       ".main" ? do
         Route.style
         Thing.style
+        -- User style library for use in Markdown
+        ".mark" ? do
+          C.backgroundColor C.yellow
     gridStyle = do
       -- Get rid of gutters from grid columns
       ".ka.grid > .row" ? do
