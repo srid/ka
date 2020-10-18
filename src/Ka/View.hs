@@ -36,6 +36,9 @@ headWidget = do
       ".main" ? do
         Route.style
       -- Get rid of gutters from grid columns
+      ".ka.grid > .row" ? do
+        C.important $ do
+          C.paddingBottom $ C.px 0
       ".ka.grid > .row > .column" ? do
         C.important $ do
           C.sym C.margin $ C.px 0
