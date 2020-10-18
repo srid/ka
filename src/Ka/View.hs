@@ -32,9 +32,12 @@ headWidget = do
       "body" ? do
         -- Force scrollbar
         C.overflowY C.scroll
-      Thing.style
+        C.backgroundColor "#fcfcfc"
+      gridStyle
       ".main" ? do
         Route.style
+        Thing.style
+    gridStyle = do
       -- Get rid of gutters from grid columns
       ".ka.grid > .row" ? do
         C.important $ do
@@ -48,8 +51,7 @@ headWidget = do
           C.sym C.padding $ C.px 0
       ".ka.grid > .row .column.navbar" ? do
         stickyColumn
-      "body" ? do
-        C.backgroundColor "#fcfcfc"
+
     stickyColumn = do
       C.important $ do
         C.maxHeight $ C.vh 100
