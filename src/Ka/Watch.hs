@@ -8,10 +8,10 @@ import Data.List (nubBy)
 import qualified Data.Map.Strict as Map
 import Data.Time (NominalDiffTime)
 import Reflex
-import Reflex.FSNotify (FSEvent, watchDir)
+import Reflex.FSNotify (FSEvent, watchTree)
 import System.FSNotify (defaultConfig)
 import qualified System.FSNotify as FSN
-import System.FilePath (takeExtension, takeFileName)
+import System.FilePath (takeExtension)
 import System.FilePattern.Directory (getDirectoryFiles)
 
 -- | Get the contents of all the files in the given directory
@@ -33,20 +33,21 @@ directoryFilesContent ::
   m (Event t (Map FilePath (Maybe Text)))
 directoryFilesContent dirPath ext = do
   fileChangeE <- watchDirectory dirPath ext
-  initE <-
+  contentE <-
     performEvent $
       ffor fileChangeE $
         Map.traverseWithKey $ \fp -> traverse $ \() -> do
           liftIO $ readFileText fp
-  (restE, fire) <- newTriggerEvent
+  -- Gather the current list of files as an event, and trigger it in the output
+  -- event (see leftmost below)
+  (content0E, fire) <- newTriggerEvent
   liftIO $ do
-    files <- getDirectoryFiles "." ["*" <> ext]
+    files <- getDirectoryFiles "." ["**/*" <> ext]
     xs <- flip traverse files $ \fp -> do
       s <- readFileText fp
       pure (fp, Just s)
     fire $ Map.fromList xs
-  pure $
-    leftmost [restE, initE]
+  pure $ leftmost [content0E, contentE]
 
 watchDirectory ::
   ( PostBuild t m,
@@ -85,19 +86,15 @@ watchDirWithDebounce ::
 watchDirWithDebounce ms dirPath = do
   let cfg = defaultConfig {FSN.confDebounce = FSN.Debounce ms}
   pb <- getPostBuild
-  evt <- watchDir cfg (dirPath <$ pb) (const True)
+  evt <- watchTree cfg (dirPath <$ pb) (const True)
   evtGrouped <- fmap toList <$> batchOccurrences ms evt
   -- Discard all but the last event for each path.
   pure $ nubByKeepLast ((==) `on` FSN.eventPath) <$> evtGrouped
 
 noteFileStatusFromEvent :: FSN.Event -> Maybe (FilePath, Maybe ())
 noteFileStatusFromEvent evt = do
-  -- Using `takeFileName` here (discarding the parent path elements), because
-  -- we are watching the current directory. Effectively this gives us the
-  -- relative path, which is just the filename as we glob over *.md.
-  let fp = takeFileName $ FSN.eventPath evt
   pure $
-    (fp,) $ case evt of
+    (FSN.eventPath evt,) $ case evt of
       FSN.Added _ _ _ ->
         Just ()
       FSN.Modified _ _ _ ->

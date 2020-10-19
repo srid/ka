@@ -16,6 +16,7 @@ import Ka.Thing
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
+import System.FilePath (takeFileName)
 import Text.Pandoc.Definition (Pandoc)
 
 data App t = App
@@ -40,8 +41,11 @@ kaApp ::
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   logDiffEvent fileContentE
+  -- Discard the parent paths; we only consider the basename to be note identifier.
+  -- TODO: Support file tree in sidebar listing.
+  let fileContentForBasenameE = Map.mapKeys takeFileName <$> fileContentE
   let pandocE :: Event t (Map ThingName (Maybe Pandoc)) =
-        ffor fileContentE $ \m ->
+        ffor fileContentForBasenameE $ \m ->
           Map.mapKeys mdFileThing $
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =
