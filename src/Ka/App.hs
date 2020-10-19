@@ -41,11 +41,10 @@ kaApp ::
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   logDiffEvent fileContentE
-  -- Discard the parent paths; we only consider the basename to be note identifier.
-  -- TODO: Support file tree in sidebar listing.
-  let fileContentForBasenameE = Map.mapKeys takeFileName <$> fileContentE
   let pandocE :: Event t (Map ThingName (Maybe Pandoc)) =
-        ffor fileContentForBasenameE $ \m ->
+        -- Discard the parent paths; we only consider the basename to be note identifier.
+        -- TODO: Support file tree in sidebar listing.
+        ffor (diffMapWithOnlyBaseFileName <$> fileContentE) $ \m ->
           Map.mapKeys mdFileThing $
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =
@@ -79,13 +78,29 @@ kaApp = do
     foldDyn G.patchMap mempty renderE
   pure $ App graphD docD
 
+-- | Drop the parent directories, retaining only the base name, on map keys.
+--
+-- On conflict, take the Just value discarding the Nothing. With two Just
+-- values, pick the greater of them (per Map.mapKeysWith semantics); this is
+-- irrelevant to our app domain however (so effectively, the behaviour when
+-- there are simultaneous modifications to files with the same base name is
+-- undefined).
+diffMapWithOnlyBaseFileName :: Map FilePath (Maybe a) -> Map FilePath (Maybe a)
+diffMapWithOnlyBaseFileName =
+  Map.mapKeysWith f takeFileName
+  where
+    f Nothing Nothing = Nothing
+    f Nothing x = x
+    f x Nothing = x
+    f x _y = x
+
 logDiffEvent ::
   (PerformEvent t m, MonadIO (Performable m)) =>
   Event t (Map String (Maybe a)) ->
   m ()
 logDiffEvent evt =
   performEvent_ $
-    ffor evt $ \fsMap ->
+    ffor evt $ \fsMap -> do
       forM_ (Map.toList fsMap) $ \(fs, change) ->
         case change of
           Just _ ->
