@@ -77,27 +77,6 @@ render r = do
             Nothing -> do
               divClass "content" $ do
                 elClass "i" "home icon" blank
-                renderClock
             -- Route_Node
             Just _ -> do
               dyn_ $ renderRouteText <$> crumbR
-
-renderClock ::
-  ( MonadIO m,
-    MonadIO (Performable m),
-    PostBuild t m,
-    MonadHold t m,
-    MonadFix m,
-    PerformEvent t m,
-    TriggerEvent t m,
-    DomBuilder t m
-  ) =>
-  m ()
-renderClock = do
-  now <- liftIO getCurrentTime
-  let secs = 1
-  tick <- clockLossy secs now
-  dyn_ $ renderTick <$> tick
-  where
-    renderTick TickInfo {..} =
-      el "time" $ text $ toText $ formatTime defaultTimeLocale "%T" _tickInfo_lastUTC
