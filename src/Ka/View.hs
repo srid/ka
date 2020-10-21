@@ -14,6 +14,7 @@ import Ka.App (App (..), kaApp)
 import Ka.Route (Route (..))
 import qualified Ka.Route as Route
 import qualified Ka.Sidebar as Sidebar
+import Ka.Sidebar.Breadcrumb (defaultRoute)
 import qualified Ka.Thing as Thing
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -82,7 +83,7 @@ bodyWidget = do
       divClass "row" $ do
         app <- kaApp
         rec route :: Dynamic t Route <-
-              holdDyn Route_Main nextRoute
+              holdDyn defaultRoute nextRoute
             nextRoute <- renderRoute app (traceDyn "route" route)
         pure ()
 
@@ -107,7 +108,6 @@ renderRoute App {..} r = do
     -- TODO: Do this properly using GADT and factorDyn
     hackR <- maybeDyn $
       ffor r $ \case
-        Route_Main -> Nothing
         Route_Node th -> Just th
     evt1 <- switchHold never <=< dyn $
       ffor hackR $ \case

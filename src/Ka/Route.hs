@@ -18,8 +18,7 @@ import Ka.Graph (ThingName (..))
 import Reflex.Dom
 
 data Route
-  = Route_Main
-  | Route_Node ThingName
+  = Route_Node ThingName
   deriving (Eq, Show)
 
 routeLink ::
@@ -58,7 +57,6 @@ dynRouteLink rDyn attr w = do
 
 renderRouteText :: DomBuilder t m => Route -> m ()
 renderRouteText = \case
-  Route_Main -> text "Home"
   Route_Node t -> text $ unThingName t
 
 renderThingLink ::

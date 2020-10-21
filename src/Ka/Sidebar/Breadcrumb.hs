@@ -1,5 +1,6 @@
 module Ka.Sidebar.Breadcrumb
   ( Breadcrumbs,
+    defaultRoute,
     init,
     putCrumb,
     render,
@@ -7,7 +8,7 @@ module Ka.Sidebar.Breadcrumb
 where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
+import Ka.Graph (ThingName (ThingName))
 import Ka.Route (Route (..), dynRouteLink, renderRouteText)
 import Reflex.Dom.Core
 import Prelude hiding (init)
@@ -23,6 +24,9 @@ data Breadcrumbs a = Breadcrumbs
 instance Foldable Breadcrumbs where
   foldMap f (Breadcrumbs before curr after) =
     foldMap f before <> f curr <> foldMap f after
+
+defaultRoute :: Route
+defaultRoute = Route_Node $ ThingName "INDEX"
 
 init :: a -> Breadcrumbs a
 init x =
@@ -57,7 +61,7 @@ render r = do
   routeHist <-
     foldDyn
       putCrumb
-      (init Route_Main)
+      (init defaultRoute)
       (updated r)
   routeHistL <- holdUniqDyn $ fmap toList routeHist
   currentCrumb <- holdUniqDyn $ fmap _breadcrumbs_current routeHist
@@ -69,7 +73,6 @@ render r = do
         -- TODO: Do this properly using GADT and factorDyn
         hackR <- maybeDyn $
           ffor crumbR $ \case
-            Route_Main -> Nothing
             Route_Node _th -> Just ()
         dyn_ $
           ffor hackR $ \case
