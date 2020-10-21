@@ -1,3 +1,5 @@
+{-# LANGUAGE RecursiveDo #-}
+
 module Ka.Sidebar.Listing (render) where
 
 import Control.Monad.Fix (MonadFix)
@@ -26,16 +28,36 @@ render ::
   ) =>
   Dynamic t [ThingName] ->
   m (Event t Route)
-render ths = do
-  mq <-
-    divClass "item" $ do
-      divClass "ui input" $ do
-        fmap (fmap mkSearchQuery . value) $
-          -- TODO: clear this field when output route event fires
-          inputElement $
-            def
-              & initialAttributes .~ ("placeholder" =: "Press / to search")
-  let res = zipDynWith (filter . includeInListing) mq ths
+render xs = do
+  rec q <- searchInput $ () <$ routeChanged
+      let results = zipDynWith (filter . includeInListing) q xs
+      routeChanged <- renderListing results
+  pure routeChanged
+
+searchInput ::
+  DomBuilder t m =>
+  -- | Clear the input field when this event fires
+  Event t () ->
+  m (Dynamic t (Maybe SearchQuery))
+searchInput clearInput = do
+  divClass "item" $ do
+    divClass "ui input" $ do
+      fmap (fmap mkSearchQuery . value) $
+        inputElement $
+          def
+            & initialAttributes .~ ("placeholder" =: "Press / to search")
+            & inputElementConfig_setValue .~ ("" <$ clearInput)
+
+renderListing ::
+  ( DomBuilder t m,
+    MonadHold t m,
+    PostBuild t m,
+    MonadFix m,
+    Prerender js t m
+  ) =>
+  Dynamic t [ThingName] ->
+  m (Event t Route)
+renderListing res = do
   fmap (switch . current . fmap leftmost) $
     simpleList res $ \th -> do
       let rDyn = Route_Node <$> th
