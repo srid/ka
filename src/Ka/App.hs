@@ -11,6 +11,7 @@ import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
 import qualified Ka.Plugin.Calendar as Calendar
+import qualified Ka.Plugin.Task as Task
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Thing
 import Ka.Watch (directoryFilesContent)
@@ -72,7 +73,9 @@ kaApp = do
         -- TODO: Eventually create a proper Plugin type to hold these functions.
         [ pure $ (fmap . fmap . fmap) (\x -> Thing_Pandoc :=> Identity x) pandocE,
           (fmap . fmap . fmap . fmap) (\x -> Thing_Calendar :=> Identity x) $
-            Calendar.runPlugin graphD pandocD pandocE
+            Calendar.runPlugin graphD pandocD pandocE,
+          (fmap . fmap . fmap . fmap) (\x -> Thing_Tasks :=> Identity x) $
+            Task.runPlugin graphD pandocD pandocE
         ]
   docD <-
     foldDyn G.patchMap mempty renderE

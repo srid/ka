@@ -16,6 +16,7 @@ import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Backlinks as Backlinks
 import qualified Ka.Plugin.Calendar as Calendar
+import qualified Ka.Plugin.Task as Task
 import Ka.Route (Route)
 import Reflex
 import Reflex.Dom
@@ -29,6 +30,7 @@ data Thing a where
   Thing_Pandoc :: Thing Pandoc
   -- | The type used by the Calendar plugin; holds the list of daily notes.
   Thing_Calendar :: Thing (Set Day)
+  Thing_Tasks :: Thing Task.Tasks
 
 render ::
   ( Prerender js t m,
@@ -51,6 +53,8 @@ render g thVal = do
             PandocView.render doc
           Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
             Calendar.render days
+          Thing_Tasks :=> (fmap runIdentity . getCompose -> x) ->
+            Task.render x
     -- TODO: Have to figure our UI order of plugins
     r3 <- Calendar.thingPanel g $ fst <$> thVal
     r2 <- Backlinks.thingPanel g $ fst <$> thVal

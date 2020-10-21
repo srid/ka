@@ -74,6 +74,7 @@ executable ka
     Ka.PandocView
     Ka.Plugin.Backlinks
     Ka.Plugin.Calendar
+    Ka.Plugin.Task
     Ka.Plugin.WikiLink
     Ka.Route
     Ka.Sidebar
