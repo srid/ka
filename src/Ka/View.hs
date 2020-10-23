@@ -11,6 +11,7 @@ import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
+import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route (..))
 import qualified Ka.Route as Route
 import qualified Ka.Sidebar as Sidebar
@@ -38,6 +39,7 @@ headWidget = do
       ".main" ? do
         Route.style
         Thing.style
+        Calendar.style
         -- User style library for use in Markdown
         ".mark" ? do
           C.backgroundColor C.yellow

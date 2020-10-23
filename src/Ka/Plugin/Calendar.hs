@@ -1,11 +1,17 @@
+{-# LANGUAGE RecursiveDo #-}
+
 module Ka.Plugin.Calendar
   ( runPlugin,
     render,
+    style,
     thingPanel,
     includeInSidebar,
   )
 where
 
+import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
+import Clay (Css, (?))
+import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -58,14 +64,25 @@ render ::
     PostBuild t m,
     DomBuilder t m,
     MonadHold t m,
-    MonadFix m
+    MonadFix m,
+    PerformEvent t m,
+    TriggerEvent t m,
+    MonadIO (Performable m)
   ) =>
+  Dynamic t Graph ->
   Dynamic t (Set Day) ->
   m (Event t Route)
-render (fmap Set.toList -> fs) = do
-  divClass "ui basic segment" $ do
-    let grouped :: Dynamic t (Map (Integer, Int) (NonEmpty Day)) =
-          groupBy ((\(y, m, _) -> (y, m)) . toGregorian) . reverse <$> fs
+render g (fmap Set.toList -> days) = do
+  linksTo <- noteTitleInput g
+  -- Tags days with a Bool to indicate if they should be highlighted. Entries
+  -- linking to `linksTo` will be highlighted. This is an experimental feature.
+  let daysTagged = ffor3 days linksTo g $ \days' mth graph ->
+        ffor days' $ \day ->
+          let t = maybe False (`Set.member` AM.postSet (dayThing day) graph) mth
+           in (day, t)
+  divClass "ui basic calendar segment" $ do
+    let grouped :: Dynamic t (Map (Integer, Int) (NonEmpty (Day, Bool))) =
+          groupBy ((\(y, m, _) -> (y, m)) . toGregorian . fst) . reverse <$> daysTagged
     divClass "ui message" $ do
       el "p" $ text "This is not a real calendar layout."
     fmap (switch . current . fmap leftmost) $
@@ -77,10 +94,53 @@ render (fmap Set.toList -> fs) = do
             simpleList (toList . snd <$> monthDyn) $ \dayD ->
               elAttr "a" ("class" =: "column") $
                 switchHold never <=< dyn $
-                  ffor dayD $ \day -> do
+                  ffor dayD $ \(day, highlight) -> do
                     let r = Route_Node $ dayThing day
                         (_y, _m, d) = toGregorian day
-                    routeLink r $ text $ show d
+                    elClass "span" (bool "" "highlight" highlight) $
+                      routeLink r $ text $ show d
+
+style :: Css
+style = do
+  ".calendar" ? do
+    "span.highlight" ? do
+      C.backgroundColor C.yellow
+
+noteTitleInput ::
+  forall t m.
+  ( DomBuilder t m,
+    PostBuild t m,
+    MonadHold t m,
+    MonadFix m,
+    PerformEvent t m,
+    TriggerEvent t m,
+    MonadIO (Performable m)
+  ) =>
+  Dynamic t Graph ->
+  m (Dynamic t (Maybe ThingName))
+noteTitleInput g = do
+  rec val <-
+        elDynAttr "div" inputClasses $ do
+          fmap value $
+            inputElement $
+              def
+                & initialAttributes .~ ("placeholder" =: "Enter a note title")
+      mthing <-
+        flip debounceWith (zipDyn g val) $ \(graph, x) ->
+          let th = ThingName x
+           in if AM.hasVertex th graph
+                then Just th
+                else Nothing
+      -- Display error on non-empty input if it is not in graph
+      let inputClasses = ffor (zipDyn val mthing) $ \case
+            ("", _) -> ("class" =: "ui input")
+            (_, Nothing) -> ("class" =: "ui error input")
+            _ -> ("class" =: "ui input")
+  pure mthing
+  where
+    debounceWith :: (a -> Maybe b) -> Dynamic t a -> m (Dynamic t (Maybe b))
+    debounceWith f =
+      holdDyn Nothing <=< fmap (fmap f) . debounce 0.5 . updated
 
 calThing :: ThingName
 calThing =

@@ -37,7 +37,10 @@ render ::
     PostBuild t m,
     MonadHold t m,
     MonadFix m,
-    PandocBuilder t m
+    PandocBuilder t m,
+    PerformEvent t m,
+    TriggerEvent t m,
+    MonadIO (Performable m)
   ) =>
   Dynamic t Graph ->
   Dynamic t (ThingName, DSum Thing Identity) ->
@@ -52,7 +55,7 @@ render g thVal = do
           Thing_Pandoc :=> (fmap runIdentity . getCompose -> doc) ->
             PandocView.render doc
           Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
-            Calendar.render days
+            Calendar.render g days
           Thing_Tasks :=> (fmap runIdentity . getCompose -> x) ->
             Task.render x
     -- TODO: Have to figure our UI order of plugins
