@@ -75,6 +75,7 @@ executable ka
     Ka.Plugin.Backlinks
     Ka.Plugin.Calendar
     Ka.Plugin.Task
+    Ka.Plugin.Telescope
     Ka.Plugin.WikiLink
     Ka.Route
     Ka.Sidebar

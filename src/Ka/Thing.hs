@@ -22,6 +22,7 @@ import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
 import Text.Pandoc.Definition (Pandoc (..))
+import qualified Ka.Plugin.Telescope as Telescope
 
 -- | All kinds of things managed by plugins.
 data Thing a where
@@ -61,13 +62,15 @@ render g thVal = do
     -- TODO: Have to figure our UI order of plugins
     r3 <- Calendar.thingPanel g $ fst <$> thVal
     r2 <- Backlinks.thingPanel g $ fst <$> thVal
-    pure $ leftmost [r1, r2, r3]
+    r4 <- Telescope.thingPanel g $ fst <$> thVal
+    pure $ leftmost [r1, r2, r3, r4]
 
 style :: C.Css
 style = do
   ".thing" ? do
     PandocView.style
     Backlinks.style
+    Telescope.style
 
 -- This breaks ghcide :-/
 -- https://github.com/haskell/haskell-language-server/pull/463
