@@ -3,15 +3,12 @@
 module Ka.Plugin.Calendar
   ( runPlugin,
     render,
-    style,
     thingPanel,
     includeInSidebar,
   )
 where
 
 import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
-import Clay (Css, (?))
-import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
@@ -99,12 +96,6 @@ render g (fmap Set.toList -> days) = do
                         (_y, _m, d) = toGregorian day
                     elClass "span" (bool "" "highlight" highlight) $
                       routeLink r $ text $ show d
-
-style :: Css
-style = do
-  ".calendar" ? do
-    "span.highlight" ? do
-      C.backgroundColor C.yellow
 
 noteTitleInput ::
   forall t m.

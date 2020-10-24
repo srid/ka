@@ -11,6 +11,8 @@ import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
 import qualified Ka.Plugin.Calendar as Calendar
+import Ka.Plugin.Highlight (highlightSpec)
+import Ka.Plugin.Tag (inlineTagSpec)
 import qualified Ka.Plugin.Task as Task
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Thing
@@ -50,6 +52,8 @@ kaApp = do
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =
                     wikiLinkSpec
+                      <> inlineTagSpec
+                      <> highlightSpec
                       <> CE.gfmExtensions
                       <> CE.fancyListSpec
                       <> CE.footnoteSpec

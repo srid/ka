@@ -57,6 +57,7 @@ executable ka
     DeriveFunctor
     DerivingStrategies
     FlexibleContexts
+    FlexibleInstances
     GADTs
     LambdaCase
     OverloadedStrings
@@ -74,6 +75,8 @@ executable ka
     Ka.PandocView
     Ka.Plugin.Backlinks
     Ka.Plugin.Calendar
+    Ka.Plugin.Highlight
+    Ka.Plugin.Tag
     Ka.Plugin.Task
     Ka.Plugin.Telescope
     Ka.Plugin.WikiLink
