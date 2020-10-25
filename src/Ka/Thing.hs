@@ -12,17 +12,17 @@ import Data.Dependent.Sum (DSum (..))
 import Data.GADT.Compare (GEq (geq))
 import Data.Time.Calendar (Day)
 import Data.Type.Equality
-import Ka.Graph (Graph, ThingName (..))
+import Ka.Graph (Graph, ThingName (..), ThingScope)
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Backlinks as Backlinks
 import qualified Ka.Plugin.Calendar as Calendar
 import qualified Ka.Plugin.Task as Task
+import qualified Ka.Plugin.Telescope as Telescope
 import Ka.Route (Route)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
 import Text.Pandoc.Definition (Pandoc (..))
-import qualified Ka.Plugin.Telescope as Telescope
 
 -- | All kinds of things managed by plugins.
 data Thing a where
@@ -44,11 +44,11 @@ render ::
     MonadIO (Performable m)
   ) =>
   Dynamic t Graph ->
-  Dynamic t (ThingName, DSum Thing Identity) ->
+  Dynamic t (ThingName, (ThingScope, DSum Thing Identity)) ->
   m (Event t Route)
 render g thVal = do
   divClass "ui basic attached segments thing" $ do
-    thValF <- factorDyn $ snd <$> thVal
+    thValF <- factorDyn $ snd . snd <$> thVal
     r1 <- divClass "ui attached basic segment" $ do
       elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal
       switchHold never <=< dyn $
