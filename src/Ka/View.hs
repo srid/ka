@@ -127,5 +127,5 @@ renderRoute App {..} r = do
             ffor thingDynM $ \case
               Nothing -> text "404" >> pure never
               Just thingDataM ->
-                Thing.render _app_graph thingDataM
+                Thing.render _app_graph _app_doc thingDataM
     pure $ leftmost [evt0, evt1]
