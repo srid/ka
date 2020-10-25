@@ -7,8 +7,7 @@ import qualified Commonmark.Extensions as CE
 import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
 import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
-import Ka.Graph (Graph, ThingName, ThingScope)
+import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
 import qualified Ka.Plugin.Calendar as Calendar
@@ -16,11 +15,12 @@ import Ka.Plugin.Highlight (highlightSpec)
 import Ka.Plugin.Tag (inlineTagSpec)
 import qualified Ka.Plugin.Task as Task
 import Ka.Plugin.WikiLink (wikiLinkSpec)
+import Ka.Scope (ThingScope)
+import qualified Ka.Scope as Scope
 import Ka.Thing
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
-import System.FilePath (splitFileName)
 import Text.Pandoc.Definition (Pandoc)
 
 data App t = App
@@ -47,7 +47,7 @@ kaApp = do
   let pandocWithScopeE :: Event t (Map ThingName (Maybe (ThingScope, Pandoc))) =
         -- Discard the parent paths; we only consider the basename to be note identifier.
         -- TODO: Support file tree in sidebar listing.
-        ffor (diffMapWithOnlyBaseFileName <$> fileContentE) $ \m ->
+        ffor (Scope.diffMapScoped <$> fileContentE) $ \m ->
           Map.mapKeys mdFileThing $
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =
@@ -85,36 +85,6 @@ kaApp = do
   docD <-
     foldDyn G.patchMap mempty renderE
   pure $ App graphD docD
-
--- TODO: Move to Scope.hs
-
--- | Move the parent directories of key to value, retaining only the base name
--- on the key.
---
--- On conflict, take the Just value discarding the Nothing. With two Just
--- values, pick the greater of them (per Map.mapKeysWith semantics); this is
--- irrelevant to our app domain however (so effectively, the behaviour when
--- there are simultaneous modifications to files with the same base name --
--- which produces two Just values -- is undefined).
-diffMapWithOnlyBaseFileName :: Map FilePath (Maybe a) -> Map FilePath (Maybe ([FilePath], a))
-diffMapWithOnlyBaseFileName m =
-  let xs = Map.toList m
-   in Map.fromListWith f $
-        ffor xs $ \(unScope -> (k, scope), v) ->
-          (k, (scope,) <$> v)
-  where
-    f Nothing Nothing = Nothing
-    f Nothing x = x
-    f x Nothing = x
-    f x _y = x
-    -- Convert foo/bar/baz.md into (["foo", "bar"], "baz.md")
-    -- TODO: What if `fn` is absolute? As fsnotify might throw in?
-    unScope fn =
-      let (dir, base) = splitFileName fn
-          scope =
-            filter (not . null) $
-              fmap toString $ T.split (== '/') $ toText dir
-       in (base, scope)
 
 logDiffEvent ::
   (PerformEvent t m, MonadIO (Performable m)) =>

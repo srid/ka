@@ -12,13 +12,14 @@ import Data.Dependent.Sum (DSum (..))
 import Data.GADT.Compare (GEq (geq))
 import Data.Time.Calendar (Day)
 import Data.Type.Equality
-import Ka.Graph (Graph, ThingName (..), ThingScope)
+import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Backlinks as Backlinks
 import qualified Ka.Plugin.Calendar as Calendar
 import qualified Ka.Plugin.Task as Task
 import qualified Ka.Plugin.Telescope as Telescope
 import Ka.Route (Route)
+import Ka.Scope (ThingScope)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)

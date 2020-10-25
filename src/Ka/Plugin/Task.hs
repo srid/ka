@@ -8,10 +8,11 @@ where
 
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
-import Ka.Graph (Graph, ThingName (..), ThingScope, noScope)
+import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
 import Ka.Route (Route (..), dynRouteLink, renderRouteText)
+import Ka.Scope (ThingScope, noScope)
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc (PandocBuilder)
 import qualified Text.Pandoc.Builder as B

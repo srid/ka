@@ -11,9 +11,10 @@ import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
-import Ka.Graph (Graph, ThingName, ThingScope, unThingName)
+import Ka.Graph (Graph, ThingName (unThingName))
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route, renderThingLink)
+import Ka.Scope (ThingScope)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)

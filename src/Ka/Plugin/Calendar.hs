@@ -15,9 +15,10 @@ import qualified Data.Set as Set
 import Data.Time (parseTimeM)
 import Data.Time.Calendar (Day, addDays, toGregorian)
 import Data.Time.Format (defaultTimeLocale, formatTime)
-import Ka.Graph (Graph, ThingName (..), ThingScope, noScope)
+import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import Ka.Route (Route (..), routeLink)
+import Ka.Scope (ThingScope, noScope)
 import Reflex.Dom.Core hiding (Link)
 import Relude.Extra (groupBy)
 import Text.Pandoc.Definition (Pandoc)

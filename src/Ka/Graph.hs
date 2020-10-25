@@ -1,9 +1,7 @@
 module Ka.Graph
   ( Graph,
     ThingName (..),
-    ThingScope,
     Context,
-    noScope,
     empty,
     patch,
     patchMap,
@@ -22,13 +20,6 @@ import Prelude hiding (empty)
 -- Defined as the human readable title.
 newtype ThingName = ThingName {unThingName :: Text}
   deriving (Eq, Show, Ord)
-
--- | The scope of a thing: that is, parent directories. Can be empty if
--- top-level scope.
-type ThingScope = [FilePath]
-
-noScope :: ThingScope
-noScope = []
 
 -- | The context of a relationship
 --

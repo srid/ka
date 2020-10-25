@@ -81,6 +81,7 @@ executable ka
     Ka.Plugin.Telescope
     Ka.Plugin.WikiLink
     Ka.Route
+    Ka.Scope
     Ka.Sidebar
     Ka.Sidebar.Breadcrumb
     Ka.Sidebar.Listing
