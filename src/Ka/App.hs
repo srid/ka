@@ -7,6 +7,7 @@ import qualified Commonmark.Extensions as CE
 import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import Ka.Graph (Graph, ThingName, ThingScope)
 import qualified Ka.Graph as G
 import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
@@ -19,7 +20,7 @@ import Ka.Thing
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
-import System.FilePath (takeFileName)
+import System.FilePath (splitFileName)
 import Text.Pandoc.Definition (Pandoc)
 
 data App t = App
@@ -85,6 +86,8 @@ kaApp = do
     foldDyn G.patchMap mempty renderE
   pure $ App graphD docD
 
+-- TODO: Move to Scope.hs
+
 -- | Move the parent directories of key to value, retaining only the base name
 -- on the key.
 --
@@ -97,13 +100,21 @@ diffMapWithOnlyBaseFileName :: Map FilePath (Maybe a) -> Map FilePath (Maybe ([F
 diffMapWithOnlyBaseFileName m =
   let xs = Map.toList m
    in Map.fromListWith f $
-        ffor xs $ \(k, v) ->
-          (takeFileName k, ([],) <$> v)
+        ffor xs $ \(unScope -> (k, scope), v) ->
+          (k, (scope,) <$> v)
   where
     f Nothing Nothing = Nothing
     f Nothing x = x
     f x Nothing = x
     f x _y = x
+    -- Convert foo/bar/baz.md into (["foo", "bar"], "baz.md")
+    -- TODO: What if `fn` is absolute? As fsnotify might throw in?
+    unScope fn =
+      let (dir, base) = splitFileName fn
+          scope =
+            filter (not . null) $
+              fmap toString $ T.split (== '/') $ toText dir
+       in (base, scope)
 
 logDiffEvent ::
   (PerformEvent t m, MonadIO (Performable m)) =>

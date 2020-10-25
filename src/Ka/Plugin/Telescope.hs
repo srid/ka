@@ -10,6 +10,7 @@ import Clay ((?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
+import qualified Data.Text as T
 import Ka.Graph (Graph, ThingName, ThingScope, unThingName)
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route, renderThingLink)
@@ -41,7 +42,10 @@ thingPanel g' scopeDyn thWithScopeDyn = do
       thDyn = fst <$> thWithScopeDyn
   -- TODO: ^^ Might have to narrow the graph to contain
   divClass "ui telescope segment" $ do
-    elClass "h2" "header" $ text "Telescope"
+    elClass "h2" "header" $ do
+      text "Telescope ["
+      dynText $ T.intercalate "/" . fmap toText . snd <$> thWithScopeDyn
+      text "]"
     el "p" $ do
       text "Notes reachable from "
       el "em" $ dynText $ unThingName <$> thDyn
