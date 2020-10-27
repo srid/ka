@@ -12,25 +12,32 @@ type ThingScope = [FilePath]
 noScope :: ThingScope
 noScope = []
 
+showScope :: ThingScope -> Text
+showScope =
+  T.intercalate "/" . fmap toText
+
 -- | Move the parent directories of key to value, retaining only the base name
 -- on the key.
 --
--- On conflict, take the Just value discarding the Nothing. With two Just
--- values, pick the greater of them (per Map.mapKeysWith semantics); this is
--- irrelevant to our app domain however (so effectively, the behaviour when
--- there are simultaneous modifications to files with the same base name --
--- which produces two Just values -- is undefined).
-diffMapScoped :: Map FilePath (Maybe a) -> Map FilePath (Maybe ([FilePath], a))
-diffMapScoped m =
-  let xs = Map.toList m
-   in Map.fromListWith f $
-        ffor xs $ \(unScope -> (k, scope), v) ->
-          (k, (scope,) <$> v)
+-- On conflict, this function errors out (when there are simultaneous
+-- modifications to files with the same base name).
+diffMapScoped :: HasCallStack => Map FilePath (Maybe a) -> Map FilePath (Maybe (ThingScope, a))
+diffMapScoped (Map.toList -> xs) =
+  Map.fromListWithKey f $
+    ffor xs $ \(unScope -> (k, scope), v) ->
+      (k, (scope,) <$> v)
   where
-    f Nothing Nothing = Nothing
-    f Nothing x = x
-    f x Nothing = x
-    f x _y = x
+    f _k Nothing Nothing = Nothing
+    f _k Nothing x = x
+    f _k x Nothing = x
+    f k (Just (scope1, _)) (Just (scope2, _)) =
+      error $
+        "Ambiguous file "
+          <> toText k
+          <> "with multiple scopes: "
+          <> showScope scope1
+          <> ", "
+          <> showScope scope2
     -- Convert foo/bar/baz.md into (["foo", "bar"], "baz.md")
     -- TODO: What if `fn` is absolute? As fsnotify might throw in?
     unScope fn =

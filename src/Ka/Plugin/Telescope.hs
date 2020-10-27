@@ -10,11 +10,11 @@ import Clay ((?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
 import Ka.Graph (Graph, ThingName (unThingName))
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route, renderThingLink)
 import Ka.Scope (ThingScope)
+import qualified Ka.Scope as Scope
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -45,7 +45,7 @@ thingPanel g' scopeDyn thWithScopeDyn = do
   divClass "ui telescope segment" $ do
     elClass "h2" "header" $ do
       text "Telescope ["
-      dynText $ T.intercalate "/" . fmap toText . snd <$> thWithScopeDyn
+      dynText $ Scope.showScope . snd <$> thWithScopeDyn
       text "]"
     el "p" $ do
       text "Notes reachable from "
