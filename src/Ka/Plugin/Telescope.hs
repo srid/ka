@@ -9,9 +9,12 @@ import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import Clay ((?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
-import Ka.Graph (Graph, ThingName, unThingName)
+import qualified Data.Map.Strict as Map
+import Ka.Graph (Graph, ThingName (unThingName))
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Route (Route, renderThingLink)
+import Ka.Scope (ThingScope)
+import qualified Ka.Scope as Scope
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -31,12 +34,19 @@ thingPanel ::
     PandocBuilder t m
   ) =>
   Dynamic t Graph ->
-  Dynamic t ThingName ->
+  Dynamic t (Map ThingName ThingScope) ->
+  Dynamic t (ThingName, ThingScope) ->
   m (Event t Route)
-thingPanel (fmap (AM.induce includeThing) -> g) thDyn =
+thingPanel g' scopeDyn thWithScopeDyn = do
+  let g = ffor3 g' thWithScopeDyn scopeDyn $ \graph (_name, scope) scopes ->
+        AM.induce (includeThing $ Map.filter (== scope) scopes) graph
+      thDyn = fst <$> thWithScopeDyn
   -- TODO: ^^ Might have to narrow the graph to contain
   divClass "ui telescope segment" $ do
-    elClass "h2" "header" $ text "Telescope"
+    elClass "h2" "header" $ do
+      text "Telescope ["
+      dynText $ Scope.showScope . snd <$> thWithScopeDyn
+      text "]"
     el "p" $ do
       text "Notes reachable from "
       el "em" $ dynText $ unThingName <$> thDyn
@@ -58,6 +68,6 @@ thingPanel (fmap (AM.induce includeThing) -> g) thDyn =
             divClass "ui label" $ do
               switchHold never <=< dyn $ renderThingLink <$> thsDyn
 
-includeThing :: ThingName -> Bool
-includeThing =
-  Calendar.includeInSidebar
+includeThing :: Map ThingName ThingScope -> ThingName -> Bool
+includeThing scopes name =
+  Map.member name scopes && Calendar.includeInSidebar name

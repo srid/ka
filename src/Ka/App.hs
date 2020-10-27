@@ -15,17 +15,17 @@ import Ka.Plugin.Highlight (highlightSpec)
 import Ka.Plugin.Tag (inlineTagSpec)
 import qualified Ka.Plugin.Task as Task
 import Ka.Plugin.WikiLink (wikiLinkSpec)
+import Ka.Scope (ThingScope)
+import qualified Ka.Scope as Scope
 import Ka.Thing
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
-import System.FilePath (takeFileName)
 import Text.Pandoc.Definition (Pandoc)
 
 data App t = App
   { _app_graph :: Dynamic t Graph,
-    -- _app_pandoc :: Dynamic t (Map ThingName Pandoc),
-    _app_doc :: Dynamic t (Map ThingName (DSum Thing Identity))
+    _app_doc :: Dynamic t (Map ThingName (ThingScope, DSum Thing Identity))
   }
 
 kaApp ::
@@ -44,10 +44,10 @@ kaApp ::
 kaApp = do
   fileContentE <- directoryFilesContent "." noteExtension
   logDiffEvent fileContentE
-  let pandocE :: Event t (Map ThingName (Maybe Pandoc)) =
+  let pandocWithScopeE :: Event t (Map ThingName (Maybe (ThingScope, Pandoc))) =
         -- Discard the parent paths; we only consider the basename to be note identifier.
         -- TODO: Support file tree in sidebar listing.
-        ffor (diffMapWithOnlyBaseFileName <$> fileContentE) $ \m ->
+        ffor (Scope.diffMapScoped <$> fileContentE) $ \m ->
           Map.mapKeys mdFileThing $
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =
@@ -61,45 +61,30 @@ kaApp = do
                       <> CE.definitionListSpec
                       <> CE.bracketedSpanSpec
                       <> defaultSyntaxSpec
-               in parseMarkdown spec fp s
+               in parseMarkdown spec fp <$> s
+      pandocE = fmap (fmap snd) <$> pandocWithScopeE
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
       ffor pandocE $
         Map.map $
           fmap $ fmap (swap . first mdFileThing) . Map.toList . queryLinksWithContext
-  pandocD :: Dynamic t (Map ThingName Pandoc) <-
-    foldDyn G.patchMap mempty pandocE
+  pandocD :: Dynamic t (Map ThingName (ThingScope, Pandoc)) <-
+    foldDyn G.patchMap mempty pandocWithScopeE
   -- NOTE: If two plugins produce the same file, the later plugin's output will
   -- be used, discarding the formers. That is what `flip Map.union` effectively does.
   renderE <-
     fmap (mergeWith $ flip Map.union) $
       sequence
         -- TODO: Eventually create a proper Plugin type to hold these functions.
-        [ pure $ (fmap . fmap . fmap) (\x -> Thing_Pandoc :=> Identity x) pandocE,
-          (fmap . fmap . fmap . fmap) (\x -> Thing_Calendar :=> Identity x) $
-            Calendar.runPlugin graphD pandocD pandocE,
-          (fmap . fmap . fmap . fmap) (\x -> Thing_Tasks :=> Identity x) $
-            Task.runPlugin graphD pandocD pandocE
+        [ pure $ (fmap . fmap . fmap . fmap) (\x -> Thing_Pandoc :=> Identity x) pandocWithScopeE,
+          (fmap . fmap . fmap . fmap . fmap) (\x -> Thing_Calendar :=> Identity x) $
+            Calendar.runPlugin graphD pandocD pandocWithScopeE,
+          (fmap . fmap . fmap . fmap . fmap) (\x -> Thing_Tasks :=> Identity x) $
+            Task.runPlugin graphD pandocD pandocWithScopeE
         ]
   docD <-
     foldDyn G.patchMap mempty renderE
   pure $ App graphD docD
-
--- | Drop the parent directories, retaining only the base name, on map keys.
---
--- On conflict, take the Just value discarding the Nothing. With two Just
--- values, pick the greater of them (per Map.mapKeysWith semantics); this is
--- irrelevant to our app domain however (so effectively, the behaviour when
--- there are simultaneous modifications to files with the same base name is
--- undefined).
-diffMapWithOnlyBaseFileName :: Map FilePath (Maybe a) -> Map FilePath (Maybe a)
-diffMapWithOnlyBaseFileName =
-  Map.mapKeysWith f takeFileName
-  where
-    f Nothing Nothing = Nothing
-    f Nothing x = x
-    f x Nothing = x
-    f x _y = x
 
 logDiffEvent ::
   (PerformEvent t m, MonadIO (Performable m)) =>

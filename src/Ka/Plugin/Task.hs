@@ -12,6 +12,7 @@ import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
 import Ka.Route (Route (..), dynRouteLink, renderRouteText)
+import Ka.Scope (ThingScope, noScope)
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc (PandocBuilder)
 import qualified Text.Pandoc.Builder as B
@@ -37,25 +38,28 @@ runPlugin ::
   forall t m.
   (Reflex t, MonadHold t m, MonadFix m, DomBuilder t m) =>
   Dynamic t Graph ->
-  Dynamic t (Map ThingName Pandoc) ->
-  (Event t (Map ThingName (Maybe Pandoc))) ->
-  m (Event t (Map ThingName (Maybe Tasks)))
+  Dynamic t (Map ThingName (ThingScope, Pandoc)) ->
+  (Event t (Map ThingName (Maybe (ThingScope, Pandoc)))) ->
+  m (Event t (Map ThingName (Maybe (ThingScope, Tasks))))
 runPlugin _graphD _pandocD pandocE = do
-  let tasksE =
+  let tasksWithScopeE =
         ffor pandocE $
           Map.mapMaybe $
-            traverse $ \(extractTasks -> ts) -> do
-              ts' <- nonEmptyAsJust ts
-              -- Ignore notes without any unchecked tasks
-              guard $ any (not . _task_checked) ts'
-              pure ts'
+            traverse $
+              traverse $ \(extractTasks -> ts) -> do
+                ts' <- nonEmptyAsJust ts
+                -- Ignore notes without any unchecked tasks
+                guard $ any (not . _task_checked) ts'
+                pure ts'
+      tasksE =
+        fmap (fmap snd) <$> tasksWithScopeE
   tasks <- foldDyn G.patchMap mempty tasksE
   pure $
     fforMaybe (attach (current tasks) $ updated tasks) $ \(oldTasks, currTasks) -> do
       guard $ oldTasks /= currTasks
       pure $
         one $
-          (ThingName "+Tasks", Just currTasks)
+          (ThingName "+Tasks", Just (noScope, currTasks))
 
 nonEmptyAsJust :: [a] -> Maybe [a]
 nonEmptyAsJust =

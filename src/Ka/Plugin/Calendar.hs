@@ -18,6 +18,7 @@ import Data.Time.Format (defaultTimeLocale, formatTime)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import Ka.Route (Route (..), routeLink)
+import Ka.Scope (ThingScope, noScope)
 import Reflex.Dom.Core hiding (Link)
 import Relude.Extra (groupBy)
 import Text.Pandoc.Definition (Pandoc)
@@ -30,9 +31,9 @@ runPlugin ::
     DomBuilder t m
   ) =>
   Dynamic t Graph ->
-  Dynamic t (Map ThingName Pandoc) ->
-  (Event t (Map ThingName (Maybe Pandoc))) ->
-  m (Event t (Map ThingName (Maybe (Set Day))))
+  Dynamic t (Map ThingName (ThingScope, Pandoc)) ->
+  (Event t (Map ThingName (Maybe (ThingScope, Pandoc)))) ->
+  m (Event t (Map ThingName (Maybe (ThingScope, Set Day))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
         ffilter (not . null) $
@@ -53,7 +54,7 @@ runPlugin _graphD _pandocD pandocE = do
           else
             Just $
               one $
-                (calThing, Just fs)
+                (calThing, Just (noScope, fs))
 
 render ::
   forall js t m.
