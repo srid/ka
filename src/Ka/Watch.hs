@@ -9,9 +9,11 @@ import qualified Data.Map.Strict as Map
 import Data.Time (NominalDiffTime)
 import Reflex
 import Reflex.FSNotify (FSEvent, watchTree)
+import System.Directory (makeAbsolute)
 import System.FSNotify (defaultConfig)
 import qualified System.FSNotify as FSN
 import System.FilePath (takeExtension)
+import System.FilePath.Posix (makeRelative)
 import System.FilePattern.Directory (getDirectoryFiles)
 
 -- | Get the contents of all the files in the given directory
@@ -31,13 +33,21 @@ directoryFilesContent ::
   FilePath ->
   String ->
   m (Event t (Map FilePath (Maybe Text)))
-directoryFilesContent dirPath ext = do
+directoryFilesContent dirPathRel ext = do
+  -- This function needs absolute directory path for `makeRelative` (see below)
+  -- to work.
+  dirPath <- liftIO $ makeAbsolute dirPathRel
   fileChangeE <- watchDirectory dirPath ext
   contentE <-
     performEvent $
-      ffor fileChangeE $
-        Map.traverseWithKey $ \fp -> traverse $ \() -> do
-          liftIO $ readFileText fp
+      ffor fileChangeE $ \m ->
+        -- fsnotify returns absolute paths; we must convert them back to
+        -- relative paths, to be consistent with `content0E` (which uses
+        -- getDirectoryFiles below to return relative paths)
+        let toRel = makeRelative dirPath
+         in flip Map.traverseWithKey (Map.mapKeys toRel m) $
+              \fp -> traverse $ \() -> do
+                liftIO $ readFileText fp
   -- Gather the current list of files as an event, and trigger it in the output
   -- event (see leftmost below)
   (content0E, fire) <- newTriggerEvent
