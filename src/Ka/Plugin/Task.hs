@@ -43,16 +43,25 @@ runPlugin ::
   m (Event t (Map ThingName (Maybe (ThingScope, Tasks))))
 runPlugin _graphD _pandocD pandocE = do
   let tasksWithScopeE =
-        ffor pandocE $
-          Map.mapMaybe $
-            traverse $
-              traverse $ \(extractTasks -> ts) -> do
-                ts' <- nonEmptyAsJust ts
-                -- Ignore notes without any unchecked tasks
-                guard $ any (not . _task_checked) ts'
-                pure ts'
+        -- The outter maybe is Nothing if the thing has no tasks. We join it
+        -- with inner maybe to treat it as "deleted" (because in effect the
+        -- tasks in this otherwise existing note may have just been deleted),
+        -- and we want that "deletion" to propagate to the foldDyn below for
+        -- correct update.
+        fmap (fmap join) $
+          ffor pandocE $
+            Map.map $
+              traverse $
+                traverse $ \(extractTasks -> ts) -> do
+                  ts' <- nonEmptyAsJust ts
+                  -- Ignore notes without any unchecked tasks
+                  guard $ any (not . _task_checked) ts'
+                  pure ts'
       tasksE =
         fmap (fmap snd) <$> tasksWithScopeE
+  -- FIXME: When a note gets all its task removed, this does't patch `tasks` to
+  -- remove it. We should pass the "informatoin" that certain notes modified in
+  -- `pandocE` have no tasks
   tasks <- foldDyn G.patchMap mempty tasksE
   pure $
     fforMaybe (attach (current tasks) $ updated tasks) $ \(oldTasks, currTasks) -> do
