@@ -15,8 +15,6 @@ The first two goals in particular are relevant for preparing `ka` to eventually 
 This spins up a local server, rather than a GTK+ app (as the latter cannot be reloaded by ghcid):
 
 ```bash
-# Setup reflex-frp nix cache first: 
-# https://github.com/obsidiansystems/obelisk#installing-obelisk
 bin/run /your/notes/dir
 ```
 
