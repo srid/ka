@@ -1,0 +1,1 @@
+- [ ] Use d3.js or some such thing to create a Roam/Obsidian like Graph view, as part of the overall research in [[Telescope plugin]].
