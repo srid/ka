@@ -1,6 +1,6 @@
 # ka
 
-`ka` is in active research phase, and is highly volatile. But, if you are curious, you may run it on your notebook ([neuron] notes work with title IDs); `ka` works with a folder of Markdown files linked to one another (wiki-links are supported).
+`ka` is in active research phase, and is highly volatile. `ka` works with a folder of Markdown files linked to one another (wiki-links are supported). If you are curious, begin by running `ka` on the ./guide notebook, before trying it out on your own notebook.
 
 Project goals:
 
@@ -9,8 +9,6 @@ Project goals:
 3. UX optimized for navigating private notebooks
 
 The first two goals in particular are relevant for preparing `ka` to eventually supplant rib and shake in neuron.
-
-To run `ka` as a GTK+ app on your notebook:
 
 ## Development
 
@@ -25,13 +23,13 @@ bin/run /your/notes/dir
 ## Running as GTK+ app
 
 ```bash
-$(nix-build)/bin/ka /your/notes/dir
+$(nix-build)/bin/ka ./guide  # Or pass your notebook directory
 ```
+
+(If the GTK+ app fails to launch for any reason, try the following section.)
 
 ## Running as web app
 
 ```bash
-JSADDLE_WARP_PORT=8080 $(nix-build --arg useWarp true)/bin/ka /your/notes/dir
+JSADDLE_WARP_PORT=8080 $(nix-build --arg useWarp true)/bin/ka ./guide
 ```
-
-[neuron]: https://github.com/srid/neuron
