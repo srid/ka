@@ -26,6 +26,8 @@ bin/run /your/notes/dir
 $(nix-build)/bin/ka ./guide  # Or pass your notebook directory
 ```
 
+To install the GTK+ app, run `nix-env -if .` from project root. Then run `ka /path/to/your/notebook` to launch `ka` on your notebook.
+
 (If the GTK+ app fails to launch for any reason, try the following section.)
 
 ## Running as web app
