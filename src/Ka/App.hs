@@ -59,7 +59,8 @@ kaApp = do
                       <> CE.footnoteSpec
                       <> CE.smartPunctuationSpec
                       <> CE.definitionListSpec
-                      <> CE.bracketedSpanSpec
+                      <> CE.attributesSpec
+                      <> CE.fencedDivSpec -- Used for publishing (semantic UI classes)
                       <> defaultSyntaxSpec
                in parseMarkdown spec fp <$> s
       pandocE = fmap (fmap snd) <$> pandocWithScopeE
