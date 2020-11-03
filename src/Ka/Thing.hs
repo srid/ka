@@ -73,6 +73,7 @@ style = do
     PandocView.style
     Backlinks.style
     Telescope.style
+    Task.style
 
 -- This breaks ghcide :-/
 -- https://github.com/haskell/haskell-language-server/pull/463

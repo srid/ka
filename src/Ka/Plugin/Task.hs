@@ -1,11 +1,14 @@
 module Ka.Plugin.Task
   ( runPlugin,
     render,
+    style,
     Task (..),
     Tasks,
   )
 where
 
+import Clay ((?))
+import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.Graph (Graph, ThingName (..))
@@ -88,7 +91,7 @@ render ::
   (Prerender js t m, PostBuild t m, PandocBuilder t m, MonadHold t m, MonadFix m) =>
   Dynamic t Tasks ->
   m (Event t Route)
-render tasks = do
+render tasks = divClass "tasks" $ do
   fmap (switch . current . fmap leftmost) $
     simpleList (Map.toList <$> tasks) $ \xDyn -> do
       r1 <- elClass "h2" "header" $ do
@@ -96,6 +99,16 @@ render tasks = do
         dynRouteLink r (constDyn $ "class" =: "route") $ do
           dyn_ $ renderRouteText <$> r
       r2 <- fmap (switch . current . fmap leftmost) $
-        simpleList (fmap snd xDyn) $ \taskDyn ->
-          PandocView.render $ ffor taskDyn $ \(Task blk _checked) -> B.Pandoc mempty $ one blk
+        simpleList (fmap snd xDyn) $ \taskDyn -> do
+          elDynClass "span" (bool "unchecked task" "checked task" <$> _task_checked <$> taskDyn) $
+            PandocView.render $
+              ffor (_task_block <$> taskDyn) $
+                B.Pandoc mempty . one
       pure $ leftmost [r1, r2]
+
+style :: C.Css
+style =
+  ".tasks" ? do
+    ".checked.task" ? do
+      C.textDecoration C.lineThrough
+      C.color C.gray
