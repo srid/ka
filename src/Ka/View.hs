@@ -51,7 +51,7 @@ headWidget = do
           C.paddingRight $ C.px 0
       ".ka.grid > .row .column.main" ? do
         C.important $ do
-          C.sym C.padding $ C.px 0
+          C.padding 0 (C.em 0.4) 0 0
       ".ka.grid > .row .column.navbar" ? do
         stickyColumn
 
