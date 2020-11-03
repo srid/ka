@@ -100,10 +100,9 @@ render tasks = divClass "tasks" $ do
           dyn_ $ renderRouteText <$> r
       r2 <- fmap (switch . current . fmap leftmost) $
         simpleList (fmap snd xDyn) $ \taskDyn -> do
-          elDynClass "span" (bool "unchecked task" "checked task" <$> _task_checked <$> taskDyn) $
-            PandocView.render $
-              ffor (_task_block <$> taskDyn) $
-                B.Pandoc mempty . one
+          blk <- holdUniqDyn $ _task_block <$> taskDyn
+          elDynClass "span" (bool "unchecked task" "checked task" <$> _task_checked <$> taskDyn) $ do
+            PandocView.render $ B.Pandoc mempty . one <$> blk
       pure $ leftmost [r1, r2]
 
 style :: C.Css
