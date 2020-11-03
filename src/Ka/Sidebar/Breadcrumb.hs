@@ -26,7 +26,7 @@ instance Foldable Breadcrumbs where
     foldMap f before <> f curr <> foldMap f after
 
 defaultRoute :: Route
-defaultRoute = Route_Node $ ThingName "INDEX"
+defaultRoute = Route_Node $ ThingName "index"
 
 init :: a -> Breadcrumbs a
 init x =
