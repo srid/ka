@@ -2,6 +2,7 @@ See [[Available plugins]] for plugins you can starting using *today*. One day yo
 
 Writing new plugins requires careful designing: [[Think long-term when designing plugins]]. Ideas for new plugins include:
 
+- [[Blog plugin]] (timeline of posts)
 - Flash cards
 - Self-tracking
 - Smart review of old cards (uses last-modified or git history)

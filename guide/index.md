@@ -1,10 +1,10 @@
-Welcome to Ka.
+Welcome to the **Ka user guide**.
 
 :::{.ui .message}
 See the GitHub README for Ka project goals, its relationship to [neuron] and for install instructions.
 :::
 
-Ka "enriches" a directory of Markdown notes with extensible features. In effect, ka "lifts" an otherwise simple directory of Markdown notes, by enriching it with abstract functionalities whilst continuing to write plain-text notes.
+Ka "enriches" a directory of Markdown notes with extensible features. In effect, ka "lifts" an otherwise simple directory of Markdown notes, by enriching it with abstract functionalities whilst continuing to enable the user to write plain-text notes for lifetime.
 
 What does this mean? It means two things:
 
