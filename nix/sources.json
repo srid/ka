@@ -17,10 +17,10 @@
         "homepage": null,
         "owner": "jgm",
         "repo": "commonmark-hs",
-        "rev": "5b5cc67a56c420ff65c6970bddadb39e94dbaa51",
-        "sha256": "0g5b5gf7fzcfbckihz15hnnasmrdc1nin70j4hgi1a81jpgqwdd6",
+        "rev": "b75e91ecc82406fef698fd9b1a82c8953cecb505",
+        "sha256": "0lb6ka5f4v2f1fj2axd6171qsa4kbca3z3iljnv7vvszhpjv84xf",
         "type": "tarball",
-        "url": "https://github.com/jgm/commonmark-hs/archive/5b5cc67a56c420ff65c6970bddadb39e94dbaa51.tar.gz",
+        "url": "https://github.com/jgm/commonmark-hs/archive/b75e91ecc82406fef698fd9b1a82c8953cecb505.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "haskell-with-utf8": {
