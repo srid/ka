@@ -10,6 +10,8 @@ Project goals:
 
 The first two goals in particular are relevant for preparing `ka` to eventually supplant rib and shake in neuron.
 
+See also https://ka.srid.ca/ which corresponds to the notes in ./guide folder.
+
 ## Development
 
 This spins up a local server, rather than a GTK+ app (as the latter cannot be reloaded by ghcid):
