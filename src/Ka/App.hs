@@ -17,7 +17,7 @@ import qualified Ka.Plugin.Task as Task
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Scope (ThingScope)
 import qualified Ka.Scope as Scope
-import Ka.Thing
+import Ka.Thing (Thing (..))
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)

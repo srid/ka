@@ -13,6 +13,8 @@ What does this mean? It means two things:
 
 Ka can be used as a web app or as a desktop app[^gtk], and unlike many desktop apps [[Ka is reactive]]. If you are planning to use Ka with your neuron notes, see [[Using neuron notes with Ka]].
 
+See [[Blog]] for a timeline of blog posts.
+
 [neuron]: https://neuron.zettel.page/
 
 [^gtk]: The desktop app is GTK+ only, and requires Linux or macOS. If you are Windows, use the web app in WSL2.
