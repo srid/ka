@@ -1,7 +1,7 @@
-The functionality implemented, and the architectural decisions made, in Ka will eventually inspire neuron.
+The functionality implemented, and the architectural decisions made, in Ka will eventually inspire future neuron releases.
 
 This involves:
 
-- Reactive build pipeline (see [[Ka is reactive]])
-- Ka [[Plugins]]
+- Fast build pipeline based on reactive programming (see [[Ka is reactive]])
+- Extensibility via [[Plugins]]
 - Misc other features
