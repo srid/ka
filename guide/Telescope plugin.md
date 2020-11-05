@@ -4,4 +4,10 @@ Visualizing the relationship of one note with other notes in the "vicinity" (i.e
 
 The telescope plugin began as a research tool to develop these ideas. It currently doesn't do anything useful; so as an user, you should just ignore them for now.
 
+- [ ] Brainstorm further
+
 [^mind]: However he is willing to have his mind changed. To that end, a [[Graph-view plugin]] can be experimented with.
+
+## External links
+
+- [Reddit discussion on inutility of graph views](https://www.reddit.com/r/Zettelkasten/comments/jogsw0/graphic_views_do_not_work_with_a_zettelkasten/)
