@@ -3,4 +3,5 @@
 , author = Some "Sridhar Ratnakumar"
 , theme = "purple"
 , recurseDir = True
+, aliases = [ "index:Ka" ]
 }
