@@ -17,7 +17,7 @@ import Data.Time.Calendar (Day, addDays, toGregorian)
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
-import Ka.Route (Route (..), routeLink)
+import Ka.Route
 import Ka.Scope (ThingScope, noScope)
 import Reflex.Dom.Core hiding (Link)
 import Relude.Extra (groupBy)
@@ -69,7 +69,7 @@ render ::
   ) =>
   Dynamic t Graph ->
   Dynamic t (Set Day) ->
-  m (Event t Route)
+  m (Event t (R Route))
 render g (fmap Set.toList -> days) = do
   linksTo <- noteTitleInput g
   -- Tags days with a Bool to indicate if they should be highlighted. Entries
@@ -93,7 +93,7 @@ render g (fmap Set.toList -> days) = do
               elAttr "a" ("class" =: "column") $
                 switchHold never <=< dyn $
                   ffor dayD $ \(day, highlight) -> do
-                    let r = Route_Node $ dayThing day
+                    let r = Route_Node :/ dayThing day
                         (_y, _m, d) = toGregorian day
                     elClass "span" (bool "" "highlight" highlight) $
                       routeLink r $ text $ show d
@@ -147,7 +147,7 @@ thingPanel ::
   ) =>
   Dynamic t Graph ->
   Dynamic t ThingName ->
-  m (Event t Route)
+  m (Event t (R Route))
 thingPanel _g thDyn = do
   thDynM <- maybeDyn $ parseDairyThing <$> thDyn
   switchHold never <=< dyn $
@@ -160,15 +160,15 @@ thingPanel _g thDyn = do
             ffor dayDyn $ \day -> do
               let prev = addDays (-1) day
                   next = addDays 1 day
-                  prevR = Route_Node . ThingName . show $ prev
-                  nextR = Route_Node . ThingName . show $ next
+                  prevR = (Route_Node :/) . ThingName . show $ prev
+                  nextR = (Route_Node :/) . ThingName . show $ next
               -- TODO: Show these only if they exist in the graph
               e1 <-
                 divClass "column" $
                   routeLink prevR $ text $ show prev
               ec <-
                 divClass "center aligned column" $
-                  routeLink (Route_Node calThing) $ text "Calendar"
+                  routeLink (Route_Node :/ calThing) $ text "Calendar"
               e2 <-
                 divClass "right aligned column" $
                   routeLink nextR $ text $ show next

@@ -24,6 +24,7 @@ executable ka
     , commonmark-extensions
     , commonmark-pandoc
     , containers
+    , constraints-extras
     , data-default
     , dependent-sum
     , dependent-sum-template

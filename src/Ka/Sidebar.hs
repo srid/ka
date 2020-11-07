@@ -2,7 +2,7 @@ module Ka.Sidebar where
 
 import Control.Monad.Fix (MonadFix)
 import Ka.Graph (ThingName (..))
-import Ka.Route (Route (..))
+import Ka.Route (R, Route (..))
 import qualified Ka.Sidebar.Breadcrumb as Breadcrumb
 import qualified Ka.Sidebar.Listing as Listing
 import Reflex.Dom.Core
@@ -20,8 +20,8 @@ render ::
     TriggerEvent t m
   ) =>
   Dynamic t [ThingName] ->
-  Dynamic t Route ->
-  m (Event t Route)
+  Dynamic t (R Route) ->
+  m (Event t (R Route))
 render ths r = do
   divClass "ui right floated small fluid inverted vertical menu nav" $ do
     fmap leftmost $

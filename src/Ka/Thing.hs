@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Ka.Thing
   ( Thing (..),
     render,
@@ -9,16 +11,15 @@ import Clay ((?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
-import Data.GADT.Compare (GEq (geq))
+import Data.GADT.Compare.TH (deriveGEq)
 import Data.Time.Calendar (Day)
-import Data.Type.Equality
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Backlinks as Backlinks
 import qualified Ka.Plugin.Calendar as Calendar
 import qualified Ka.Plugin.Task as Task
 import qualified Ka.Plugin.Telescope as Telescope
-import Ka.Route (Route)
+import Ka.Route (R, Route)
 import Ka.Scope (ThingScope)
 import Reflex
 import Reflex.Dom
@@ -47,7 +48,7 @@ render ::
   Dynamic t Graph ->
   Dynamic t (Map ThingName (ThingScope, DSum Thing Identity)) ->
   Dynamic t (ThingName, (ThingScope, DSum Thing Identity)) ->
-  m (Event t Route)
+  m (Event t (R Route))
 render g doc thVal = do
   divClass "ui basic attached segments thing" $ do
     thValF <- factorDyn $ snd . snd <$> thVal
@@ -75,20 +76,4 @@ style = do
     Telescope.style
     Task.style
 
--- This breaks ghcide :-/
--- https://github.com/haskell/haskell-language-server/pull/463
-{-
-import Data.GADT.Compare.TH (deriveGEq)
-fmap concat $
-  sequence
-    [ deriveGEq ''Thing
-    ]
--}
-
--- Why derive manually? See above.
-instance GEq Thing where
-  geq Thing_Pandoc Thing_Pandoc =
-    pure Refl
-  geq Thing_Calendar Thing_Calendar =
-    pure Refl
-  geq _ _ = Nothing
+$(deriveGEq ''Thing)

@@ -12,7 +12,7 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Plugin.Highlight as Highlight
-import Ka.Route (Route (..))
+import Ka.Route hiding (style)
 import qualified Ka.Route as Route
 import qualified Ka.Sidebar as Sidebar
 import Ka.Sidebar.Breadcrumb (defaultRoute)
@@ -81,7 +81,7 @@ bodyWidget = do
     divClass "ui two column ka grid" $ do
       divClass "row" $ do
         app <- kaApp
-        rec route :: Dynamic t Route <-
+        rec route :: Dynamic t (R Route) <-
               holdDyn defaultRoute nextRoute
             nextRoute <- renderRoute app (traceDyn "route" route)
         pure ()
@@ -98,20 +98,18 @@ renderRoute ::
     TriggerEvent t m
   ) =>
   App t ->
-  Dynamic t Route ->
-  m (Event t Route)
+  Dynamic t (R Route) ->
+  m (Event t (R Route))
 renderRoute App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
     Sidebar.render (Map.keys <$> _app_doc) r
   divClass "twelve wide main column" $ do
     -- TODO: Do this properly using GADT and factorDyn
-    hackR <- maybeDyn $
-      ffor r $ \case
-        Route_Node th -> Just th
+    factored <- factorDyn r
     evt1 <- switchHold never <=< dyn $
-      ffor hackR $ \case
+      ffor factored $ \case
         -- Route_Main
-        Nothing -> do
+        Route_Scope :=> (fmap runIdentity . getCompose -> _scopeDyn) -> do
           divClass "ui basic segment" $ do
             elClass "h1" "header" $ text "ka"
             let cnt = Map.size <$> _app_doc
@@ -120,7 +118,7 @@ renderRoute App {..} r = do
               dynText $ show <$> cnt
             pure never
         -- Route_Node
-        Just fpDyn -> do
+        Route_Node :=> (fmap runIdentity . getCompose -> fpDyn) -> do
           let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
           thingDynM <- maybeDyn thingDyn
           switchHold never <=< dyn $

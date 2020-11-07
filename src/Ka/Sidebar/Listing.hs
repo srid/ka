@@ -7,7 +7,7 @@ import Data.Tagged
 import qualified Data.Text as T
 import Ka.Graph (ThingName (..))
 import qualified Ka.Plugin.Calendar as Calendar
-import Ka.Route (Route (..), dynRouteLink, renderRouteText)
+import Ka.Route
 import Reflex.Dom.Core
 
 type SearchQuery = Tagged "SearchQuery" Text
@@ -27,7 +27,7 @@ render ::
     Prerender js t m
   ) =>
   Dynamic t [ThingName] ->
-  m (Event t Route)
+  m (Event t (R Route))
 render xs = do
   rec q <- searchInput $ () <$ routeChanged
       let results = zipDynWith (filter . includeInListing) q xs
@@ -56,11 +56,11 @@ renderListing ::
     Prerender js t m
   ) =>
   Dynamic t [ThingName] ->
-  m (Event t Route)
+  m (Event t (R Route))
 renderListing res = do
   fmap (switch . current . fmap leftmost) $
     simpleList res $ \th -> do
-      let rDyn = Route_Node <$> th
+      let rDyn = (Route_Node :/) <$> th
       dynRouteLink rDyn (constDyn $ "class" =: "gray active item") $ do
         dyn_ $ renderRouteText <$> rDyn
 

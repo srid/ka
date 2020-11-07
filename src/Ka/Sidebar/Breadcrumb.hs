@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 module Ka.Sidebar.Breadcrumb
   ( Breadcrumbs,
     defaultRoute,
@@ -8,8 +10,14 @@ module Ka.Sidebar.Breadcrumb
 where
 
 import Control.Monad.Fix (MonadFix)
-import Ka.Graph (ThingName (ThingName))
-import Ka.Route (Route (..), dynRouteLink, renderRouteText)
+import Ka.Route
+  ( DSum ((:=>)),
+    R,
+    Route (..),
+    dynRouteLink,
+    renderRouteText,
+    pattern (:/),
+  )
 import Reflex.Dom.Core
 import Prelude hiding (init)
 
@@ -25,8 +33,11 @@ instance Foldable Breadcrumbs where
   foldMap f (Breadcrumbs before curr after) =
     foldMap f before <> f curr <> foldMap f after
 
-defaultRoute :: Route
-defaultRoute = Route_Node $ ThingName "index"
+defaultRoute :: R Route
+defaultRoute =
+  Route_Scope :/ ["/"]
+
+-- Route_Node :/ ThingName "index"
 
 init :: a -> Breadcrumbs a
 init x =
@@ -55,10 +66,10 @@ render ::
     PerformEvent t m,
     TriggerEvent t m
   ) =>
-  Dynamic t Route ->
-  m (Event t Route)
+  Dynamic t (R Route) ->
+  m (Event t (R Route))
 render r = do
-  routeHist <-
+  routeHist :: Dynamic t (Breadcrumbs (R Route)) <-
     foldDyn
       putCrumb
       (init defaultRoute)
@@ -70,16 +81,10 @@ render r = do
       let itemClass = ffor2 currentCrumb crumbR $ \curr x ->
             "class" =: bool "item" "active purple item" (curr == x)
       dynRouteLink crumbR itemClass $ do
-        -- TODO: Do this properly using GADT and factorDyn
-        hackR <- maybeDyn $
-          ffor crumbR $ \case
-            Route_Node _th -> Just ()
-        dyn_ $
-          ffor hackR $ \case
-            -- Route_Main
-            Nothing -> do
-              divClass "content" $ do
-                elClass "i" "home icon" blank
-            -- Route_Node
-            Just _ -> do
-              dyn_ $ renderRouteText <$> crumbR
+        factored <- factorDyn crumbR
+        dyn_ @t @m @() $
+          ffor factored $ \case
+            Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
+              dyn_ $ fmap (text . show) scopeDyn
+            Route_Node :=> (fmap runIdentity . getCompose -> thDyn) -> do
+              dyn_ $ renderRouteText . (Route_Node :/) <$> thDyn

@@ -10,7 +10,7 @@ import Clay (Css, pct, px, (?))
 import qualified Clay as C
 import qualified Data.Text as T
 import Ka.Markdown (mdFileThing)
-import Ka.Route (Route (..), renderThingLink)
+import Ka.Route (R, Route (..), renderThingLink)
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc
   ( Config (Config),
@@ -26,7 +26,7 @@ instance PandocRaw (HydrationDomBuilderT s t m) where
   elPandocRaw = elPandocRawSafe
 
 -- | Route monoid for use with reflex-dom-pandoc
-newtype RouteM t = RouteM {unRouteM :: Event t Route}
+newtype RouteM t = RouteM {unRouteM :: Event t (R Route)}
 
 instance Reflex t => Semigroup (RouteM t) where
   RouteM a <> RouteM b = RouteM $ leftmost [a, b]
@@ -41,7 +41,7 @@ render ::
     Prerender js t m
   ) =>
   Dynamic t Pandoc ->
-  m (Event t Route)
+  m (Event t (R Route))
 render doc = do
   switchHold never <=< dyn $
     ffor doc $ fmap unRouteM . elPandoc pandocCfg

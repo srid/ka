@@ -10,6 +10,8 @@ This spins up a local server, rather than a GTK+ app (as the latter cannot be re
 bin/run ./guide
 ```
 
+NOTE: HLS support will be broken [until this](https://github.com/haskell/haskell-language-server/pull/463) (i.e., [this PR](https://github.com/haskell/haskell-language-server/pull/530)) gets into next release.
+
 ## Running as GTK+ app
 
 ```bash

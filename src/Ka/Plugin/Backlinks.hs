@@ -7,7 +7,7 @@ import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Calendar as Calendar
-import Ka.Route (Route, renderThingLink)
+import Ka.Route (R, Route, renderThingLink)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -42,7 +42,7 @@ thingPanel ::
   ) =>
   Dynamic t Graph ->
   Dynamic t ThingName ->
-  m (Event t Route)
+  m (Event t (R Route))
 thingPanel g thDyn =
   divClass "ui backlinks segment" $ do
     elClass "h2" "header" $ text "Backlinks"
@@ -59,7 +59,7 @@ thingPanel g thDyn =
   where
     partitionBacklinks bs =
       fmap (\bl -> if Calendar.includeInSidebar (fst bl) then Left bl else Right bl) bs
-    renderBacklink :: Dynamic t (ThingName, [G.Context]) -> m (Event t Route)
+    renderBacklink :: Dynamic t (ThingName, [G.Context]) -> m (Event t (R Route))
     renderBacklink ctxDyn = do
       divClass "ui vertical segment" $ do
         evt1 <- elAttr "h3" ("class" =: "header") $ do
