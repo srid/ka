@@ -9,12 +9,15 @@ import System.FilePath (splitFileName)
 -- top-level scope.
 type ThingScope = [FilePath]
 
+-- TODO: use nonEmpty
 noScope :: ThingScope
 noScope = []
 
 showScope :: ThingScope -> Text
-showScope =
-  T.intercalate "/" . fmap toText
+showScope [] =
+  "@root"
+showScope s =
+  T.intercalate "/" $ fmap toText s
 
 -- | Move the parent directories of key to value, retaining only the base name
 -- on the key.
@@ -42,7 +45,10 @@ diffMapScoped (Map.toList -> xs) =
     -- TODO: What if `fn` is absolute? As fsnotify might throw in?
     unScope fn =
       let (dir, base) = splitFileName fn
-          scope =
+          scope' =
             filter (not . null) $
               fmap toString $ T.split (== '/') $ toText dir
+          scope =
+            -- because splitFileName returns a dot
+            if scope' == ["."] then [] else scope'
        in (base, scope)

@@ -47,7 +47,7 @@ kaApp = do
   let pandocWithScopeE :: Event t (Map ThingName (Maybe (ThingScope, Pandoc))) =
         -- Discard the parent paths; we only consider the basename to be note identifier.
         -- TODO: Support file tree in sidebar listing.
-        ffor (Scope.diffMapScoped <$> fileContentE) $ \m ->
+        ffor (traceEventWith (\m -> show $ Map.map (fmap fst) m) $ fmap Scope.diffMapScoped fileContentE) $ \m ->
           Map.mapKeys mdFileThing $
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =

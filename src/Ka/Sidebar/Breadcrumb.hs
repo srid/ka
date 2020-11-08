@@ -18,6 +18,7 @@ import Ka.Route
     renderRouteText,
     pattern (:/),
   )
+import Ka.Scope (noScope, showScope)
 import Reflex.Dom.Core
 import Prelude hiding (init)
 
@@ -35,7 +36,7 @@ instance Foldable Breadcrumbs where
 
 defaultRoute :: R Route
 defaultRoute =
-  Route_Scope :/ ["/"]
+  Route_Scope :/ noScope
 
 -- Route_Node :/ ThingName "index"
 
@@ -85,6 +86,6 @@ render r = do
         dyn_ @t @m @() $
           ffor factored $ \case
             Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
-              dyn_ $ fmap (text . show) scopeDyn
+              dyn_ $ fmap (text . showScope) scopeDyn
             Route_Node :=> (fmap runIdentity . getCompose -> thDyn) -> do
               dyn_ $ renderRouteText . (Route_Node :/) <$> thDyn
