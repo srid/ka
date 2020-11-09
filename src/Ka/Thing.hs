@@ -21,7 +21,6 @@ import qualified Ka.Plugin.Task as Task
 import qualified Ka.Plugin.Telescope as Telescope
 import Ka.Route (R, Route)
 import Ka.Scope (ThingScope)
-import Ka.ScopeView (renderScopeCrumbs)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -51,26 +50,22 @@ render ::
   Dynamic t (ThingName, (ThingScope, DSum Thing Identity)) ->
   m (Event t (R Route))
 render g doc thVal = do
-  divClass "ui basic attached segments thing" $ do
-    scope <- holdUniqDyn $ fst . snd <$> thVal
-    thName <- holdUniqDyn $ fst <$> thVal
-    r0 <- renderScopeCrumbs (Just <$> scope) $ unThingName <$> thName
-    thValF <- factorDyn $ snd . snd <$> thVal
-    r1 <- divClass "ui attached basic segment" $ do
-      elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal
-      switchHold never <=< dyn $
-        ffor thValF $ \case
-          Thing_Pandoc :=> (fmap runIdentity . getCompose -> docDyn) ->
-            PandocView.render docDyn
-          Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
-            Calendar.render g days
-          Thing_Tasks :=> (fmap runIdentity . getCompose -> x) ->
-            Task.render x
-    -- TODO: Have to figure our UI order of plugins
-    r3 <- Calendar.thingPanel g $ fst <$> thVal
-    r2 <- Backlinks.thingPanel g $ fst <$> thVal
-    r4 <- Telescope.thingPanel g (fmap fst <$> doc) $ second fst <$> thVal
-    pure $ leftmost [r0, r1, r2, r3, r4]
+  thValF <- factorDyn $ snd . snd <$> thVal
+  r1 <- divClass "ui attached basic segment" $ do
+    elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal
+    switchHold never <=< dyn $
+      ffor thValF $ \case
+        Thing_Pandoc :=> (fmap runIdentity . getCompose -> docDyn) ->
+          PandocView.render docDyn
+        Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
+          Calendar.render g days
+        Thing_Tasks :=> (fmap runIdentity . getCompose -> x) ->
+          Task.render x
+  -- TODO: Have to figure our UI order of plugins
+  r3 <- Calendar.thingPanel g $ fst <$> thVal
+  r2 <- Backlinks.thingPanel g $ fst <$> thVal
+  r4 <- Telescope.thingPanel g (fmap fst <$> doc) $ second fst <$> thVal
+  pure $ leftmost [r1, r2, r3, r4]
 
 style :: C.Css
 style = do

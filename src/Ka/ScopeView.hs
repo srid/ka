@@ -42,10 +42,7 @@ renderScopeContents ::
   Dynamic t ThingScope ->
   m (Event t (R Route))
 renderScopeContents docs scopeDyn = do
-  split <- holdUniqDyn $ splitScope <$> scopeDyn
-  -- TODO consolidate with Thing.hs's call
-  e0 <- renderScopeCrumbs (fst <$> split) (toText . snd <$> split)
-  e1 <- divClass "ui attached basic segment" $ do
+  divClass "ui attached basic segment" $ do
     let scopeDocs = ffor2 scopeDyn docs $ \currScope scopes ->
           Map.keys $
             flip Map.filter scopes $
@@ -80,4 +77,3 @@ renderScopeContents docs scopeDyn = do
       text "Note count: "
       dynText $ show <$> cnt
     pure evt
-  pure $ leftmost [e0, e1]
