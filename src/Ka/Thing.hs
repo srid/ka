@@ -54,7 +54,7 @@ render g doc thVal = do
   divClass "ui basic attached segments thing" $ do
     scope <- holdUniqDyn $ fst . snd <$> thVal
     thName <- holdUniqDyn $ fst <$> thVal
-    r0 <- renderScopeCrumbs scope thName
+    r0 <- renderScopeCrumbs (Just <$> scope) $ unThingName <$> thName
     thValF <- factorDyn $ snd . snd <$> thVal
     r1 <- divClass "ui attached basic segment" $ do
       elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal

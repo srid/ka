@@ -13,6 +13,12 @@ type ThingScope = [FilePath]
 noScope :: ThingScope
 noScope = []
 
+splitScope :: ThingScope -> (Maybe ThingScope, FilePath)
+splitScope = first (fmap reverse) . go . reverse
+  where
+    go [] = (Nothing, "/")
+    go (x : xs) = (Just xs, x)
+
 showScope :: ThingScope -> Text
 showScope [] =
   "/"

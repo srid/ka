@@ -109,7 +109,6 @@ renderRoute App {..} r = do
     evt1 <- switchHold never <=< dyn $
       ffor factored $ \case
         Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
-          -- TODO: Finish scope tree
           renderScopeContents (fmap fst <$> _app_doc) scopeDyn
         Route_Node :=> (fmap runIdentity . getCompose -> fpDyn) -> do
           let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
