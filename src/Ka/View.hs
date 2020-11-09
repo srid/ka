@@ -152,8 +152,10 @@ renderScope App {..} scopeDyn = do
                       else length scope == length currScope + 1 && currScope `isPrefixOf` scope
     evt <- fmap (switch . current . fmap leftmost) $
       divClass "ui list" $ do
-        -- TODO: show sub-folders
-        e1 <- simpleList subScopes $ \(traceDyn "sc" -> sc) -> do
+        -- TODO: Is the scope data-type perfect?
+        -- Consider the case of multiple notebooks passed as arguments to CLI
+        -- Duplicate daily notes: we should allow them! and yet resolve it correctly.
+        e1 <- simpleList subScopes $ \sc -> do
           let rDyn = (Route_Scope :/) <$> sc
           dynRouteLink rDyn (constDyn mempty) $ do
             el "li" $ el "b" $ dyn_ $ renderRouteText <$> rDyn

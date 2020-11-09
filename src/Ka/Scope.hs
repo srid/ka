@@ -15,7 +15,7 @@ noScope = []
 
 showScope :: ThingScope -> Text
 showScope [] =
-  "@root"
+  "/"
 showScope s =
   T.intercalate "/" $ fmap toText s
 
