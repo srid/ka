@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Ka.Thing
@@ -20,8 +19,9 @@ import qualified Ka.Plugin.Backlinks as Backlinks
 import qualified Ka.Plugin.Calendar as Calendar
 import qualified Ka.Plugin.Task as Task
 import qualified Ka.Plugin.Telescope as Telescope
-import Ka.Route (R, Route (Route_Scope), dynRouteLink, pattern (:/))
+import Ka.Route (R, Route)
 import Ka.Scope (ThingScope)
+import Ka.ScopeView (renderScopeCrumbs)
 import Reflex
 import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -52,18 +52,9 @@ render ::
   m (Event t (R Route))
 render g doc thVal = do
   divClass "ui basic attached segments thing" $ do
-    r0 <- divClass "ui top attached segment breadcrumb" $ do
-      scope <- holdUniqDyn $ fst . snd <$> thVal
-      let xs = inits <$> scope
-      fmap (switch . current . fmap leftmost) $ do
-        e <- simpleList xs $ \scopeDyn -> do
-          e <- dynRouteLink ((Route_Scope :/) <$> scopeDyn) (constDyn $ "class" =: "section") $ do
-            let node = maybe "/" head . nonEmpty . reverse <$> scopeDyn
-            dynText $ toText <$> node
-          elClass "i" "right angle icon divider" blank
-          pure e
-        divClass "active section" $ dynText $ unThingName . fst <$> thVal
-        pure e
+    scope <- holdUniqDyn $ fst . snd <$> thVal
+    thName <- holdUniqDyn $ fst <$> thVal
+    r0 <- renderScopeCrumbs scope thName
     thValF <- factorDyn $ snd . snd <$> thVal
     r1 <- divClass "ui attached basic segment" $ do
       elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal

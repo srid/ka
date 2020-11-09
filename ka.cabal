@@ -83,6 +83,7 @@ executable ka
     Ka.Plugin.WikiLink
     Ka.Route
     Ka.Scope
+    Ka.ScopeView
     Ka.Sidebar
     Ka.Sidebar.Breadcrumb
     Ka.Sidebar.Listing

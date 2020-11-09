@@ -9,13 +9,12 @@ where
 import Clay (Css, render, (?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
-import Data.List (nub)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Plugin.Highlight as Highlight
 import Ka.Route hiding (style)
 import qualified Ka.Route as Route
-import Ka.Scope (ThingScope, showScope)
+import Ka.ScopeView (renderScopeContents)
 import qualified Ka.Sidebar as Sidebar
 import Ka.Sidebar.Breadcrumb (defaultRoute)
 import qualified Ka.Thing as Thing
@@ -102,7 +101,7 @@ renderRoute ::
   App t ->
   Dynamic t (R Route) ->
   m (Event t (R Route))
-renderRoute app@App {..} r = do
+renderRoute App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
     Sidebar.render (Map.keys <$> _app_doc) r
   divClass "twelve wide main column" $ do
@@ -111,7 +110,7 @@ renderRoute app@App {..} r = do
       ffor factored $ \case
         Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
           -- TODO: Finish scope tree
-          renderScope app scopeDyn
+          renderScopeContents (fmap fst <$> _app_doc) scopeDyn
         Route_Node :=> (fmap runIdentity . getCompose -> fpDyn) -> do
           let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
           thingDynM <- maybeDyn thingDyn
@@ -121,52 +120,3 @@ renderRoute app@App {..} r = do
               Just thingDataM ->
                 Thing.render _app_graph _app_doc thingDataM
     pure $ leftmost [evt0, evt1]
-
-renderScope ::
-  ( DomBuilder t m,
-    PostBuild t m,
-    MonadHold t m,
-    MonadFix m,
-    Prerender js t m
-  ) =>
-  App t ->
-  Dynamic t ThingScope ->
-  m (Event t (R Route))
-renderScope App {..} scopeDyn = do
-  divClass "ui basic segment" $ do
-    elClass "h1" "header" $ do
-      dynText $ showScope <$> scopeDyn
-    let scopeDocs = ffor2 scopeDyn _app_doc $ \currScope docs ->
-          Map.keys $
-            flip Map.filter docs $
-              \(scope, _) ->
-                scope == currScope
-        subScopes = ffor2 scopeDyn _app_doc $ \currScope docs ->
-          nub $
-            fmap fst $
-              Map.elems $
-                flip Map.filter docs $
-                  \(scope, _) ->
-                    if null currScope
-                      then length scope == 1
-                      else length scope == length currScope + 1 && currScope `isPrefixOf` scope
-    evt <- fmap (switch . current . fmap leftmost) $
-      divClass "ui list" $ do
-        -- TODO: Is the scope data-type perfect?
-        -- Consider the case of multiple notebooks passed as arguments to CLI
-        -- Duplicate daily notes: we should allow them! and yet resolve it correctly.
-        e1 <- simpleList subScopes $ \sc -> do
-          let rDyn = (Route_Scope :/) <$> sc
-          dynRouteLink rDyn (constDyn mempty) $ do
-            el "li" $ el "b" $ dyn_ $ renderRouteText <$> rDyn
-        e2 <- simpleList scopeDocs $ \th -> do
-          let rDyn = (Route_Node :/) <$> th
-          dynRouteLink rDyn (constDyn $ "class" =: "scope-item") $ do
-            el "li" $ dyn_ $ renderRouteText <$> rDyn
-        pure $ zipDynWith (<>) e1 e2
-    el "hr" blank
-    let cnt = Map.size <$> _app_doc
-    el "p" $ do
-      text "Note count: "
-      dynText $ show <$> cnt
-    pure evt
