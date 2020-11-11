@@ -8,3 +8,4 @@ Writing new plugins requires careful designing: [[Think long-term when designing
 - Smart review of old cards (uses last-modified or git history)
 - Folgezettel linking (`[[[..]]]`) of neuron
 - [Link queries](https://neuron.zettel.page/link-query.html) of neuron
+- [[Spaced repetition plugin]]

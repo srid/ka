@@ -1,0 +1,1 @@
+cf. [Declarative Spaced Repetition from CS SYD](https://www.reddit.com/r/haskell/comments/js7xpa/cs_syd_declarative_spaced_repetition/)
