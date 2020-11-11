@@ -38,8 +38,6 @@ defaultRoute :: R Route
 defaultRoute =
   Route_Scope :/ noScope
 
--- Route_Node :/ ThingName "index"
-
 init :: a -> Breadcrumbs a
 init x =
   Breadcrumbs [] x []

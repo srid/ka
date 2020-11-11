@@ -11,12 +11,10 @@ import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
-import Ka.Graph (ThingName (unThingName))
 import qualified Ka.Plugin.Highlight as Highlight
 import Ka.Route hiding (style)
 import qualified Ka.Route as Route
-import Ka.Scope (ThingScope, splitScope)
-import Ka.ScopeView (renderScopeContents, renderScopeCrumbs)
+import Ka.ScopeView (renderScopeBreadcrumb, renderScopeContents)
 import qualified Ka.Sidebar as Sidebar
 import Ka.Sidebar.Breadcrumb (defaultRoute)
 import qualified Ka.Thing as Thing
@@ -85,11 +83,11 @@ bodyWidget = do
       divClass "row" $ do
         app <- kaApp
         rec route :: Dynamic t (R Route) <-
-              holdDyn defaultRoute nextRoute
-            nextRoute <- renderRoute app (traceDyn "route" route)
+              holdUniqDyn =<< holdDyn defaultRoute nextRoute
+            nextRoute <- renderRouteBody app route
         pure ()
 
-renderRoute ::
+renderRouteBody ::
   forall t m js.
   ( PandocBuilder t m,
     MonadHold t m,
@@ -104,27 +102,15 @@ renderRoute ::
   App t ->
   Dynamic t (R Route) ->
   m (Event t (R Route))
-renderRoute App {..} r = do
+renderRouteBody App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
     Sidebar.render (Map.keys <$> _app_doc) r
   evt1 <- divClass "twelve wide main column" $ do
     divClass "ui basic attached segments thing" $ do
-      -- Scope breadcrumbs; REFACTOR
-      mscope <- maybeDyn $
-        ffor2 _app_doc r $ \docs -> \case
-          Route_Scope :/ sc -> Just $ splitScope sc
-          Route_Node :/ th -> case Map.lookup th docs of
-            Nothing -> Nothing
-            Just (scope, _) -> Just (Just scope, toString $ unThingName th)
-      r0 <- switchHold never <=< dyn $
-        ffor mscope $ \case
-          Nothing -> pure never
-          Just (split :: Dynamic t (Maybe ThingScope, FilePath)) -> do
-            renderScopeCrumbs (fst <$> split) (toText . snd <$> split)
-      -- Route body
-      factored <- factorDyn r
-      r1 <- switchHold never <=< dyn $
-        ffor factored $ \case
+      e0 <- renderScopeBreadcrumb r $ _app_doc <&> fmap fst
+      r' <- factorDyn $ traceDyn "route" r
+      e1 <- switchHold never <=< dyn $
+        ffor r' $ \case
           Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
             renderScopeContents (fmap fst <$> _app_doc) scopeDyn
           Route_Node :=> (fmap runIdentity . getCompose -> fpDyn) -> do
@@ -132,8 +118,9 @@ renderRoute App {..} r = do
             thingDynM <- maybeDyn thingDyn
             switchHold never <=< dyn $
               ffor thingDynM $ \case
-                Nothing -> text "404" >> pure never
+                Nothing ->
+                  text "404" >> pure never
                 Just thingDataM ->
                   Thing.render _app_graph _app_doc thingDataM
-      pure $ leftmost [r0, r1]
+      pure $ leftmost [e0, e1]
   pure $ leftmost [evt0, evt1]

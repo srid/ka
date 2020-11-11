@@ -11,7 +11,6 @@ import qualified Commonmark.Pandoc as CP
 import Data.List (nub)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
-import GHC.IO (unsafePerformIO)
 import Ka.Graph (ThingName (..))
 import System.FilePath (dropExtension)
 import qualified Text.Pandoc.Builder as B
@@ -36,10 +35,6 @@ parseMarkdown spec fp s =
   where
     toPandoc = Pandoc mempty . B.toList . CP.unCm
 
-tr :: Show a => a -> a
-tr x =
-  unsafePerformIO $ print x >> pure x
-
 queryLinksWithContext :: Pandoc -> Map FilePath [Block]
 queryLinksWithContext doc =
   fmap nub $ Map.fromListWith (<>) . fmap (second one) $ W.query go doc
@@ -55,14 +50,14 @@ queryLinksWithContext doc =
           W.query linksFromInline is
         B.Header _ _ is ->
           W.query linksFromInline is
-        B.DefinitionList (tr -> xs) ->
+        B.DefinitionList xs ->
           -- Gather all filenames linked, and have them put (see above) in the
           -- same definition list block.
           concat $
             flip fmap xs $ \(is, bss) ->
               let def = W.query linksFromInline is
                   body = fmap (fmap (fmap fst . go)) bss
-               in tr $ def <> concat (concat body)
+               in def <> concat (concat body)
         _ -> mempty
 
     linksFromInline :: Inline -> [FilePath]

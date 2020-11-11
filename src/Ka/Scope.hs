@@ -9,19 +9,22 @@ import System.FilePath (splitFileName)
 -- top-level scope.
 type ThingScope = [FilePath]
 
--- TODO: use nonEmpty
+-- A thing without scope is said to exist at the root directory.
 noScope :: ThingScope
 noScope = []
+
+rootPath :: FilePath
+rootPath = "/"
 
 splitScope :: ThingScope -> (Maybe ThingScope, FilePath)
 splitScope = first (fmap reverse) . go . reverse
   where
-    go [] = (Nothing, "/")
+    go [] = (Nothing, rootPath)
     go (x : xs) = (Just xs, x)
 
 showScope :: ThingScope -> Text
 showScope [] =
-  "/"
+  toText rootPath
 showScope s =
   T.intercalate "/" $ fmap toText s
 
@@ -48,7 +51,6 @@ diffMapScoped (Map.toList -> xs) =
           <> ", "
           <> showScope scope2
     -- Convert foo/bar/baz.md into (["foo", "bar"], "baz.md")
-    -- TODO: What if `fn` is absolute? As fsnotify might throw in?
     unScope fn =
       let (dir, base) = splitFileName fn
           scope' =
