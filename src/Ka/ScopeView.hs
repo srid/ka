@@ -80,23 +80,44 @@ renderScopeContents docs scopeDyn = do
                     then length scope == 1
                     else length scope == length currScope + 1 && currScope `isPrefixOf` scope
     evt <- fmap (switch . current . fmap leftmost) $
-      divClass "ui list" $ do
+      divClass "ui relaxed list scope-contents" $ do
         -- TODO: Is the scope data-type perfect?
         -- Consider the case of multiple notebooks passed as arguments to CLI
         -- Duplicate daily notes: we should allow them! and yet resolve it correctly.
         e1 <- simpleList subScopes $ \sc -> do
           let rDyn = (Route_Scope :/) <$> sc
           folderName <- holdUniqDyn $ toText . snd . splitScope <$> sc
-          dynRouteLink rDyn (constDyn mempty) $ do
-            el "li" $ el "b" $ dynText folderName
+          folderItem $
+            dynRouteLink rDyn (constDyn mempty) $ do
+              el "b" $ dynText folderName
         e2 <- simpleList scopeDocs $ \th -> do
           let rDyn = (Route_Node :/) <$> th
-          dynRouteLink rDyn (constDyn $ "class" =: "scope-item") $ do
-            el "li" $ dyn_ $ renderRouteText <$> rDyn
+          fileItem $
+            dynRouteLink rDyn (constDyn $ "class" =: "scope-item") $ do
+              dyn_ $ renderRouteText <$> rDyn
         pure $ zipDynWith (<>) e1 e2
-    el "hr" blank
-    let cnt = Map.size <$> docs
-    el "p" $ do
-      text "Note count: "
-      dynText $ show <$> cnt
+    divClass "ui mini horizontal statistic" $ do
+      divClass "value" $ do
+        dynText $ show . Map.size <$> docs
+      divClass "label" $ do
+        text "Notes"
     pure evt
+  where
+    folderItem w = do
+      divClass "scope item" $ do
+        scopeIcon
+        divClass "content" $ do
+          divClass "header" w
+    fileItem w = do
+      divClass "thing item" $ do
+        thingIcon
+        divClass "content" $ do
+          divClass "description" w
+
+scopeIcon :: DomBuilder t m => m ()
+scopeIcon =
+  elClass "i" "folder icon" blank
+
+thingIcon :: DomBuilder t m => m ()
+thingIcon =
+  elClass "i" "sticky note outline icon" blank

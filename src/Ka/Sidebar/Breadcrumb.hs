@@ -19,6 +19,7 @@ import Ka.Route
     pattern (:/),
   )
 import Ka.Scope (noScope, showScope)
+import Ka.ScopeView (scopeIcon, thingIcon)
 import Reflex.Dom.Core
 import Prelude hiding (init)
 
@@ -84,6 +85,8 @@ render r = do
         dyn_ @t @m @() $
           ffor factored $ \case
             Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
-              dyn_ $ fmap (text . showScope) scopeDyn
+              scopeIcon
+              el "i" $ dyn_ $ fmap (text . showScope) scopeDyn
             Route_Node :=> (fmap runIdentity . getCompose -> thDyn) -> do
+              thingIcon
               dyn_ $ renderRouteText . (Route_Node :/) <$> thDyn
