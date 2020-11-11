@@ -5,16 +5,38 @@ import qualified Data.Text as T
 import Reflex (ffor)
 import System.FilePath (splitFileName)
 
+-- TODO: Is the scope data-type perfect?
+-- Consider the case of multiple notebooks passed as arguments to CLI
+-- Duplicate daily notes: we should allow them! and yet resolve it correctly.
+
 -- | The scope of a thing: that is, parent directories. Can be empty if
 -- top-level scope.
 type ThingScope = [FilePath]
 
+-- A thing without scope is said to exist at the root directory.
 noScope :: ThingScope
 noScope = []
 
+rootPath :: FilePath
+rootPath = "/"
+
+splitScope :: ThingScope -> (Maybe ThingScope, FilePath)
+splitScope = first (fmap reverse) . go . reverse
+  where
+    go [] = (Nothing, rootPath)
+    go (x : xs) = (Just xs, x)
+
+isSubScope :: ThingScope -> ThingScope -> Bool
+isSubScope child parent =
+  if null parent
+    then length child == 1
+    else length child == length parent + 1 && parent `isPrefixOf` child
+
 showScope :: ThingScope -> Text
-showScope =
-  T.intercalate "/" . fmap toText
+showScope [] =
+  toText rootPath
+showScope s =
+  T.intercalate "/" $ fmap toText s
 
 -- | Move the parent directories of key to value, retaining only the base name
 -- on the key.
@@ -39,10 +61,12 @@ diffMapScoped (Map.toList -> xs) =
           <> ", "
           <> showScope scope2
     -- Convert foo/bar/baz.md into (["foo", "bar"], "baz.md")
-    -- TODO: What if `fn` is absolute? As fsnotify might throw in?
     unScope fn =
       let (dir, base) = splitFileName fn
-          scope =
+          scope' =
             filter (not . null) $
               fmap toString $ T.split (== '/') $ toText dir
+          scope =
+            -- because splitFileName returns a dot
+            if scope' == ["."] then [] else scope'
        in (base, scope)

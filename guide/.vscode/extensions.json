@@ -24,9 +24,6 @@
 		// - Footnote
 		"houkanshan.vscode-markdown-footnote",
 
-		// Language - spell checker
-		"streetsidesoftware.code-spell-checker",
-
 		// When in fullscreen
 		"rid9.datetime"
 	]

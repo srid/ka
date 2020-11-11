@@ -12,8 +12,9 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.App (App (..), kaApp)
 import qualified Ka.Plugin.Highlight as Highlight
-import Ka.Route (Route (..))
+import Ka.Route hiding (style)
 import qualified Ka.Route as Route
+import Ka.ScopeView (renderScopeBreadcrumb, renderScopeContents)
 import qualified Ka.Sidebar as Sidebar
 import Ka.Sidebar.Breadcrumb (defaultRoute)
 import qualified Ka.Thing as Thing
@@ -81,12 +82,13 @@ bodyWidget = do
     divClass "ui two column ka grid" $ do
       divClass "row" $ do
         app <- kaApp
-        rec route :: Dynamic t Route <-
-              holdDyn defaultRoute nextRoute
-            nextRoute <- renderRoute app (traceDyn "route" route)
+        rec route :: Dynamic t (R Route) <-
+              holdUniqDyn =<< holdDyn defaultRoute nextRoute
+            nextRoute <- renderRouteBody app route
         pure ()
 
-renderRoute ::
+renderRouteBody ::
+  forall t m js.
   ( PandocBuilder t m,
     MonadHold t m,
     PostBuild t m,
@@ -98,34 +100,27 @@ renderRoute ::
     TriggerEvent t m
   ) =>
   App t ->
-  Dynamic t Route ->
-  m (Event t Route)
-renderRoute App {..} r = do
+  Dynamic t (R Route) ->
+  m (Event t (R Route))
+renderRouteBody App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
     Sidebar.render (Map.keys <$> _app_doc) r
-  divClass "twelve wide main column" $ do
-    -- TODO: Do this properly using GADT and factorDyn
-    hackR <- maybeDyn $
-      ffor r $ \case
-        Route_Node th -> Just th
-    evt1 <- switchHold never <=< dyn $
-      ffor hackR $ \case
-        -- Route_Main
-        Nothing -> do
-          divClass "ui basic segment" $ do
-            elClass "h1" "header" $ text "ka"
-            let cnt = Map.size <$> _app_doc
-            el "p" $ do
-              text "Note count: "
-              dynText $ show <$> cnt
-            pure never
-        -- Route_Node
-        Just fpDyn -> do
-          let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
-          thingDynM <- maybeDyn thingDyn
-          switchHold never <=< dyn $
-            ffor thingDynM $ \case
-              Nothing -> text "404" >> pure never
-              Just thingDataM ->
-                Thing.render _app_graph _app_doc thingDataM
-    pure $ leftmost [evt0, evt1]
+  evt1 <- divClass "twelve wide main column" $ do
+    divClass "ui basic attached segments thing" $ do
+      e0 <- renderScopeBreadcrumb r $ _app_doc <&> fmap fst
+      r' <- factorDyn $ traceDyn "route" r
+      e1 <- switchHold never <=< dyn $
+        ffor r' $ \case
+          Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
+            renderScopeContents (fmap fst <$> _app_doc) scopeDyn
+          Route_Node :=> (fmap runIdentity . getCompose -> fpDyn) -> do
+            let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
+            thingDynM <- maybeDyn thingDyn
+            switchHold never <=< dyn $
+              ffor thingDynM $ \case
+                Nothing ->
+                  text "404" >> pure never
+                Just thingDataM ->
+                  Thing.render _app_graph _app_doc thingDataM
+      pure $ leftmost [e0, e1]
+  pure $ leftmost [evt0, evt1]

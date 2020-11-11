@@ -24,6 +24,7 @@ executable ka
     , commonmark-extensions
     , commonmark-pandoc
     , containers
+    , constraints-extras
     , data-default
     , dependent-sum
     , dependent-sum-template
@@ -82,6 +83,7 @@ executable ka
     Ka.Plugin.WikiLink
     Ka.Route
     Ka.Scope
+    Ka.ScopeView
     Ka.Sidebar
     Ka.Sidebar.Breadcrumb
     Ka.Sidebar.Listing

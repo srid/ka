@@ -12,7 +12,7 @@ import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import Ka.Graph (Graph, ThingName (unThingName))
 import qualified Ka.Plugin.Calendar as Calendar
-import Ka.Route (Route, renderThingLink)
+import Ka.Route (R, Route, renderThingLink)
 import Ka.Scope (ThingScope)
 import qualified Ka.Scope as Scope
 import Reflex
@@ -36,7 +36,7 @@ thingPanel ::
   Dynamic t Graph ->
   Dynamic t (Map ThingName ThingScope) ->
   Dynamic t (ThingName, ThingScope) ->
-  m (Event t Route)
+  m (Event t (R Route))
 thingPanel g' scopeDyn thWithScopeDyn = do
   let g = ffor3 g' thWithScopeDyn scopeDyn $ \graph (_name, scope) scopes ->
         AM.induce (includeThing $ Map.filter (== scope) scopes) graph

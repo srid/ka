@@ -14,7 +14,7 @@ import qualified Data.Map.Strict as Map
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
-import Ka.Route (Route (..), dynRouteLink, renderRouteText)
+import Ka.Route hiding (style)
 import Ka.Scope (ThingScope, noScope)
 import Reflex.Dom.Core hiding (Link)
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -90,12 +90,12 @@ render ::
   forall js t m.
   (Prerender js t m, PostBuild t m, PandocBuilder t m, MonadHold t m, MonadFix m) =>
   Dynamic t Tasks ->
-  m (Event t Route)
+  m (Event t (R Route))
 render tasks = divClass "tasks" $ do
   fmap (switch . current . fmap leftmost) $
     simpleList (Map.toList <$> tasks) $ \xDyn -> do
       r1 <- elClass "h2" "header" $ do
-        let r = Route_Node <$> fmap fst xDyn
+        let r = (Route_Node :/) <$> fmap fst xDyn
         dynRouteLink r (constDyn $ "class" =: "route") $ do
           dyn_ $ renderRouteText <$> r
       r2 <- fmap (switch . current . fmap leftmost) $
