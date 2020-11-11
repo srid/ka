@@ -5,6 +5,10 @@ import qualified Data.Text as T
 import Reflex (ffor)
 import System.FilePath (splitFileName)
 
+-- TODO: Is the scope data-type perfect?
+-- Consider the case of multiple notebooks passed as arguments to CLI
+-- Duplicate daily notes: we should allow them! and yet resolve it correctly.
+
 -- | The scope of a thing: that is, parent directories. Can be empty if
 -- top-level scope.
 type ThingScope = [FilePath]
@@ -21,6 +25,12 @@ splitScope = first (fmap reverse) . go . reverse
   where
     go [] = (Nothing, rootPath)
     go (x : xs) = (Just xs, x)
+
+isSubScope :: ThingScope -> ThingScope -> Bool
+isSubScope child parent =
+  if null parent
+    then length child == 1
+    else length child == length parent + 1 && parent `isPrefixOf` child
 
 showScope :: ThingScope -> Text
 showScope [] =

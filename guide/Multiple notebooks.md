@@ -1,0 +1,1 @@
+We want to be able to merge two distinct notebooks whilst also allowing *cross linking* between them using predictable *linking strategy*. This is a feature in roadmap.

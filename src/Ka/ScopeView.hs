@@ -5,7 +5,7 @@ import Data.List (nub)
 import qualified Data.Map.Strict as Map
 import Ka.Graph (ThingName, unThingName)
 import Ka.Route
-import Ka.Scope (ThingScope, splitScope)
+import Ka.Scope (ThingScope, isSubScope, splitScope)
 import Reflex.Dom
 
 renderScopeBreadcrumb ::
@@ -64,41 +64,32 @@ renderScopeContents ::
   Dynamic t (Map ThingName ThingScope) ->
   Dynamic t ThingScope ->
   m (Event t (R Route))
-renderScopeContents docs scopeDyn = do
+renderScopeContents thingScopes scopeDyn = do
   divClass "ui attached basic segment" $ do
-    let scopeDocs = ffor2 scopeDyn docs $ \currScope scopes ->
+    let thingsInScope = ffor2 scopeDyn thingScopes $ \currScope scopes ->
           Map.keys $
-            flip Map.filter scopes $
-              \scope ->
-                scope == currScope
-        subScopes = ffor2 scopeDyn docs $ \currScope scopes ->
-          nub $
-            Map.elems $
-              flip Map.filter scopes $
-                \scope ->
-                  if null currScope
-                    then length scope == 1
-                    else length scope == length currScope + 1 && currScope `isPrefixOf` scope
-    evt <- fmap (switch . current . fmap leftmost) $
-      divClass "ui relaxed list scope-contents" $ do
-        -- TODO: Is the scope data-type perfect?
-        -- Consider the case of multiple notebooks passed as arguments to CLI
-        -- Duplicate daily notes: we should allow them! and yet resolve it correctly.
-        e1 <- simpleList subScopes $ \sc -> do
+            Map.filter (== currScope) scopes
+        subScopes = ffor2 scopeDyn thingScopes $ \currScope (nub . Map.elems -> scopes) ->
+          scopes
+            & filter (`isSubScope` currScope)
+    evt <- divClass "ui relaxed list scope-contents" $ do
+      e1 <- fmap (switch . current . fmap leftmost) $
+        simpleList subScopes $ \sc -> do
           let rDyn = (Route_Scope :/) <$> sc
           folderName <- holdUniqDyn $ toText . snd . splitScope <$> sc
           folderItem $
             dynRouteLink rDyn (constDyn mempty) $ do
               el "b" $ dynText folderName
-        e2 <- simpleList scopeDocs $ \th -> do
+      e2 <- fmap (switch . current . fmap leftmost) $
+        simpleList thingsInScope $ \th -> do
           let rDyn = (Route_Node :/) <$> th
           fileItem $
-            dynRouteLink rDyn (constDyn $ "class" =: "scope-item") $ do
+            dynRouteLink rDyn (constDyn mempty) $ do
               dyn_ $ renderRouteText <$> rDyn
-        pure $ zipDynWith (<>) e1 e2
+      pure $ leftmost [e1, e2]
     divClass "ui mini horizontal statistic" $ do
       divClass "value" $ do
-        dynText $ show . Map.size <$> docs
+        dynText $ show . Map.size <$> thingScopes
       divClass "label" $ do
         text "Notes"
     pure evt
