@@ -1,7 +1,4 @@
-let 
-  src = import ./nix/sources.nix;
-in 
-{ pkgs ? import src.nixpkgs {} 
+{ pkgs ? import ./dep/nixpkgs {} 
 , useWarp ? false
 , ... 
 }:
@@ -20,13 +17,16 @@ in
   pkgs.haskellPackages.developPackage {
     root = ./.;
     name = "ka";
-    source-overrides = {
-      reflex-fsnotify = src.reflex-fsnotify;
-      reflex-dom-pandoc = src.reflex-dom-pandoc;
-      commonmark = src.commonmark-hs + "/commonmark";
-      commonmark-extensions = src.commonmark-hs + "/commonmark-extensions";
-      commonmark-pandoc = src.commonmark-hs + "/commonmark-pandoc";
-    };
+    source-overrides = 
+      let 
+        cm = import ./dep/commonmark/thunk.nix; 
+      in {
+        reflex-fsnotify = import ./dep/reflex-fsnotify/thunk.nix;
+        reflex-dom-pandoc = import ./dep/reflex-dom-pandoc/thunk.nix;
+        commonmark = cm + "/commonmark";
+        commonmark-extensions = cm + "/commonmark-extensions";
+        commonmark-pandoc = cm + "/commonmark-pandoc";
+      };
     overrides = self: super: with pkgs.haskell.lib; {
       reflex-dom = 
         if useWarp
