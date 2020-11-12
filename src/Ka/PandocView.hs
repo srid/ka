@@ -60,6 +60,9 @@ style = do
     -- Make list items more "relaxed" (with spacing around them)
     "ul li" ? do
       C.paddingTop $ C.em 0.3
+    -- GH checkboxes should have padding to right, to prevent text from "sticking"
+    "li .ui.checkbox, .task .ui.checkbox" ? do
+      C.important $ C.marginRight $ C.em 0.3
     "#footnotes" ? do
       C.fontSize $ pct 85
       C.borderTop C.solid (px 1) C.black

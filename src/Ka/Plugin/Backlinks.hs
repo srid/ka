@@ -3,7 +3,7 @@ module Ka.Plugin.Backlinks where
 import Clay (em, pct, (?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
-import Ka.Graph (Graph, ThingName)
+import Ka.Graph (Context, Graph, ThingName)
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
 import qualified Ka.Plugin.Calendar as Calendar
@@ -65,8 +65,12 @@ thingPanel g thDyn =
         evt1 <- elAttr "h3" ("class" =: "header") $ do
           switchHold never <=< dyn $ ffor (fst <$> ctxDyn) renderThingLink
         evt2 <- elClass "ul" "ui list context" $ do
-          fmap (switch . current . fmap leftmost) $
-            simpleList (snd <$> ctxDyn) $ \blkDyn -> do
-              el "li" $
-                PandocView.render $ ffor blkDyn $ Pandoc mempty . one
+          renderContext $ snd <$> ctxDyn
         pure $ leftmost [evt1, evt2]
+
+renderContext :: (PandocBuilder t f, PostBuild t f, MonadHold t f, MonadFix f, Prerender js t f) => Dynamic t [Context] -> f (Event t (R Route))
+renderContext ctxDyn = do
+  fmap (switch . current . fmap leftmost) $
+    simpleList ctxDyn $ \blkDyn -> do
+      el "li" $
+        PandocView.render $ ffor blkDyn $ Pandoc mempty . one
