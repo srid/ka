@@ -38,8 +38,8 @@ thingPanel ::
   Dynamic t (ThingName, ThingScope) ->
   m (Event t (R Route))
 thingPanel g' scopeDyn thWithScopeDyn = do
-  let g = ffor3 g' thWithScopeDyn scopeDyn $ \graph (_name, scope) scopes ->
-        AM.induce (includeThing $ Map.filter (== scope) scopes) graph
+  let g = ffor3 g' thWithScopeDyn scopeDyn $ \graph (currThing, scope) scopes ->
+        AM.induce (includeThing currThing $ Map.filter (== scope) scopes) graph
       thDyn = fst <$> thWithScopeDyn
   -- TODO: ^^ Might have to narrow the graph to contain
   divClass "ui telescope segment" $ do
@@ -48,7 +48,7 @@ thingPanel g' scopeDyn thWithScopeDyn = do
       dynText $ Scope.showScope . snd <$> thWithScopeDyn
       text "]"
     el "p" $ do
-      text "Notes reachable from "
+      text "Non-daily notes reachable from "
       el "em" $ dynText $ unThingName <$> thDyn
       text ", in increasing order of distance from it."
       el "strong" $ text " Please note: "
@@ -68,6 +68,6 @@ thingPanel g' scopeDyn thWithScopeDyn = do
             divClass "ui label" $ do
               switchHold never <=< dyn $ renderThingLink <$> thsDyn
 
-includeThing :: Map ThingName ThingScope -> ThingName -> Bool
-includeThing scopes name =
-  Map.member name scopes && Calendar.includeInSidebar name
+includeThing :: ThingName -> Map ThingName ThingScope -> ThingName -> Bool
+includeThing currThing _scopes name =
+  {- Map.member name scopes && -} name == currThing || Calendar.includeInSidebar name
