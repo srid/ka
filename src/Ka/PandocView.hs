@@ -56,6 +56,10 @@ render doc = do
 
 style :: Css
 style = do
-  "#footnotes" ? do
-    C.fontSize $ pct 85
-    C.borderTop C.solid (px 1) C.black
+  ".pandoc" ? do
+    -- Make list items more "relaxed" (with spacing around them)
+    "ul li" ? do
+      C.paddingTop $ C.em 0.3
+    "#footnotes" ? do
+      C.fontSize $ pct 85
+      C.borderTop C.solid (px 1) C.black
