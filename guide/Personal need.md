@@ -1,0 +1,1 @@
+Usually the feature I work next on hobby projects is determined by ==my own immediate personal needs==. This is what, in larger part, motivates me do them. Losing sight of this larger goal can easily lead to losing interest.

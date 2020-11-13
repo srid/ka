@@ -1,5 +1,3 @@
-{-# LANGUAGE RecursiveDo #-}
-
 module Ka.App where
 
 import Commonmark (defaultSyntaxSpec)
@@ -74,8 +72,8 @@ kaApp = do
   -- NOTE: If two plugins produce the same file, the later plugin's output will
   -- be used, discarding the formers. That is what `flip Map.union` effectively does.
   renderE <-
-    fmap (mergeWith $ flip Map.union) $
-      sequence
+    mergeWith (flip Map.union)
+      <$> sequence
         -- TODO: Eventually create a proper Plugin type to hold these functions.
         [ pure $ (fmap . fmap . fmap . fmap) (\x -> Thing_Pandoc :=> Identity x) pandocWithScopeE,
           (fmap . fmap . fmap . fmap . fmap) (\x -> Thing_Calendar :=> Identity x) $

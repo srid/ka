@@ -24,8 +24,8 @@ render ::
   m (Event t (R Route))
 render ths r = do
   divClass "ui right floated small fluid inverted vertical menu nav" $ do
-    fmap leftmost $
-      sequence
+    leftmost
+      <$> sequence
         [ Breadcrumb.render r,
           Listing.render ths
         ]
