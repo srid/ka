@@ -10,8 +10,6 @@ This spins up a local server, rather than a GTK+ app (as the latter cannot be re
 bin/run ./guide
 ```
 
-NOTE: You will need haskell-language-server 0.6.0 or later to develop this project.
-
 ## Running as GTK+ app
 
 ```bash
