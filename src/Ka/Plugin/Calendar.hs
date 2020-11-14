@@ -12,7 +12,7 @@ import qualified Algebra.Graph.Labelled.AdjacencyMap as AM
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import Data.Time (parseTimeM)
+import Data.Time (UTCTime, parseTimeM)
 import Data.Time.Calendar (Day, addDays, toGregorian)
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import Ka.Graph (Graph, ThingName (..))
@@ -31,8 +31,8 @@ runPlugin ::
     DomBuilder t m
   ) =>
   Dynamic t Graph ->
-  Dynamic t (Map ThingName (ThingScope, Pandoc)) ->
-  (Event t (Map ThingName (Maybe (ThingScope, Pandoc)))) ->
+  Dynamic t (Map ThingName (ThingScope, (UTCTime, Pandoc))) ->
+  Event t (Map ThingName (Maybe (ThingScope, (UTCTime, Pandoc)))) ->
   m (Event t (Map ThingName (Maybe (ThingScope, Set Day))))
 runPlugin _graphD _pandocD pandocE = do
   let diaryFilesE =
@@ -53,7 +53,7 @@ runPlugin _graphD _pandocD pandocE = do
           then Nothing
           else
             Just $
-              one $
+              one
                 (calThing, Just (noScope, fs))
 
 render ::
@@ -174,6 +174,7 @@ thingPanel _g thDyn = do
                   routeLink nextR $ text $ show next
               pure $ leftmost [e1, ec, e2]
 
+-- TODO: Include current week's entries unconditionally.
 includeInSidebar :: ThingName -> Bool
 includeInSidebar =
   isNothing . parseDairyThing

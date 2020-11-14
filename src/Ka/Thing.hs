@@ -14,6 +14,7 @@ import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import Data.Dependent.Sum (DSum (..))
 import Data.GADT.Compare.TH (deriveGEq)
+import Data.Time (UTCTime)
 import Data.Time.Calendar (Day)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.PandocView as PandocView
@@ -30,6 +31,7 @@ import Text.Pandoc.Definition (Pandoc (..))
 
 data Thing = Thing
   { _thing_scope :: ThingScope,
+    _thing_lastModified :: UTCTime,
     _thing_val :: DSum ThingVal Identity
   }
 

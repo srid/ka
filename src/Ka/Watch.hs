@@ -6,10 +6,11 @@ where
 import Control.Monad.Fix (MonadFix)
 import Data.List (nubBy)
 import qualified Data.Map.Strict as Map
-import Data.Time (NominalDiffTime)
+import Data.Time (NominalDiffTime, UTCTime)
+import Data.Traversable (for)
 import Reflex
 import Reflex.FSNotify (FSEvent, watchTree)
-import System.Directory (makeAbsolute)
+import System.Directory (getModificationTime, makeAbsolute)
 import System.FSNotify (defaultConfig)
 import qualified System.FSNotify as FSN
 import System.FilePath (takeExtension)
@@ -32,7 +33,7 @@ directoryFilesContent ::
   ) =>
   FilePath ->
   String ->
-  m (Event t (Map FilePath (Maybe Text)))
+  m (Event t (Map FilePath (Maybe (UTCTime, Text))))
 directoryFilesContent dirPathRel ext = do
   -- This function needs absolute directory path for `makeRelative` (see below)
   -- to work.
@@ -46,16 +47,18 @@ directoryFilesContent dirPathRel ext = do
         -- getDirectoryFiles below to return relative paths)
         let toRel = makeRelative dirPath
          in flip Map.traverseWithKey (Map.mapKeys toRel m) $
-              \fp -> traverse $ \() -> do
-                liftIO $ readFileText fp
+              \fp -> traverse $ \mt -> do
+                c <- liftIO $ readFileText fp
+                pure (mt, c)
   -- Gather the current list of files as an event, and trigger it in the output
   -- event (see leftmost below)
   (content0E, fire) <- newTriggerEvent
   liftIO $ do
     files <- getDirectoryFiles "." ["**/*" <> ext]
-    xs <- flip traverse files $ \fp -> do
+    xs <- for files $ \fp -> do
+      mt <- getModificationTime fp
       s <- readFileText fp
-      pure (fp, Just s)
+      pure (fp, Just (mt, s))
     fire $ Map.fromList xs
   pure $ leftmost [content0E, contentE]
 
@@ -69,7 +72,7 @@ watchDirectory ::
   ) =>
   FilePath ->
   String ->
-  m (Event t (Map FilePath (Maybe ())))
+  m (Event t (Map FilePath (Maybe UTCTime)))
 watchDirectory dirPath ext = do
   fsEvt <- watchDirWithDebounce 0.1 dirPath
   let fsEvt' = fforMaybe fsEvt $ \es -> do
@@ -101,20 +104,20 @@ watchDirWithDebounce ms dirPath = do
   -- Discard all but the last event for each path.
   pure $ nubByKeepLast ((==) `on` FSN.eventPath) <$> evtGrouped
 
-noteFileStatusFromEvent :: FSN.Event -> Maybe (FilePath, Maybe ())
+noteFileStatusFromEvent :: FSN.Event -> Maybe (FilePath, Maybe UTCTime)
 noteFileStatusFromEvent evt = do
   pure $
     (FSN.eventPath evt,) $ case evt of
-      FSN.Added _ _ _ ->
-        Just ()
-      FSN.Modified _ _ _ ->
-        Just ()
-      FSN.Removed _ _ _ ->
+      FSN.Added _ mt _ ->
+        Just mt
+      FSN.Modified _ mt _ ->
+        Just mt
+      FSN.Removed {} ->
         Nothing
-      FSN.Unknown _ _ _ ->
+      FSN.Unknown _ mt _ ->
         -- Unknown is an event that fsnotify (haskell) doesn't know how to
         -- handle. Let's consider the file to be modified, just to be safe.
-        Just ()
+        Just mt
 
 -- | Like @Data.List.nubBy@ but keeps the last occurence
 nubByKeepLast :: (a -> a -> Bool) -> [a] -> [a]

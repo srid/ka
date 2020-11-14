@@ -11,6 +11,7 @@ import Clay ((?))
 import qualified Clay as C
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Map.Strict as Map
+import Data.Time (UTCTime)
 import Ka.Graph (Graph, ThingName (..))
 import qualified Ka.Graph as G
 import qualified Ka.PandocView as PandocView
@@ -41,8 +42,8 @@ runPlugin ::
   forall t m.
   (Reflex t, MonadHold t m, MonadFix m, DomBuilder t m) =>
   Dynamic t Graph ->
-  Dynamic t (Map ThingName (ThingScope, Pandoc)) ->
-  (Event t (Map ThingName (Maybe (ThingScope, Pandoc)))) ->
+  Dynamic t (Map ThingName (ThingScope, (UTCTime, Pandoc))) ->
+  Event t (Map ThingName (Maybe (ThingScope, (UTCTime, Pandoc)))) ->
   m (Event t (Map ThingName (Maybe (ThingScope, Tasks))))
 runPlugin _graphD _pandocD pandocE = do
   let tasksWithScopeE =
@@ -55,7 +56,7 @@ runPlugin _graphD _pandocD pandocE = do
           ffor pandocE $
             Map.map $
               traverse $
-                traverse $ \(extractTasks -> ts) -> do
+                traverse $ \(extractTasks . snd -> ts) -> do
                   ts' <- nonEmptyAsJust ts
                   -- Ignore notes without any unchecked tasks
                   guard $ any (not . _task_checked) ts'
@@ -70,7 +71,7 @@ runPlugin _graphD _pandocD pandocE = do
     fforMaybe (attach (current tasks) $ updated tasks) $ \(oldTasks, currTasks) -> do
       guard $ oldTasks /= currTasks
       pure $
-        one $
+        one
           (ThingName "+Tasks", Just (noScope, currTasks))
 
 nonEmptyAsJust :: [a] -> Maybe [a]

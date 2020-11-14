@@ -104,7 +104,10 @@ renderRouteBody ::
   m (Event t (R Route))
 renderRouteBody App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
-    Sidebar.render (Map.keys <$> _app_things) r
+    let recentlyUpdatedThings =
+          ffor _app_things $
+            fmap fst . sortOn (Down . snd) . Map.toList . Map.map Thing._thing_lastModified
+    Sidebar.render recentlyUpdatedThings r
   evt1 <- divClass "twelve wide main column" $ do
     divClass "ui basic attached segments thing" $ do
       e0 <- renderScopeBreadcrumb r $ _app_things <&> fmap Thing._thing_scope

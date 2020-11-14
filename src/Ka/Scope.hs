@@ -38,8 +38,8 @@ showScope [] =
 showScope s =
   T.intercalate "/" $ fmap toText s
 
--- | Move the parent directories of key to value, retaining only the base name
--- on the key.
+-- | Move the parent directories of map key to map value, retaining only the
+-- base filename on the key.
 --
 -- On conflict, this function errors out (when there are simultaneous
 -- modifications to files with the same base name).
@@ -53,6 +53,7 @@ diffMapScoped (Map.toList -> xs) =
     f _k Nothing x = x
     f _k x Nothing = x
     f k (Just (scope1, _)) (Just (scope2, _)) =
+      -- TODO: Handle this error gracefully.
       error $
         "Ambiguous file "
           <> toText k
