@@ -3,6 +3,7 @@
 , ... 
 }:
 let
+  inherit (import ./dep/gitignore { inherit (pkgs) lib; }) gitignoreSource;
   extraDeps =
     if pkgs.lib.trivial.inNixShell
       then with pkgs.haskellPackages; [ 
@@ -15,7 +16,7 @@ let
       else [];
 in 
   pkgs.haskellPackages.developPackage {
-    root = ./.;
+    root = gitignoreSource ./.;
     name = "ka";
     source-overrides = 
       let 
