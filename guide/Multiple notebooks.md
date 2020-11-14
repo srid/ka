@@ -10,5 +10,5 @@ We want to be able to merge two distinct notebooks whilst also allowing *cross l
 
 Dev tasks to implement the above:
 
-- [ ] Refactor `_app_doc`'s Map value type to be an ADT.
+- [ ] Refactor `_app_things`'s Map value type to be an ADT.
 - [ ] 

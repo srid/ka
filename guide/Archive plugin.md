@@ -1,4 +1,6 @@
 Doesn't do anything ... yet.
 
+## Preliminaries
+
 - [x] Hierarchical directories
-- [ ] Tree view in [[Sidebar listing]] (useful for review too)
+- [x] Tree view based navigation

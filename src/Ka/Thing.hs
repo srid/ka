@@ -1,7 +1,9 @@
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Ka.Thing
-  ( Thing (..),
+  ( ThingVal (..),
+    Thing (..),
     render,
     style,
   )
@@ -26,14 +28,19 @@ import Reflex.Dom
 import Reflex.Dom.Pandoc (PandocBuilder)
 import Text.Pandoc.Definition (Pandoc (..))
 
+data Thing = Thing
+  { _thing_scope :: ThingScope,
+    _thing_val :: DSum ThingVal Identity
+  }
+
 -- | All kinds of things managed by plugins.
-data Thing a where
+data ThingVal a where
   -- | The most common type; simply corresponds to Markdown files written by the
   -- user.
-  Thing_Pandoc :: Thing Pandoc
+  ThingVal_Pandoc :: ThingVal Pandoc
   -- | The type used by the Calendar plugin; holds the list of daily notes.
-  Thing_Calendar :: Thing (Set Day)
-  Thing_Tasks :: Thing Task.Tasks
+  ThingVal_Calendar :: ThingVal (Set Day)
+  ThingVal_Tasks :: ThingVal Task.Tasks
 
 render ::
   ( Prerender js t m,
@@ -46,25 +53,25 @@ render ::
     MonadIO (Performable m)
   ) =>
   Dynamic t Graph ->
-  Dynamic t (Map ThingName (ThingScope, DSum Thing Identity)) ->
-  Dynamic t (ThingName, (ThingScope, DSum Thing Identity)) ->
+  Dynamic t (Map ThingName Thing) ->
+  Dynamic t (ThingName, Thing) ->
   m (Event t (R Route))
 render g doc thVal = do
-  thValF <- factorDyn $ snd . snd <$> thVal
+  thValF <- factorDyn $ _thing_val . snd <$> thVal
   r1 <- divClass "ui attached basic segment" $ do
     elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal
     switchHold never <=< dyn $
       ffor thValF $ \case
-        Thing_Pandoc :=> (fmap runIdentity . getCompose -> docDyn) ->
+        ThingVal_Pandoc :=> (fmap runIdentity . getCompose -> docDyn) ->
           PandocView.render docDyn
-        Thing_Calendar :=> (fmap runIdentity . getCompose -> days) ->
+        ThingVal_Calendar :=> (fmap runIdentity . getCompose -> days) ->
           Calendar.render g days
-        Thing_Tasks :=> (fmap runIdentity . getCompose -> x) ->
+        ThingVal_Tasks :=> (fmap runIdentity . getCompose -> x) ->
           Task.render x
   -- TODO: Have to figure our UI order of plugins
   r3 <- Calendar.thingPanel g $ fst <$> thVal
   r2 <- Backlinks.thingPanel g $ fst <$> thVal
-  r4 <- Telescope.thingPanel g (fmap fst <$> doc) $ second fst <$> thVal
+  r4 <- Telescope.thingPanel g (fmap _thing_scope <$> doc) $ second _thing_scope <$> thVal
   pure $ leftmost [r1, r2, r3, r4]
 
 style :: C.Css
@@ -75,4 +82,4 @@ style = do
     Telescope.style
     Task.style
 
-$(deriveGEq ''Thing)
+$(deriveGEq ''ThingVal)

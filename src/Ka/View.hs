@@ -104,23 +104,23 @@ renderRouteBody ::
   m (Event t (R Route))
 renderRouteBody App {..} r = do
   evt0 <- divClass "four wide navbar column" $ do
-    Sidebar.render (Map.keys <$> _app_doc) r
+    Sidebar.render (Map.keys <$> _app_things) r
   evt1 <- divClass "twelve wide main column" $ do
     divClass "ui basic attached segments thing" $ do
-      e0 <- renderScopeBreadcrumb r $ _app_doc <&> fmap fst
+      e0 <- renderScopeBreadcrumb r $ _app_things <&> fmap Thing._thing_scope
       r' <- factorDyn $ traceDyn "route" r
       e1 <- switchHold never <=< dyn $
         ffor r' $ \case
           Route_Scope :=> (fmap runIdentity . getCompose -> scopeDyn) -> do
-            renderScopeContents (fmap fst <$> _app_doc) scopeDyn
+            renderScopeContents (fmap Thing._thing_scope <$> _app_things) scopeDyn
           Route_Node :=> (fmap runIdentity . getCompose -> fpDyn) -> do
-            let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_doc
+            let thingDyn = zipDynWith (\fp doc -> (fp,) <$> Map.lookup fp doc) fpDyn _app_things
             thingDynM <- maybeDyn thingDyn
             switchHold never <=< dyn $
               ffor thingDynM $ \case
                 Nothing ->
                   text "404" >> pure never
                 Just thingDataM ->
-                  Thing.render _app_graph _app_doc thingDataM
+                  Thing.render _app_graph _app_things thingDataM
       pure $ leftmost [e0, e1]
   pure $ leftmost [evt0, evt1]

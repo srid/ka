@@ -15,7 +15,7 @@ import qualified Ka.Plugin.Task as Task
 import Ka.Plugin.WikiLink (wikiLinkSpec)
 import Ka.Scope (ThingScope)
 import qualified Ka.Scope as Scope
-import Ka.Thing (Thing (..))
+import Ka.Thing (Thing (..), ThingVal (..))
 import Ka.Watch (directoryFilesContent)
 import Reflex hiding (mapMaybe)
 import Reflex.Dom.Pandoc (PandocBuilder)
@@ -23,7 +23,7 @@ import Text.Pandoc.Definition (Pandoc)
 
 data App t = App
   { _app_graph :: Dynamic t Graph,
-    _app_doc :: Dynamic t (Map ThingName (ThingScope, DSum Thing Identity))
+    _app_things :: Dynamic t (Map ThingName Thing)
   }
 
 kaApp ::
@@ -75,14 +75,12 @@ kaApp = do
     mergeWith (flip Map.union)
       <$> sequence
         -- TODO: Eventually create a proper Plugin type to hold these functions.
-        [ pure $ (fmap . fmap . fmap . fmap) (\x -> Thing_Pandoc :=> Identity x) pandocWithScopeE,
-          (fmap . fmap . fmap . fmap . fmap) (\x -> Thing_Calendar :=> Identity x) $
-            Calendar.runPlugin graphD pandocD pandocWithScopeE,
-          (fmap . fmap . fmap . fmap . fmap) (\x -> Thing_Tasks :=> Identity x) $
-            Task.runPlugin graphD pandocD pandocWithScopeE
+        [ (fmap . fmap . fmap . fmap . fmap) (\x -> ThingVal_Pandoc :=> Identity x) $ pure pandocWithScopeE,
+          (fmap . fmap . fmap . fmap . fmap) (\x -> ThingVal_Calendar :=> Identity x) $ Calendar.runPlugin graphD pandocD pandocWithScopeE,
+          (fmap . fmap . fmap . fmap . fmap) (\x -> ThingVal_Tasks :=> Identity x) $ Task.runPlugin graphD pandocD pandocWithScopeE
         ]
   docD <-
-    foldDyn G.patchMap mempty renderE
+    foldDyn G.patchMap mempty $ fmap (fmap $ uncurry Thing) <$> renderE
   pure $ App graphD docD
 
 logDiffEvent ::
