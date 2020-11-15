@@ -1,9 +1,10 @@
 module Main where
 
+import qualified Data.Text as T
 import qualified Ka.View as View
 import Main.Utf8 (withUtf8)
 import Reflex.Dom (mainWidgetWithHead)
-import System.Directory (getCurrentDirectory, withCurrentDirectory)
+import System.Directory (getCurrentDirectory, getHomeDirectory, withCurrentDirectory)
 import System.Environment (getArgs)
 import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
@@ -12,10 +13,12 @@ main =
   withUtf8 $ do
     customDir <- getArg0
     withCurrentDirectoryMaybe customDir $ do
+      notesDir <- getCurrentDirectory
+      notebookId <- pathAsShortTitle notesDir
       hSetBuffering stdout LineBuffering
-      putStrLn . ("Notes dir " <>) =<< getCurrentDirectory
+      putStrLn $ "Notes dir " <> notesDir
       mainWidgetWithHead
-        View.headWidget
+        (View.headWidget notebookId)
         View.bodyWidget
 
 -- | Get the first CLI argument
@@ -31,3 +34,8 @@ withCurrentDirectoryMaybe mf action =
   case mf of
     Nothing -> action
     Just f -> withCurrentDirectory f action
+
+pathAsShortTitle :: FilePath -> IO Text
+pathAsShortTitle (toText -> fp) = do
+  homeDir <- toText <$> getHomeDirectory
+  pure $ T.replace homeDir "~" fp

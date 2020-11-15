@@ -21,14 +21,14 @@ import qualified Ka.Thing as Thing
 import Reflex.Dom.Core
 import Reflex.Dom.Pandoc (PandocBuilder)
 
-headWidget :: DomBuilder t m => m ()
-headWidget = do
+headWidget :: DomBuilder t m => Text -> m ()
+headWidget notebookId = do
   elAttr "meta" ("http-equiv" =: "Content-Type" <> "content" =: "text/html; charset=utf-8") blank
   elAttr "meta" ("content" =: "width=device-width, initial-scale=1" <> "name" =: "viewport") blank
   elAttr "link" ("rel" =: "stylesheet" <> "type" =: "text/css" <> "href" =: "https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.7/dist/semantic.min.css") blank
   el "style" $ do
     text $ toStrict $ render style
-  el "title" $ text "ka Jsaddle"
+  el "title" $ text $ "ka 🧠 " <> notebookId
   where
     style :: Css
     style = do
