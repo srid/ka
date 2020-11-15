@@ -1,8 +1,7 @@
-{ pkgs ? import ./dep/nixpkgs {} 
-, useWarp ? false
-, ... 
+{ useWarp ? false
 }:
 let
+  pkgs = import ./dep/nixpkgs {};
   inherit (import ./dep/gitignore { inherit (pkgs) lib; }) gitignoreSource;
   extraDeps =
     if pkgs.lib.trivial.inNixShell
