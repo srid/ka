@@ -58,7 +58,7 @@ render ::
   Dynamic t (Map ThingName Thing) ->
   Dynamic t (ThingName, Thing) ->
   m (Event t (R Route))
-render g doc thVal = do
+render g _doc thVal = do
   thValF <- factorDyn $ _thing_val . snd <$> thVal
   r1 <- divClass "ui attached basic segment" $ do
     elClass "h1" "header" $ dynText $ unThingName . fst <$> thVal
@@ -73,8 +73,8 @@ render g doc thVal = do
   -- TODO: Have to figure our UI order of plugins
   r3 <- Calendar.thingPanel g $ fst <$> thVal
   r2 <- Backlinks.thingPanel g $ fst <$> thVal
-  r4 <- Telescope.thingPanel g (fmap _thing_scope <$> doc) $ second _thing_scope <$> thVal
-  pure $ leftmost [r1, r2, r3, r4]
+  -- r4 <- Telescope.thingPanel g (fmap _thing_scope <$> doc) $ second _thing_scope <$> thVal
+  pure $ leftmost [r1, r2, r3] -- , r4]
 
 style :: C.Css
 style = do
