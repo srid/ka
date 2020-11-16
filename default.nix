@@ -10,7 +10,6 @@ let
           ghcid 
           cabal-fmt 
           haskell-language-server
-          ormolu 
         ]
       else [];
 in 
@@ -23,6 +22,7 @@ in
       in {
         reflex-fsnotify = import ./dep/reflex-fsnotify/thunk.nix;
         reflex-dom-pandoc = import ./dep/reflex-dom-pandoc/thunk.nix;
+        pandoc-link-context = import ./dep/pandoc-link-context/thunk.nix;
         commonmark = cm + "/commonmark";
         commonmark-extensions = cm + "/commonmark-extensions";
         commonmark-pandoc = cm + "/commonmark-pandoc";

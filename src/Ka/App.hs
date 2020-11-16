@@ -8,7 +8,7 @@ import qualified Data.Map.Strict as Map
 import Data.Time (UTCTime, getCurrentTime)
 import Ka.Graph (Graph, ThingName)
 import qualified Ka.Graph as G
-import Ka.Markdown (mdFileThing, noteExtension, parseMarkdown, queryLinksWithContext)
+import qualified Ka.Markdown as M
 import qualified Ka.Plugin.Calendar as Calendar
 import Ka.Plugin.Highlight (highlightSpec)
 import Ka.Plugin.Tag (inlineTagSpec)
@@ -41,12 +41,12 @@ kaApp ::
   ) =>
   m (App t)
 kaApp = do
-  fileContentE <- directoryFilesContent "." noteExtension
+  fileContentE <- directoryFilesContent "." M.noteExtension
   logDiffEvent fileContentE
   let pandocWithScopeE :: Event t (Map ThingName (Maybe (ThingScope, (UTCTime, Pandoc)))) =
         -- Discard the parent paths; we only consider the basename to be note identifier.
         ffor (Scope.diffMapScoped <$> fileContentE) $ \m ->
-          Map.mapKeys mdFileThing $
+          Map.mapKeys M.mdFileThing $
             flip Map.mapWithKey m $ \fp -> fmap $ \s ->
               let spec =
                     wikiLinkSpec
@@ -60,13 +60,13 @@ kaApp = do
                       <> CE.attributesSpec
                       <> CE.fencedDivSpec -- Used for publishing (semantic UI classes)
                       <> defaultSyntaxSpec
-               in second (parseMarkdown spec fp) <$> s
+               in second (M.parseMarkdown spec fp) <$> s
       pandocE :: Event t (Map ThingName (Maybe Pandoc)) = fmap (fmap $ snd . snd) <$> pandocWithScopeE
   graphD :: Dynamic t Graph <-
     foldDyn G.patch G.empty $
       ffor pandocE $
         Map.map $
-          fmap $ fmap (swap . first mdFileThing) . Map.toList . queryLinksWithContext
+          fmap $ fmap (swap . first M.mdFileThing) . Map.toList . M.queryNoteLinksWithContext
   pandocD :: Dynamic t (Map ThingName (ThingScope, (UTCTime, Pandoc))) <-
     foldDyn G.patchMap mempty pandocWithScopeE
   -- NOTE: If two plugins produce the same file, the later plugin's output will

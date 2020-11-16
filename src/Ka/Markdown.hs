@@ -2,20 +2,19 @@ module Ka.Markdown
   ( noteExtension,
     mdFileThing,
     parseMarkdown,
-    queryLinksWithContext,
+    queryNoteLinksWithContext,
   )
 where
 
 import qualified Commonmark as CM
 import qualified Commonmark.Pandoc as CP
-import Data.List (nub)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import Ka.Graph (ThingName (..))
 import System.FilePath (dropExtension)
 import qualified Text.Pandoc.Builder as B
-import Text.Pandoc.Definition (Attr, Block, Inline (Link), Pandoc (..), Target)
-import qualified Text.Pandoc.Walk as W
+import Text.Pandoc.Definition (Block, Pandoc (..))
+import qualified Text.Pandoc.LinkContext as LC
 
 type CMSyntaxSpec =
   CM.SyntaxSpec
@@ -35,44 +34,12 @@ parseMarkdown spec fp s =
   where
     toPandoc = Pandoc mempty . B.toList . CP.unCm
 
-queryLinksWithContext :: Pandoc -> Map FilePath [Block]
-queryLinksWithContext doc =
-  fmap nub $ Map.fromListWith (<>) . fmap (second one) $ W.query go doc
+queryNoteLinksWithContext :: Pandoc -> Map FilePath [Block]
+queryNoteLinksWithContext =
+  Map.mapKeys toString
+    . Map.filterWithKey (flip $ const isNoteUrl)
+    . LC.queryLinksWithContext
   where
-    go :: Block -> [(FilePath, Block)]
-    go blk =
-      fmap (,blk) $ case blk of
-        B.Para is ->
-          W.query linksFromInline is
-        B.Plain is ->
-          W.query linksFromInline is
-        B.LineBlock is ->
-          W.query linksFromInline is
-        B.Header _ _ is ->
-          W.query linksFromInline is
-        B.DefinitionList xs ->
-          -- Gather all filenames linked, and have them put (see above) in the
-          -- same definition list block.
-          concat $
-            flip fmap xs $ \(is, bss) ->
-              let def = W.query linksFromInline is
-                  body = fmap (fmap (fmap fst . go)) bss
-               in def <> concat (concat body)
-        _ -> mempty
-
-    linksFromInline :: Inline -> [FilePath]
-    linksFromInline = maybeToList . getNoteLinkFilePath
-
-    getNoteLinkFilePath :: Inline -> Maybe FilePath
-    getNoteLinkFilePath x = do
-      (_attr, _inlines, (url, _title)) <- getNoteLink x
-      pure $ toString url
-
-    getNoteLink :: Inline -> Maybe (Attr, [Inline], Target)
-    getNoteLink = \case
-      Link attr inlines target@(url, _title) -> do
-        guard $ not $ "/" `T.isInfixOf` url
-        guard $ toText noteExtension `T.isSuffixOf` url
-        pure (attr, inlines, target)
-      _ ->
-        Nothing
+    isNoteUrl :: Text -> Bool
+    isNoteUrl url =
+      not ("/" `T.isInfixOf` url) && (toText noteExtension `T.isSuffixOf` url)
