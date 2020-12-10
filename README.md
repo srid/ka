@@ -1,6 +1,6 @@
 # ka
 
-See <https://ka.srid.ca/> for project intro and details.
+See <https://ka.srid.ca> for project intro and details.
 
 ## Development
 
