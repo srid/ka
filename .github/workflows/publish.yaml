@@ -19,7 +19,7 @@ jobs:
         ./neuron --version  # This extracts the bundle; should take a while
     - name: Build neuron site 🔧
       run: |
-        ./neuron -d ./guide rib
+        ./neuron -d ${PWD}/guide rib
     - name: Deploy to gh-pages 🚀
       uses: peaceiris/actions-gh-pages@v3
       with:
