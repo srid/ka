@@ -1,9 +1,5 @@
 Welcome to the **Ka user guide**.
 
-:::{.ui .message}
-See the GitHub README for install instructions.
-:::
-
 Ka "enriches" a directory of Markdown notes with extensible features. In effect, ka "lifts" an otherwise simple directory of Markdown notes, by enriching it with abstract functionalities whilst continuing to enable the user to write plain-text notes for lifetime.
 
 <video width="100%" muted="" autoplay="true" loop="true">
@@ -22,9 +18,9 @@ What does this mean? It means two things:
 
 See [[Blog]] for a timeline of blog posts.
 
-## Access to source code
+## Source code
 
-[neuron] [sponsors] may get early access to `ka` source code, which can be utilized to run it locally on your notes. If you are a (tier 2+) sponsor, please [email me][email] your GitHub user name - for access to the repository.
+https://github.com/srid/ka
 
 
 [neuron]: https://neuron.zettel.page/
